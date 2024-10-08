@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Amenity, Bookmark, CareTaker, HouseRating,  Houses, LandLords, Location,  Teenants
+from .models import Amenity, Bookmark, CareTaker, HouseRating,  Houses, LandLords, Location, Room,  Teenants
 
 
 class CareTakersSerializer(serializers.ModelSerializer):
@@ -30,6 +30,12 @@ class HouseRatingSerializer(serializers.ModelSerializer):
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
+        fields = "__all__"
+
+
+class RoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
         fields = "__all__"
 
 class AmenitiesSerializer(serializers.ModelSerializer):

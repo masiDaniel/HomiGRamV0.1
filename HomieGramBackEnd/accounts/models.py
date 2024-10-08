@@ -1,4 +1,6 @@
 from django.db import models
+from HomieGramBackEnd.houses.models import LandLords
+from accounts.models import CustomUser
 from django.contrib.auth.models import AbstractUser, AbstractBaseUser
 
 
@@ -10,3 +12,4 @@ class CustomUser(AbstractUser):
     profile_pic = models.ImageField(null=True)
     passport_pic = models.ImageField(null=True)
     id_scan = models.ImageField(null=True) 
+    # user_type = models.ForeignKey(LandLords,null=True, on_delete=models.CASCADE)

@@ -1,8 +1,10 @@
 from django.urls import path
-from .views import AddBookmarkView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, SearchApiView
+from .views import AddBookmarkView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, SearchApiView, GetRoomssAPIView
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
+    path('getRooms/', GetRoomssAPIView.as_view(), name="get_houses"),
+
     path("search/<str:name>", SearchApiView.as_view(), name="search_house"),
     path('rate/<int:house_id>/', RateHouseAPIView.as_view(), name='rate-house'),
     path('getLocation/', GetLocationsAPIView.as_view(), name="get_locations"),
