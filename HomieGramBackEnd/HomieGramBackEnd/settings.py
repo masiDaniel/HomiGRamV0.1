@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'houses.apps.HousesConfig',
     'comments.apps.CommentsConfig',
+    'business.apps.BusinessConfig'
 ]
 
 MIDDLEWARE = [

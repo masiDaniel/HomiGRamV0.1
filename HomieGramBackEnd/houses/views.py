@@ -21,6 +21,18 @@ class HouseAPIView(APIView):
         houses = Houses.objects.all()
         serializer = HousesSerializers(houses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Create a new house
+        """
+        serializer = HousesSerializers(data=request.data)  # Pass the incoming data to the serializer
+        if serializer.is_valid():  # Validate the data
+            serializer.save()  # Save the house if the data is valid
+            return Response(serializer.data, status=status.HTTP_201_CREATED)  # Respond with the created house data
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+    
+
     # def post(self, request, *args, **kwargs):
     #     """
     #     Used to get a house by id

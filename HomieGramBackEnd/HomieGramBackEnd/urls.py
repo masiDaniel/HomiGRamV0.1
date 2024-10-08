@@ -24,5 +24,6 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     path('comments/', include('comments.urls')),
     path('houses/', include('houses.urls')),
+    path('business/', include('business.urls')),
     path('api/auth/', include('knox.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

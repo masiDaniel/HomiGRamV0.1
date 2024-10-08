@@ -122,6 +122,7 @@ class Room(models.Model):
     tenant =  models.ForeignKey(CustomUser, related_name='tenant_occupying', on_delete=models.SET_NULL, null=True, blank=True)
     # entry_date = models.DateField(default=timezone.now())
     room_images = models.ImageField(upload_to='room_images/', default="Homi rooms")
+    rent_status = models.BooleanField(default=False)
     
     def assign_tenant(self, tenant):
         self.tenant = tenant
