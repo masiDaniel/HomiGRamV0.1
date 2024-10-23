@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.generics import get_object_or_404
 from rest_framework import status
 from .models import MyBusiness, Category,Product, Order, Cart, CartItem
 from .serializers import MyBusinessSerializer, CategorySerializer, ProductSerializer, CartItemSerializer, CartSerializer, OrderSerializer
@@ -75,7 +76,7 @@ class ProductAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
         """
-        this will post a business
+        this will post a product
         """
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
@@ -83,6 +84,36 @@ class ProductAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+
+    def patch(self, request, *args, **kwargs):
+        """
+        this will update parts of a product
+        """
+        # Retrieve the product instance by the ID from the URL or request data
+        product = get_object_or_404(Product, id=kwargs.get('pk'))
+
+        # Use partial=True to allow partial updates
+        serializer = ProductSerializer(product, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            # Save the updates to the product instance
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, *args, **kwargs):
+        """
+        this is to delete a product.
+        """
+
+        product = get_object_or_404(Product, id=kwargs.get('pk'))
+
+        # Delete the product instance
+        product.delete()
+
+        # Return a success response
+        return Response({"message": "Product deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
 
 class CartAPIView(APIView):
     """
@@ -114,7 +145,7 @@ class CartItemAPIView(APIView):
     """
     handles the cart item operations
     """
-    
+
 
     def get(self, request, *args, **kwargs):
         """
