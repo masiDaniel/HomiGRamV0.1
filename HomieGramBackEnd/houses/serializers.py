@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Amenity, Bookmark, CareTaker, HouseRating,  Houses, LandLords, Location, Room,  Teenants
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating,  Houses,  Location, Room,  Teenants
 
 
 class CareTakersSerializer(serializers.ModelSerializer):
@@ -7,10 +7,10 @@ class CareTakersSerializer(serializers.ModelSerializer):
         model = CareTaker
         fields = ['user_id', 'house_id']
 
-class LandLordsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LandLords
-        fields = ['user_id', 'num_houses']
+# class LandLordsSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = LandLords
+#         fields = ['user_id', 'num_houses']
 
 class TeenantsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,3 +47,9 @@ class BookmarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookmark
         fields = ['id', 'user', 'house', 'created_at']
+
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Advertisement
+        fields = ['id', 'title', 'description', 'image', 'video_file', 'start_date', 'end_date', 'is_active']

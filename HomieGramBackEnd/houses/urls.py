@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddBookmarkView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, SearchApiView, GetRoomssAPIView
+from .views import AddBookmarkView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, SearchApiView, GetRoomssAPIView, getAdvvertismentsAPIView
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
@@ -12,5 +12,6 @@ urlpatterns = [
     path('getBookmarks/', GetBookmarksAPIView.as_view(), name="get_bookmarks"),
     path('bookmark/add/<int:house_id>/', AddBookmarkView.as_view(), name='add_bookmark'),
     path('bookmark/remove/<int:house_id>/', RemoveBookmarkView.as_view(), name='remove_bookmark'),
+    path('getAdverts/', getAdvvertismentsAPIView.as_view(), name="get_adverts")
 
 ]

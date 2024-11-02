@@ -3,9 +3,9 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveAPIView
-from .serializers import AmenitiesSerializer, BookmarkSerializer, HousesSerializers, LocationSerializer, RoomSerializer
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, HousesSerializers, LocationSerializer, RoomSerializer
 from accounts.serializers import MessageSerializer
-from .models import Amenity, Bookmark, HouseRating, Houses, Location, Room
+from .models import Advertisement, Amenity, Bookmark, HouseRating, Houses, Location, Room
 
 # Create your views here.
 class HouseAPIView(APIView):
@@ -138,3 +138,13 @@ class RemoveBookmarkView(APIView):
 
         bookmark.delete()
         return Response({'message': 'Bookmark removed'}, status=status.HTTP_204_NO_CONTENT)
+
+class getAdvvertismentsAPIView(APIView):
+
+    def get (self, request, *args , **kwargs):
+        """
+        get all adverst in the database for today
+        """
+        adverts = Advertisement.objects.all()
+        serializer =  AdvertisementSerializer(adverts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

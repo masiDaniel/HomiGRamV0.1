@@ -174,7 +174,7 @@ class OrderAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         """
-        get all cart items in teh database
+        get all orders in teh database
         """
 
         orders = Order.objects.all()
@@ -183,7 +183,7 @@ class OrderAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
         """
-        this will post a cart item
+        this will post an order
         """
         serializer = OrderSerializer(data=request.data)
         if serializer.is_valid():

@@ -1,3 +1,4 @@
+from datetime import timezone
 from django.conf import settings
 from django.db import models
 from accounts.models import CustomUser
@@ -8,15 +9,15 @@ from django.contrib.contenttypes.models import ContentType
 
 
 # Create your models here.
-class LandLords(models.Model):
-    """
-    Stores Information about landLords of Houses
-    """
-    user_id = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
-    num_houses = models.IntegerField(default=0)
+# class LandLords(models.Model):
+#     """
+#     Stores Information about landLords of Houses
+#     """
+#     user_id = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
+#     num_houses = models.IntegerField(default=0)
 
-    def __str__(self) -> str:
-        return self.user_id.get_full_name()
+#     def __str__(self) -> str:
+#         return self.user_id.get_full_name()
 
 
 class Amenity(models.Model):
@@ -46,7 +47,7 @@ class Houses(models.Model):
     name = models.CharField(max_length=100, null=False, blank=False, default="")
     rent_amount = models.DecimalField(null=False, blank=False,
                                       decimal_places=2, max_digits=10)
-    landlord_id = models.ForeignKey(LandLords, on_delete=models.CASCADE,
+    landlord_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE,
                                      null=True, blank=False)
     rating = models.PositiveSmallIntegerField(default=0, null=False, blank=False, )
     description = models.TextField()
@@ -156,3 +157,20 @@ class Bookmark(models.Model):
 
     def __str__(self):
         return f"{self.user} bookmarked {self.house}"
+    
+
+class Advertisement(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    image = models.ImageField(upload_to='advertisements/images', null=True, blank=True)
+    video_file = models.FileField(upload_to='advertisements/videos/', null=True, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    is_active = models.BooleanField(default=True)
+    # business = models.ForeignKey(MyBusiness, related_name='business', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
+
+    def is_currently_active(self):
+        return self.is_active and self.start_date <= timezone.now().date() <= self.end_date
