@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveAPIView
+
+from .utils import check_payment_status
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, HousesSerializers, LocationSerializer, RoomSerializer
 from accounts.serializers import MessageSerializer
 from .models import Advertisement, Amenity, Bookmark, HouseRating, Houses, Location, Room
@@ -148,3 +150,35 @@ class getAdvvertismentsAPIView(APIView):
         adverts = Advertisement.objects.all()
         serializer =  AdvertisementSerializer(adverts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class AssignTenantView(APIView):
+     def post(self, request, house_id):
+        # Get the house object
+        house = Houses.objects.filter(id=house_id).first()
+        
+        if not house:
+            return Response({"error": "House not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Find an empty room in the house (where occupied=False)
+        empty_room = Room.objects.filter(apartment=house, occupied=False).first()
+
+        if not empty_room:
+            return Response({"error": "No empty rooms available in this house"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Simulate checking payment status (you would integrate with an actual payment gateway here)
+        payment_confirmed = check_payment_status(empty_room)
+        
+        if not payment_confirmed:
+            return Response({"error": "Payment not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Assign the tenant to the room after successful payment
+        tenant = request.user  # Assuming the user sending the request is the tenant
+        empty_room.assign_tenant(tenant)
+
+        # Mark the rent status as true (meaning the rent has been paid)
+        empty_room.rent_status = True
+        empty_room.save()
+
+        # Optionally, serialize and return room information (or tenant info, depending on your needs)
+        room_data = RoomSerializer(empty_room).data  # Serialize room data to return
+        return Response(room_data, status=status.HTTP_200_OK)

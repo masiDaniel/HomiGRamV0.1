@@ -104,3 +104,42 @@ class UserSearchAPIView(APIView):
 
         serializer = AccountSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+class UpdateUserAPIView(APIView):
+    """
+    Handles dynamic updates to user fields
+    """
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Updates user fields dynamically
+        """
+        # Get the authenticated user
+        user = request.user
+
+        # Extract fields to update from the request
+        update_data = request.data
+
+        if not update_data:
+            return Response(
+                {"message": "No data provided for update."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Update the user's fields
+        for field, value in update_data.items():
+            if hasattr(user, field):  # Check if the field exists on the user model
+                setattr(user, field, value)
+            else:
+                return Response(
+                    {"message": f"Field '{field}' is not valid."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+        # Save changes to the database
+        user.save()
+
+        # Serialize the updated user and return the response
+        serializer = AccountSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
