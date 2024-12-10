@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
-from .serializers import AccountSerializer, MessageSerializer
+from .serializers import AccountSerializer, MessageSerializer, UserSerializer
 from knox.models import AuthToken
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -142,4 +142,15 @@ class UpdateUserAPIView(APIView):
 
         # Serialize the updated user and return the response
         serializer = AccountSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class GetUsersAPIView(APIView):
+
+    def get (self, request, *args , **kwargs):
+        """
+        get all userss in the database
+        """
+        users = CustomUser.objects.all()
+        serializer = UserSerializer(users, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

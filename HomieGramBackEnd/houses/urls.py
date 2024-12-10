@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddBookmarkView, AssignTenantView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, SearchApiView, GetRoomssAPIView, getAdvvertismentsAPIView
+from .views import AddBookmarkView, AssignCaretakerView, AssignTenantView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, SearchApiView, GetRoomssAPIView, getAdvvertismentsAPIView, GetCaretakersAPIView
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
@@ -14,5 +14,8 @@ urlpatterns = [
     path('bookmark/remove/<int:house_id>/', RemoveBookmarkView.as_view(), name='remove_bookmark'),
     path('getAdverts/', getAdvvertismentsAPIView.as_view(), name="get_adverts"),
     path('assign-tenant/<int:house_id>/', AssignTenantView.as_view(), name='assign_tenant'),
+    path('assign-caretaker/', AssignCaretakerView.as_view(), name='assign_caretaker'),
+    path('remove-caretaker/', RemoveCaretakerView.as_view(), name='remove_caretaker'),
+    path('get-all-caretaker/', GetCaretakersAPIView.as_view(), name='get_caretakers'),
 
 ]

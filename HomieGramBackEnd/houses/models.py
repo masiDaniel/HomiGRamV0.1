@@ -61,6 +61,11 @@ class Houses(models.Model):
     video = models.FileField(upload_to='house_videos/', null=True, blank=True)
     payment_bank_name = models.CharField(max_length=100, blank=True)
     payment_account_number = models.CharField(max_length=50, blank=True)
+    caretaker = models.OneToOneField(
+        "CareTaker", null=True, blank=True, on_delete=models.SET_NULL,
+        related_name='assigned_house'
+    ) 
+    
     # TODO implement ratings from teenants and non teenants
     #validators=[MinValueValidator(0), MaxValueValidator(5)
     
@@ -96,7 +101,14 @@ class CareTaker(models.Model):
     Stores Information about Caretakers
     """
     user_id = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
-    house_id = models.ForeignKey(Houses, null=True, on_delete=models.CASCADE)
+    house_id = models.ForeignKey(Houses, null=True, on_delete=models.CASCADE, related_name='caretakers')
+
+    def save(self, *args, **kwargs):
+        # # Automatically set the caretaker field in the house
+        # if self.house_id:
+        #     self.house_id.caretaker = self
+        #     self.house_id.save()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return self.user_id.get_full_name()

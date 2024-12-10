@@ -4,10 +4,12 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveAPIView
 
+from accounts.models import CustomUser
+
 from .utils import check_payment_status
-from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, HousesSerializers, LocationSerializer, RoomSerializer
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HousesSerializers, LocationSerializer, RoomSerializer
 from accounts.serializers import MessageSerializer
-from .models import Advertisement, Amenity, Bookmark, HouseRating, Houses, Location, Room
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating, Houses, Location, Room
 
 # Create your views here.
 class HouseAPIView(APIView):
@@ -94,8 +96,8 @@ class GetRoomssAPIView(APIView):
         """
         get all locations in the database
         """
-        rooms = Room.objects.all()
-        serializer = RoomSerializer(rooms, many=True)
+        caretakers = Room.objects.all()
+        serializer = RoomSerializer(caretakers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -182,3 +184,44 @@ class AssignTenantView(APIView):
         # Optionally, serialize and return room information (or tenant info, depending on your needs)
         room_data = RoomSerializer(empty_room).data  # Serialize room data to return
         return Response(room_data, status=status.HTTP_200_OK)
+
+
+
+class AssignCaretakerView(APIView):
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        house_id = request.data.get('house_id')
+
+        try:
+            user = CustomUser.objects.get(pk=user_id)
+            house = Houses.objects.get(pk=house_id)
+        except (CustomUser.DoesNotExist, Houses.DoesNotExist) as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+        caretaker, created = CareTaker.objects.get_or_create(user_id=user, house_id=house)
+        return Response(
+            {"message": "Caretaker assigned successfully", "created": created},
+            status=status.HTTP_200_OK
+        )
+
+class RemoveCaretakerView(APIView):
+    def delete(self, request):
+        user_id = request.data.get('user_id')
+        house_id = request.data.get('house_id')
+
+        try:
+            caretaker = CareTaker.objects.get(user_id=user_id, house_id=house_id)
+            caretaker.delete()
+            return Response({"message": "Caretaker removed successfully!"}, status=status.HTTP_200_OK)
+        except CareTaker.DoesNotExist:
+            return Response({"error": "Caretaker not found"}, status=status.HTTP_404_NOT_FOUND)
+
+class GetCaretakersAPIView(APIView):
+
+    def get (self, request, *args , **kwargs):
+        """
+        get all caretakers in the database
+        """
+        caretakers = CareTaker.objects.all()
+        serializer = CareTakersSerializer(caretakers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

@@ -31,6 +31,12 @@ class AccountSerializer(serializers.ModelSerializer):
         validated_data["password"] = instance.password
         return super().update(instance, validated_data)
 
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'email', 'first_name', 'last_name']
+
 class MessageTokenSerializer(serializers.Serializer):
     message = serializers.CharField(max_length=100)
     token = serializers.CharField(max_length=100)

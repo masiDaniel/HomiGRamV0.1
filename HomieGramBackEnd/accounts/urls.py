@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import LogoutAPIView, RegisterUsersAPIView, LoginApIView, UpdateUserAPIView, UserSearchAPIView
+from .views import GetUsersAPIView, LogoutAPIView, RegisterUsersAPIView, LoginApIView, UpdateUserAPIView, UserSearchAPIView
 
 urlpatterns = [
     path("signup/", RegisterUsersAPIView.as_view(), name="signup"),
@@ -7,4 +7,5 @@ urlpatterns = [
     path("logout/", LogoutAPIView.as_view(), name="logout"),
     path('users/', UserSearchAPIView.as_view(), name='user-search'),
     path('user/update/', UpdateUserAPIView.as_view(), name='update-user'),
+    path('getUsers/', GetUsersAPIView.as_view(), name='get-users'),
 ]

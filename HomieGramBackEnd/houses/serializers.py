@@ -53,3 +53,8 @@ class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advertisement
         fields = ['id', 'title', 'description', 'image', 'video_file', 'start_date', 'end_date', 'is_active']
+
+class CaretakerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CareTaker
+        fields = "__all__"
