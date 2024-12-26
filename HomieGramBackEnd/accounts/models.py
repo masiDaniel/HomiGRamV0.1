@@ -14,3 +14,11 @@ class CustomUser(AbstractUser):
     user_type = models.CharField(max_length=10, choices=USER_TYPES, default='tenant')
     is_landlord = models.BooleanField(default=False)  # To indicate if user is a landlord
     num_houses = models.IntegerField(default=0)  # Track the number of houses they own
+    regno = models.CharField(max_length=20, unique=True, blank=True, null=True)
+
+    def clean(self):
+        if self.regno and not self.regno.startswith("USER-"):
+            raise ValidationError("Registration number must start with 'USER-'")
+
+    def __str__(self):
+        return f"{self.username} ({self.regno})"
