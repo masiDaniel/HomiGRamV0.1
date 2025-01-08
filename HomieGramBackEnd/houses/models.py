@@ -127,7 +127,7 @@ class Teenants(models.Model):
     
 class Room(models.Model):
     apartment = models.ForeignKey(Houses, related_name='rooms', on_delete=models.CASCADE)
-    # room_name ="{self.apartment.name} {self.id}"
+    room_name =  models.CharField(max_length=100, null=False, blank=False, default="Homi room")
     number_of_bedrooms = models.IntegerField()
     size_in_sq_meters = models.DecimalField(max_digits=6, decimal_places=2)
     rent = models.DecimalField(max_digits=10, decimal_places=2)

@@ -94,12 +94,29 @@ class GetRoomssAPIView(APIView):
 
     def get (self, request, *args , **kwargs):
         """
-        get all locations in the database
+        get all rooms in the database
         """
-        caretakers = Room.objects.all()
-        serializer = RoomSerializer(caretakers, many=True)
+        Rooms = Room.objects.all()
+        serializer = RoomSerializer(Rooms, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
+    
+    def post(self, request, *args, **kwargs):
+        """
+        Create new multiple rooms in the database
+        """
+        rooms_data = request.data  # Expecting a list of room data
+        if not isinstance(rooms_data, list):
+            return Response({"detail": "Request body should be a list of room data."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        rooms = []
+        for room_data in rooms_data:
+            serializer = RoomSerializer(data=room_data)
+            if serializer.is_valid():
+                rooms.append(serializer.save())  # Save the valid room
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response({"detail": "Rooms added successfully."}, status=status.HTTP_201_CREATED)
 
 class GetAmenitiessAPIView(APIView):
 
