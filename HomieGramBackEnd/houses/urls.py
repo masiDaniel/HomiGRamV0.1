@@ -17,5 +17,4 @@ urlpatterns = [
     path('assign-caretaker/', AssignCaretakerView.as_view(), name='assign_caretaker'),
     path('remove-caretaker/', RemoveCaretakerView.as_view(), name='remove_caretaker'),
     path('get-all-caretaker/', GetCaretakersAPIView.as_view(), name='get_caretakers'),
-
 ]

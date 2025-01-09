@@ -148,12 +148,12 @@ class AddBookmarkView(APIView):
         bookmark, created = Bookmark.objects.get_or_create(user=request.user, house=house)
         if created:
             return Response({'message': 'Bookmark added'}, status=status.HTTP_201_CREATED)
-        return Response({'message': 'Bookmark already exists'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Bookmark already exists',}, status=status.HTTP_200_OK)
 
 class RemoveBookmarkView(APIView):
     def post(self, request, house_id, *args, **kwargs):
         try:
-            bookmark = Bookmark.objects.get(user=request.user, house_id=house_id)
+            bookmark = Bookmark.objects.get(house=house_id, user=request.user.id)
         except Bookmark.DoesNotExist:
             return Response({'error': 'Bookmark not found'}, status=status.HTTP_404_NOT_FOUND)
 
