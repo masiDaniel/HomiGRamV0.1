@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wz1s%bi$+y*#n4@42c+s3oq@f!jid@nnu&2n0k5a8q*)ncp5ck
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.8.112', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['192.168.2.127', '127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     'houses.apps.HousesConfig',
     'comments.apps.CommentsConfig',
-    'business.apps.BusinessConfig'
+    'business.apps.BusinessConfig',
+    'chat.apps.ChatConfig',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -143,4 +145,13 @@ REST_FRAMEWORK = {
 'DEFAULT_PERMISSION_CLASSES': [
     'rest_framework.permissions.IsAuthenticated',
 ]
+}
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],  # Ensure Redis is running
+        },
+    },
 }
