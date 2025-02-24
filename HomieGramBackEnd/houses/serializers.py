@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating,  Houses,  Location, Room,  Teenants
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating,  Houses,  Location, Room,  Teenants, PendingAdvertisement
 
 
 class CareTakersSerializer(serializers.ModelSerializer):
@@ -52,8 +52,12 @@ class BookmarkSerializer(serializers.ModelSerializer):
 class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Advertisement
-        fields = ['id', 'title', 'description', 'image', 'video_file', 'start_date', 'end_date', 'is_active']
+        fields = ['id', 'title', 'description', 'image', 'video_file', 'start_date', 'end_date', 'status']
 
+class PendingAdvertisementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingAdvertisement
+        fields =  "__all__"
 class CaretakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareTaker

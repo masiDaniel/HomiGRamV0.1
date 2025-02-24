@@ -1,4 +1,4 @@
-from datetime import timezone
+from datetime import  datetime, timezone
 from django.conf import settings
 from django.db import models
 from accounts.models import CustomUser
@@ -40,6 +40,13 @@ class Location(models.Model):
     def __str__(self):
         return f'{self.county}, {self.town}, {self.area}'
 
+def validate_file_extension(value):
+    valid_extensions = ['pdf', 'docx', 'doc']
+    extension = value.name.split('.')[-1].lower()
+    if extension not in valid_extensions:
+        raise ValidationError(_('Unsupported file extension. Only PDF, DOC, DOCX files are allowed.'))
+
+
 class Houses(models.Model):
     """
     Will Hold Information about the House
@@ -64,7 +71,9 @@ class Houses(models.Model):
     caretaker = models.OneToOneField(
         "CareTaker", null=True, blank=True, on_delete=models.SET_NULL,
         related_name='assigned_house'
-    ) 
+    )
+    contract_file = models.FileField(upload_to='house_contacts/', validators=[validate_file_extension], null=True, blank=True)
+    
     
     # TODO implement ratings from teenants and non teenants
     #validators=[MinValueValidator(0), MaxValueValidator(5)
@@ -171,6 +180,21 @@ class Bookmark(models.Model):
         return f"{self.user} bookmarked {self.house}"
     
 
+class PendingAdvertisement(models.Model):
+    """Stores ad details before payment confirmation."""
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    image = models.ImageField(upload_to='advertisements/images', null=True, blank=True)
+    video_file = models.FileField(upload_to='advertisements/videos/', null=True, blank=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    payment_status = models.BooleanField(default=False)  # Payment not received yet
+    payment_reference = models.CharField(max_length=100, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.title} - {'Paid' if self.payment_status else 'Pending'}"
+
+
 class Advertisement(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
@@ -178,11 +202,34 @@ class Advertisement(models.Model):
     video_file = models.FileField(upload_to='advertisements/videos/', null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
-    is_active = models.BooleanField(default=True)
-    # business = models.ForeignKey(MyBusiness, related_name='business', on_delete=models.CASCADE)
+    STATUS_CHOICES = [
+    ('pending', 'Pending'),
+    ('active', 'Active'),
+    ('expired', 'Expired'),
+    ]
+    
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+
 
     def __str__(self):
         return self.title
+    
+    def clean(self):
+        if self.start_date > self.end_date:
+            raise ValidationError({"end_date": "End date cannot be before the start date."})
 
-    def is_currently_active(self):
-        return self.is_active and self.start_date <= timezone.now().date() <= self.end_date
+    def update_status(self):
+        today = datetime.now(timezone.utc).date()
+        if today < self.start_date:
+            self.status = 'pending'
+        elif self.start_date <= today <= self.end_date:
+            self.status = 'active'
+        else:
+            self.status = 'expired'
+        
+
+    
+    def save(self, *args, **kwargs):
+        """Automatically update is_active based on start and end dates before saving."""
+        self.update_status()
+        super().save(*args, **kwargs)

@@ -3,13 +3,15 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveAPIView
+from datetime import  datetime, timezone
+import uuid
 
 from accounts.models import CustomUser
 
 from .utils import check_payment_status
-from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HousesSerializers, LocationSerializer, RoomSerializer
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HousesSerializers, LocationSerializer, RoomSerializer,  PendingAdvertisementSerializer
 from accounts.serializers import MessageSerializer
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating, Houses, Location, Room
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating, Houses, Location, Room, PendingAdvertisement
 
 # Create your views here.
 class HouseAPIView(APIView):
@@ -36,22 +38,21 @@ class HouseAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)  # Respond with the created house data
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
     
+    def patch(self, request, *args, **kwargs):
+        """
+        Partially update an existing house
+        """
+        try:
+            house = Houses.objects.get(id=kwargs['house_id'])  # Fetch the house by its ID
+        except Houses.DoesNotExist:
+            return Response({"detail": "House not found."}, status=status.HTTP_404_NOT_FOUND)
 
-    # def post(self, request, *args, **kwargs):
-    #     """
-    #     Used to get a house by id
-    #     """
-    #     house_id = request.data.get("house_id")
-    #     house = Houses.objects.get(id=house_id)
+        serializer = HousesSerializers(house, data=request.data, partial=True)  # Allow partial update
+        if serializer.is_valid():
+            serializer.save()  # Update the house if the data is valid
+            return Response(serializer.data, status=status.HTTP_200_OK)  # Respond with the updated house data
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    #     # sent house id doesn't exist
-    #     if not house:
-    #         message = {"message": "House Doesn't Exist"}
-    #         serializer = MessageSerializer(message)
-    #         return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
-        
-    #     serializer = HousesSerializers(house)
-    #     return Response(serializer.data, status=status.HTTP_200_OK)
     
 class GetHouseAPIView(RetrieveAPIView):
     pass
@@ -160,14 +161,80 @@ class RemoveBookmarkView(APIView):
         bookmark.delete()
         return Response({'message': 'Bookmark removed'}, status=status.HTTP_204_NO_CONTENT)
 
+
+class SubmitAdvertisementAPIView(APIView):
+    """
+    User submits an ad, but it's not saved in the main advertisement model until payment is confirmed.
+    """
+
+    def post(self, request, *args, **kwargs):
+        serializer = PendingAdvertisementSerializer(data=request.data)
+        if serializer.is_valid():
+            ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
+            # Simulate payment request (Replace with real payment gateway integration)
+            payment_link = f"https://payments.example.com/pay?ref={ad.payment_reference}"
+            return Response(
+                {"message": "Payment required", "payment_link": payment_link},
+                status=status.HTTP_202_ACCEPTED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class ConfirmPaymentAPIView(APIView):
+    """
+    After payment, this endpoint verifies payment status and moves the ad to the main model.
+    """
+
+    def post(self, request, *args, **kwargs):
+        payment_reference = request.data.get("payment_reference")
+        if not payment_reference:
+            return Response({"error": "Payment reference required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            ad = PendingAdvertisement.objects.get(payment_reference=payment_reference)
+            # Simulate payment verification (Replace with real payment API check)
+            payment_verified = True  # Assume payment is successful for now
+
+            if payment_verified:
+                # Move ad to main Advertisement model
+                Advertisement.objects.create(
+                    title=ad.title,
+                    description=ad.description,
+                    image=ad.image,
+                    video_file=ad.video_file,
+                    start_date=ad.start_date,
+                    end_date=ad.end_date
+                )
+                ad.delete()  # Remove from pending ads
+                return Response({"message": "Payment confirmed. Ad is now active."}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Payment not verified"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except PendingAdvertisement.DoesNotExist:
+            return Response({"error": "Invalid payment reference"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
 class getAdvvertismentsAPIView(APIView):
 
-    def get (self, request, *args , **kwargs):
-        """
-        get all adverst in the database for today
-        """
+    def get(self, request, *args, **kwargs):
+        today = datetime.now(timezone.utc).date()
+
+        # Get all ads and update their status
         adverts = Advertisement.objects.all()
-        serializer =  AdvertisementSerializer(adverts, many=True)
+        for ad in adverts:
+            ad.update_status()
+            ad.save()
+
+        # # Filter for active ads today
+        # adverts = adverts.filter(start_date__lte=today, end_date__gte=today)
+
+        # Optional filtering by status
+        status_param = request.query_params.get('status', None)
+        if status_param:
+            adverts = adverts.filter(status=status_param)
+
+        serializer = AdvertisementSerializer(adverts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class AssignTenantView(APIView):
@@ -223,11 +290,11 @@ class AssignCaretakerView(APIView):
 
 class RemoveCaretakerView(APIView):
     def delete(self, request):
-        user_id = request.data.get('user_id')
+        caretaker_id = request.data.get('caretaker_id')
         house_id = request.data.get('house_id')
 
         try:
-            caretaker = CareTaker.objects.get(user_id=user_id, house_id=house_id)
+            caretaker = CareTaker.objects.get(pk=caretaker_id, house_id=house_id)
             caretaker.delete()
             return Response({"message": "Caretaker removed successfully!"}, status=status.HTTP_200_OK)
         except CareTaker.DoesNotExist:
