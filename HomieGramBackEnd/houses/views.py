@@ -1,3 +1,4 @@
+import time
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import status
@@ -6,6 +7,7 @@ from rest_framework.generics import RetrieveAPIView
 from datetime import  datetime, timezone
 import uuid
 
+from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 
 from .utils import check_payment_status
@@ -168,11 +170,47 @@ class SubmitAdvertisementAPIView(APIView):
     """
 
     def post(self, request, *args, **kwargs):
-        serializer = PendingAdvertisementSerializer(data=request.data)
+        serializer = AdvertisementSerializer(data=request.data)
         if serializer.is_valid():
+            mpesa_client = MpesaHandler()
+            stk_data = {
+                'amount': 1,
+                'phone_number': '254711860307'
+            }
+            res_status, res_data = mpesa_client.make_stk_push(stk_data)
+            if res_status  == 200:
+                num_of_tries = 0
+                while True:
+
+                    #asynchronus progrgramming
+                    time.sleep(1)
+                    trans_status, trans_response = mpesa_client.query_transaction_status(res_data['CheckoutRequestID'])
+
+                    if trans_status == 200:
+                        break
+
+                    if num_of_tries == 60:
+                        break
+
+                    num_of_tries += 1
+
+
+                if trans_status == 200 and trans_response['ResultCode'] == '0':
+                    serializer.save()
+
+                    pass
+                else:
+                    return Response({'error': trans_response['ResultDesc']}, status=status.HTTP_400_BAD_REQUEST)
+
+                
+            else:
+                return Response({'error': res_data['errorMessage']}, status=status.HTTP_400_BAD_REQUEST)
+                
+
+
+
             ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
-            # Simulate payment request (Replace with real payment gateway integration)
-            payment_link = f"https://payments.example.com/pay?ref={ad.payment_reference}"
+            
             return Response(
                 {"message": "Payment required", "payment_link": payment_link},
                 status=status.HTTP_202_ACCEPTED
