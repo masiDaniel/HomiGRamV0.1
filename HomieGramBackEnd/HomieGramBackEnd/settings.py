@@ -46,7 +46,8 @@ INSTALLED_APPS = [
     'comments.apps.CommentsConfig',
     'business.apps.BusinessConfig',
     'chat.apps.ChatConfig',
-    'channels'
+    'channels',
+   
 ]
 
 MIDDLEWARE = [
@@ -154,4 +155,8 @@ CHANNEL_LAYERS = {
             'hosts': [('127.0.0.1', 6379)],  # Ensure Redis is running
         },
     },
+}
+
+REST_KNOX = {
+    'TOKEN_TTL': None,  # Token does not expire
 }

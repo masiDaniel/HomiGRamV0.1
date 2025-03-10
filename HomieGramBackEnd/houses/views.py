@@ -174,7 +174,7 @@ class SubmitAdvertisementAPIView(APIView):
         if serializer.is_valid():
             mpesa_client = MpesaHandler()
             stk_data = {
-                'amount': 1,
+                'amount': 30,
                 'phone_number': '254711860307'
             }
             res_status, res_data = mpesa_client.make_stk_push(stk_data)

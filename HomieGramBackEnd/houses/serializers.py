@@ -58,6 +58,7 @@ class PendingAdvertisementSerializer(serializers.ModelSerializer):
     class Meta:
         model = PendingAdvertisement
         fields =  "__all__"
+    
 class CaretakerSerializer(serializers.ModelSerializer):
     class Meta:
         model = CareTaker
