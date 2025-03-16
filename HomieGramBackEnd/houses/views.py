@@ -174,8 +174,8 @@ class SubmitAdvertisementAPIView(APIView):
         if serializer.is_valid():
             mpesa_client = MpesaHandler()
             stk_data = {
-                'amount': 30,
-                'phone_number': '254711860307'
+                'amount': 10000,
+                'phone_number': '254701572575'
             }
             res_status, res_data = mpesa_client.make_stk_push(stk_data)
             if res_status  == 200:
@@ -210,9 +210,10 @@ class SubmitAdvertisementAPIView(APIView):
 
 
             ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
-            
+            payment_reference=str(uuid.uuid4())
+
             return Response(
-                {"message": "Payment required", "payment_link": payment_link},
+                {"message": "Payment required", "payment_link": payment_reference},
                 status=status.HTTP_202_ACCEPTED
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

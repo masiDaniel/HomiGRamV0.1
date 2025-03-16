@@ -3,11 +3,13 @@ from django.shortcuts import render
 from rest_framework import status, generics
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.contrib.auth import get_user_model
 from comments.models import HouseComments
 from .serializers import CommentsSerializers
 from accounts.serializers import MessageSerializer
 from .models import HouseComments
+
+User = get_user_model() 
 
 # Create your views here.
 class CommentsApi(APIView):
@@ -26,6 +28,7 @@ class CommentsApi(APIView):
             "house_id" : request.data.get("house_id"),
             "user_id" : request.data.get("user_id"),
             "comment" : request.data.get("comment"),
+            "parent" : request.data.get("parent"),
         }
 
         # checking data sent if any required field is missing return 400
@@ -34,16 +37,7 @@ class CommentsApi(APIView):
             serializer = MessageSerializer(message)
             return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
     
-        # checking for nested sockets
-        if request.data.get("nested") and not request.data.get("nested_id"):
-            # no nested id provided
-            message ={"message": "Missing Nested ID For Nested Post"}
-            serializer = MessageSerializer(message)
-            return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
-        
-        # appending nested id and nested to data
-        data["nested"] = request.data.get("nested", False)
-        data["nested_id"] = request.data.get("nested_id", "")
+    
 
         serializer = CommentsSerializers(data=data)
         if serializer.is_valid():
@@ -54,6 +48,47 @@ class CommentsApi(APIView):
             serializer = MessageSerializer(data)
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    def put(self, request, *args, **kwargs):
+        """Handles liking and disliking comments"""
+        comment_id = request.data.get("comment_id")
+        action = request.data.get("action")  # 'like' or 'dislike'
+        user_id = request.data.get("user_id")
+
+        try:
+            comment = HouseComments.objects.get(id=comment_id)
+            user = User.objects.get(id=user_id)  # Convert ID to actual User object
+
+            if action == "like":
+                if comment.likes.filter(id=user.id).exists():
+                    comment.likes.remove(user)
+                    return Response({"message": "Like removed"}, status=status.HTTP_200_OK)
+
+                comment.likes.add(user)
+                comment.dislikes.remove(user)  # Remove dislike if exists
+                return Response({"message": "Comment liked"}, status=status.HTTP_200_OK)
+
+            elif action == "dislike":
+                if comment.dislikes.filter(id=user.id).exists():
+                    comment.dislikes.remove(user)
+                    return Response({"message": "Dislike removed"}, status=status.HTTP_200_OK)
+
+                comment.dislikes.add(user)
+                comment.likes.remove(user)  # Remove like if exists
+                return Response({"message": "Comment disliked"}, status=status.HTTP_200_OK)
+
+            return Response({"error": "Invalid action"}, status=status.HTTP_400_BAD_REQUEST)
+
+        except HouseComments.DoesNotExist:
+            return Response({"error": "Comment not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class CommentDetailsApi(generics.DestroyAPIView):
@@ -65,4 +100,5 @@ class CommentDetailsApi(generics.DestroyAPIView):
             return Response({"message": "comment deleted succesfully,"}, status=status.HTTP_204_NO_CONTENT)
         except HouseComments.DoesNotExist:
             return Response({"message": "comment does not excist"}, status=status.HTTP_404_NOT_FOUND)
-        
+
+

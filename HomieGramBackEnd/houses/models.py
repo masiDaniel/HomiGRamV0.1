@@ -1,6 +1,8 @@
-from datetime import  datetime, timezone
+from django.utils import timezone
 from django.conf import settings
 from django.db import models
+from dynaconf import ValidationError
+# from django.utils import timezone
 from accounts.models import CustomUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.models import User
@@ -44,7 +46,7 @@ def validate_file_extension(value):
     valid_extensions = ['pdf', 'docx', 'doc']
     extension = value.name.split('.')[-1].lower()
     if extension not in valid_extensions:
-        raise ValidationError(_('Unsupported file extension. Only PDF, DOC, DOCX files are allowed.'))
+        raise ValidationError(('Unsupported file extension. Only PDF, DOC, DOCX files are allowed.'))
 
 
 class Houses(models.Model):
@@ -145,6 +147,7 @@ class Room(models.Model):
     # entry_date = models.DateField(default=timezone.now())
     room_images = models.ImageField(upload_to='room_images/', default="Homi rooms")
     rent_status = models.BooleanField(default=False)
+    last_payment_date = models.DateField(null=True, blank=True)
     
     def assign_tenant(self, tenant):
         self.tenant = tenant
@@ -158,7 +161,24 @@ class Room(models.Model):
     def __str__(self):
         # name = apartment + self.id
         return f"{self.apartment.name} {self.id}"
-    
+
+
+class Payment(models.Model):
+    tenant = models.ForeignKey(CustomUser, related_name="payments", on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, related_name="payments", on_delete=models.CASCADE)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_date = models.DateTimeField(default=timezone.now)
+    payment_status = models.BooleanField(default=True)  # True if payment was successful
+
+    def save(self, *args, **kwargs):
+        """Automatically update rent status when payment is saved."""
+        super().save(*args, **kwargs)  # Save payment record
+        self.room.rent_status = True
+        self.room.last_payment_date = self.payment_date
+        self.room.save()
+
+
+
 class RoomImage(models.Model):
     room =  models.ForeignKey(Room, related_name='images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='room_images/')
@@ -219,7 +239,7 @@ class Advertisement(models.Model):
             raise ValidationError({"end_date": "End date cannot be before the start date."})
 
     def update_status(self):
-        today = datetime.now(timezone.utc).date()
+        today = timezone.now(timezone.utc).date()
         if today < self.start_date:
             self.status = 'pending'
         elif self.start_date <= today <= self.end_date:

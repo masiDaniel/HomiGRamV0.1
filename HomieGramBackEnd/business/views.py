@@ -69,8 +69,13 @@ class ProductAPIView(APIView):
         """
         get all products in teh database
         """
+        business_null = request.query_params.get('business', None)
+        
+        if business_null == "null":
+            products = Product.objects.filter(business__isnull=True)
+        else:
+            products = Product.objects.all()
 
-        products = Product.objects.all()
         serialzer = ProductSerializer(products, many=True)
         return Response(serialzer.data, status=status.HTTP_200_OK)
     
@@ -78,6 +83,12 @@ class ProductAPIView(APIView):
         """
         this will post a product
         """
+
+        data = request.data.copy()
+
+        if 'business' not in data or not data['business']:
+            data['user'] = request.user.id
+
         serializer = ProductSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -114,6 +125,8 @@ class ProductAPIView(APIView):
 
         # Return a success response
         return Response({"message": "Product deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+    
+    
 
 class CartAPIView(APIView):
     """
