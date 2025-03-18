@@ -171,51 +171,56 @@ class SubmitAdvertisementAPIView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = AdvertisementSerializer(data=request.data)
+        # if serializer.is_valid():
+        #     mpesa_client = MpesaHandler()
+        #     stk_data = {
+        #         'amount': 10000,
+        #         'phone_number': '254701572575'
+        #     }
+        #     res_status, res_data = mpesa_client.make_stk_push(stk_data)
+        #     if res_status  == 200:
+        #         num_of_tries = 0
+        #         while True:
+
+        #             #asynchronus progrgramming
+        #             time.sleep(1)
+        #             trans_status, trans_response = mpesa_client.query_transaction_status(res_data['CheckoutRequestID'])
+
+        #             if trans_status == 200:
+        #                 break
+
+        #             if num_of_tries == 60:
+        #                 break
+
+        #             num_of_tries += 1
+
+
+        #         if trans_status == 200 and trans_response['ResultCode'] == '0':
+        #             serializer.save()
+
+        #             pass
+        #         else:
+        #             return Response({'error': trans_response['ResultDesc']}, status=status.HTTP_400_BAD_REQUEST)
+
+                
+        #     else:
+        #         return Response({'error': res_data['errorMessage']}, status=status.HTTP_400_BAD_REQUEST)
+                
+
+
+
+        #     ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
+        #     payment_reference=str(uuid.uuid4())
+
+        #     return Response(
+        #         {"message": "Payment required", "payment_link": payment_reference},
+        #         status=status.HTTP_202_ACCEPTED
+        #     )
         if serializer.is_valid():
-            mpesa_client = MpesaHandler()
-            stk_data = {
-                'amount': 10000,
-                'phone_number': '254701572575'
-            }
-            res_status, res_data = mpesa_client.make_stk_push(stk_data)
-            if res_status  == 200:
-                num_of_tries = 0
-                while True:
+            serializer.save()
+            return Response({"message": "creation succesful. Ad is now active."}, status=status.HTTP_201_CREATED)
 
-                    #asynchronus progrgramming
-                    time.sleep(1)
-                    trans_status, trans_response = mpesa_client.query_transaction_status(res_data['CheckoutRequestID'])
-
-                    if trans_status == 200:
-                        break
-
-                    if num_of_tries == 60:
-                        break
-
-                    num_of_tries += 1
-
-
-                if trans_status == 200 and trans_response['ResultCode'] == '0':
-                    serializer.save()
-
-                    pass
-                else:
-                    return Response({'error': trans_response['ResultDesc']}, status=status.HTTP_400_BAD_REQUEST)
-
-                
-            else:
-                return Response({'error': res_data['errorMessage']}, status=status.HTTP_400_BAD_REQUEST)
-                
-
-
-
-            ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
-            payment_reference=str(uuid.uuid4())
-
-            return Response(
-                {"message": "Payment required", "payment_link": payment_reference},
-                status=status.HTTP_202_ACCEPTED
-            )
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 

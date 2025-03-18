@@ -239,7 +239,7 @@ class Advertisement(models.Model):
             raise ValidationError({"end_date": "End date cannot be before the start date."})
 
     def update_status(self):
-        today = timezone.now(timezone.utc).date()
+        today = timezone.now().date()
         if today < self.start_date:
             self.status = 'pending'
         elif self.start_date <= today <= self.end_date:
