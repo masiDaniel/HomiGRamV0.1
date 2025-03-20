@@ -139,20 +139,31 @@ class CartAPIView(APIView):
         get all carts in teh database
         """
 
-        carts = Cart.objects.all()
-        serialzer = CartSerializer(carts, many=True)
-        return Response(serialzer.data, status=status.HTTP_200_OK)
-    
+        user = request.user
+
+        try:
+            cart = Cart.objects.get(user=user)  # Fetch cart for this user
+            serializer = CartSerializer(cart)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Cart.DoesNotExist:
+            return Response({"message": "No cart found for this user"}, status=status.HTTP_404_NOT_FOUND)
+        
     def post(self, request, *args, **kwargs):
         """
-        this will post a business
+        this will post a cart
         """
+        user = request.user
+
+        # Check if user already has a cart
+        if Cart.objects.filter(user=user).exists():
+            return Response({"message": "User already has a cart"}, status=status.HTTP_400_BAD_REQUEST)
+
         serializer = CartSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            serializer.save(user=user)  # Assign user to the cart
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 class CartItemAPIView(APIView):
     """
