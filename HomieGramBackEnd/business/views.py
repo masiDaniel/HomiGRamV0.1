@@ -1,10 +1,12 @@
 from django.shortcuts import render
+from django.http import QueryDict
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.generics import get_object_or_404
 from rest_framework import status
 from .models import MyBusiness, Category,Product, Order, Cart, CartItem
 from .serializers import MyBusinessSerializer, CategorySerializer, ProductSerializer, CartItemSerializer, CartSerializer, OrderSerializer
+from rest_framework.parsers import MultiPartParser, FormParser , JSONParser
 
 # Create your views here.
 
@@ -64,6 +66,7 @@ class ProductAPIView(APIView):
     handles the Product operations
     """
     
+    parser_classes = (JSONParser, MultiPartParser, FormParser)  # Ensure file uploads are handled properly
 
     def get(self, request, *args, **kwargs):
         """
@@ -79,20 +82,23 @@ class ProductAPIView(APIView):
         serialzer = ProductSerializer(products, many=True)
         return Response(serialzer.data, status=status.HTTP_200_OK)
     
+     
     def post(self, request, *args, **kwargs):
         """
-        this will post a product
+        This method handles posting a product.
         """
 
-        data = request.data.copy()
+        data = request.data.dict() if isinstance(request.data, QueryDict) else request.data
 
-        if 'business' not in data or not data['business']:
+        if not data.get('business'):
             data['user'] = request.user.id
 
-        serializer = ProductSerializer(data=request.data)
+        serializer = ProductSerializer(data=data, context={'request': request})
+
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 

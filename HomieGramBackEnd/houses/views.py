@@ -83,7 +83,7 @@ class RateHouseAPIView(APIView):
 
         return Response({"message": "Rating submitted successfully"}, status=status.HTTP_200_OK)
 
-class GetLocationsAPIView(APIView):
+class LocationsAPIView(APIView):
 
     def get (self, request, *args , **kwargs):
         """
@@ -92,6 +92,17 @@ class GetLocationsAPIView(APIView):
         locations = Location.objects.all()
         serializer = LocationSerializer(locations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args , **kwargs):
+        """
+        post new location
+        """
+
+        serializer = LocationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class GetRoomssAPIView(APIView):
 
@@ -121,15 +132,27 @@ class GetRoomssAPIView(APIView):
         
         return Response({"detail": "Rooms added successfully."}, status=status.HTTP_201_CREATED)
 
-class GetAmenitiessAPIView(APIView):
+class AmenitiessAPIView(APIView):
 
     def get (self, request, *args , **kwargs):
         """
         get all amenities in the database
         """
-        locations = Amenity.objects.all()
-        serializer = AmenitiesSerializer(locations, many=True)
+        amenities = Amenity.objects.all()
+        serializer = AmenitiesSerializer(amenities, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request, *args , **kwargs):
+        """
+        post new amenities
+        """
+
+        serializer = AmenitiesSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     
 class GetBookmarksAPIView(APIView):
 
@@ -140,6 +163,7 @@ class GetBookmarksAPIView(APIView):
         bookmarks = Bookmark.objects.all()
         serializer = BookmarkSerializer(bookmarks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+        
 
 class AddBookmarkView(APIView):
     def post(self, request, house_id, *args, **kwargs):

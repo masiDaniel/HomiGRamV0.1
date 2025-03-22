@@ -25,8 +25,14 @@ SECRET_KEY = 'django-insecure-wz1s%bi$+y*#n4@42c+s3oq@f!jid@nnu&2n0k5a8q*)ncp5ck
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.106', '127.0.0.1', 'localhost', '192.168.8.18', '172.20.10.2', '192.168.2.127', "https://hommiegram.azurewebsites.net"]
+ALLOWED_HOSTS = ['192.168.0.106', '127.0.0.1', 'localhost', '192.168.8.18', '172.20.10.2', '192.168.2.127', "http://hommiegram.azurewebsites.net/"]
 
+
+# CSRF_TRUSTED_ORIGINS = [
+#     "https://hommiegram.azurewebsites.net",
+#     "http://localhost:8000",
+#     "http://127.0.0.1:8000",
+# ]
 
 
 # Application definition

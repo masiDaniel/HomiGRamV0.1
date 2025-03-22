@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddBookmarkView, AssignCaretakerView, AssignTenantView, GetAmenitiessAPIView, GetBookmarksAPIView, GetLocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, SearchApiView, GetRoomssAPIView, getAdvvertismentsAPIView, GetCaretakersAPIView, getAdvvertismentsAPIView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView
+from .views import AddBookmarkView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, GetBookmarksAPIView, LocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, SearchApiView, GetRoomssAPIView, getAdvvertismentsAPIView, GetCaretakersAPIView, getAdvvertismentsAPIView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
@@ -7,11 +7,11 @@ urlpatterns = [
     path('getRooms/', GetRoomssAPIView.as_view(), name="get_houses"),
     path("search/<str:name>", SearchApiView.as_view(), name="search_house"),
     path('rate/<int:house_id>/', RateHouseAPIView.as_view(), name='rate-house'),
-    path('getLocation/', GetLocationsAPIView.as_view(), name="get_locations"),
+    path('locations/', LocationsAPIView.as_view(), name="get_locations"),
     path('getAdverstisments/', getAdvvertismentsAPIView.as_view(), name="get_advertismens"),
     path('submitAdvertisment/', SubmitAdvertisementAPIView.as_view(), name="submit_advertisment"),
     path('confirmPayment/', ConfirmPaymentAPIView.as_view(), name="confirm_payment"),
-    path('getAmenities/', GetAmenitiessAPIView.as_view(), name="get_amenities"),
+    path('amenities/', AmenitiessAPIView.as_view(), name="get_amenities"),
     path('getBookmarks/', GetBookmarksAPIView.as_view(), name="get_bookmarks"),
     path('bookmark/add/<int:house_id>/', AddBookmarkView.as_view(), name='add_bookmark'),
     path('bookmark/remove/<int:house_id>/', RemoveBookmarkView.as_view(), name='remove_bookmark'),

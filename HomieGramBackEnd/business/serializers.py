@@ -30,5 +30,15 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = "__all__"
-        read_only_fields = ['user'] 
+    
+
+    extra_kwargs = {"seller": {"read_only": True}} 
+      
+    
+    def create(self, validated_data):
+        request = self.context.get("request")  # Get the request from context
+        if "business" not in validated_data:  # If no business is provided
+            validated_data["seller"] = request.user  # Set seller to the authenticated user
+
+        return super().create(validated_data)
 
