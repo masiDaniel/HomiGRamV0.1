@@ -60,7 +60,7 @@ class Houses(models.Model):
                                      null=True, blank=False)
     rating = models.PositiveSmallIntegerField(default=0, null=False, blank=False, )
     description = models.TextField()
-    location = models.CharField(default="", max_length=50)
+    
     location_detail = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
     amenities = models.ManyToManyField(Amenity, related_name='houses')
     image = models.ImageField(upload_to='house_images/', null=True, blank=True)

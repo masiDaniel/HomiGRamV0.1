@@ -283,24 +283,23 @@ class ConfirmPaymentAPIView(APIView):
 
 
 
-class getAdvvertismentsAPIView(APIView):
+class GetAdvertisementsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         today = datetime.now(timezone.utc).date()
 
-        # Get all ads and update their status
+      
+        status_param = request.query_params.get('status', None)
+
+        
         adverts = Advertisement.objects.all()
+
+        if status_param in ['pending', 'active', 'expired']:
+            adverts = adverts.filter(status=status_param)
+            
         for ad in adverts:
             ad.update_status()
             ad.save()
-
-        # # Filter for active ads today
-        # adverts = adverts.filter(start_date__lte=today, end_date__gte=today)
-
-        # Optional filtering by status
-        status_param = request.query_params.get('status', None)
-        if status_param:
-            adverts = adverts.filter(status=status_param)
 
         serializer = AdvertisementSerializer(adverts, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

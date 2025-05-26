@@ -34,6 +34,24 @@ class MyBusinessAPIView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def patch(self, request, *args, **kwargs):
+        """
+        this will update a business
+        """
+
+        # Retrieve the business instance by the ID from the URL or request data
+        business = get_object_or_404(MyBusiness, id=kwargs.get('pk'))
+
+        # Use partial=True to allow partial updates
+        serializer = MyBusinessSerializer(business, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+       
+
+
     
 
 class CategoryAPIView(APIView):
