@@ -6,6 +6,7 @@ from django.forms import ValidationError
 # Create your models here.
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
+    nick_name = models.CharField(unique=True, null=True)
     id_number = models.IntegerField(default=0)
     phone_number = models.CharField(max_length=15, default='')
     profile_pic = models.ImageField(null=True)
