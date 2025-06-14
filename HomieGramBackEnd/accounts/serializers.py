@@ -35,7 +35,7 @@ class AccountSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email', 'first_name', 'last_name']
+        fields = ['id', 'email', 'first_name', 'last_name', 'phone_number']
 
 class MessageTokenSerializer(serializers.Serializer):
     message = serializers.CharField(max_length=100)
