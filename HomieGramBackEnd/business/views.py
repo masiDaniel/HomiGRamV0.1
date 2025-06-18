@@ -71,7 +71,7 @@ class CategoryAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
         """
-        this will post a business
+        this will post a category
         """
         serializer = CategorySerializer(data=request.data)
         if serializer.is_valid():

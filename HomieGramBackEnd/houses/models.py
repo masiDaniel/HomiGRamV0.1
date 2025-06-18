@@ -10,16 +10,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 
 
-# Create your models here.
-# class LandLords(models.Model):
-#     """
-#     Stores Information about landLords of Houses
-#     """
-#     user_id = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
-#     num_houses = models.IntegerField(default=0)
-
-#     def __str__(self) -> str:
-#         return self.user_id.get_full_name()
 
 
 class Amenity(models.Model):
@@ -115,10 +105,6 @@ class CareTaker(models.Model):
     house_id = models.ForeignKey(Houses, null=True, on_delete=models.CASCADE, related_name='caretakers')
 
     def save(self, *args, **kwargs):
-        # # Automatically set the caretaker field in the house
-        # if self.house_id:
-        #     self.house_id.caretaker = self
-        #     self.house_id.save()
         super().save(*args, **kwargs)
 
     def __str__(self) -> str:
