@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-wz1s%bi$+y*#n4@42c+s3oq@f!jid@nnu&2n0k5a8q*)ncp5ck
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.106', '127.0.0.1', 'localhost', '192.168.8.18', '172.20.10.2', '192.168.2.127', "http://hommiegram.azurewebsites.net/", '192.168.21.219', '192.168.100.7', '192.168.100.11']
+ALLOWED_HOSTS = ['192.168.0.106', '127.0.0.1', 'localhost', '192.168.8.18', '172.20.10.2', '192.168.2.127', "http://hommiegram.azurewebsites.net/", '192.168.21.219', '192.168.100.7', '192.168.100.18', '192.168.0.107']
 
 
 # CSRF_TRUSTED_ORIGINS = [
@@ -38,6 +38,7 @@ ALLOWED_HOSTS = ['192.168.0.106', '127.0.0.1', 'localhost', '192.168.8.18', '172
 # Application definition
 
 INSTALLED_APPS = [
+     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -52,8 +53,10 @@ INSTALLED_APPS = [
     'houses.apps.HousesConfig',
     'comments.apps.CommentsConfig',
     'business.apps.BusinessConfig',
-    'chat.apps.ChatConfig',
-    'channels',
+  
+    'chat.apps.ChatConfig'
+   
+
    
 ]
 
@@ -159,15 +162,24 @@ REST_FRAMEWORK = {
 ]
 }
 
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
+#         'CONFIG': {
+#             'hosts': [('127.0.0.1', 6379)],  # Ensure Redis is running
+#         },
+#     },
+# }
+
+# For now use in-memory layer (can use Redis in production)
 CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [('127.0.0.1', 6379)],  # Ensure Redis is running
-        },
-    },
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
 }
 
 REST_KNOX = {
     'TOKEN_TTL': None,  # Token does not expire
 }
+
+ASGI_APPLICATION = "HomieGramBackEnd.asgi.application"
