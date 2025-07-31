@@ -4,6 +4,7 @@ from accounts.models import CustomUser
 # Create your models here.
 class ChatRoom(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    label = models.CharField(max_length=255, blank=True)
     participants = models.ManyToManyField(CustomUser, related_name='chatrooms')
     created_at = models.DateTimeField(auto_now_add=True)
     is_group = models.BooleanField(default=False)

@@ -42,7 +42,7 @@ class CreateGroupChatRoom(APIView):
     def post(self, request):
         name = request.data.get("name")
         participant_ids = request.data.get("participant_ids", [])
-        message = request.data.get("initial_message")
+      
 
         if not name or not participant_ids:
             return Response({"error": "Group name and participant IDs are required."}, status=400)
@@ -58,13 +58,6 @@ class CreateGroupChatRoom(APIView):
             except User.DoesNotExist:
                 continue
 
-        # Optionally  initial message
-        # if message:
-        #     Message.objects.create(
-        #         room=room,
-        #         sender=request.user,
-        #         message=message
-        #     )
 
         return Response({
             "success": True,

@@ -28,7 +28,7 @@ def create_private_chat_if_not_exists(user1, user2):
 
         room, created = ChatRoom.objects.get_or_create(
             name=private_room_name,
-            defaults={"type": "private"},
+            defaults={"is_group": False},
         )
         room.participants.add(user1, user2)
 
@@ -334,7 +334,8 @@ class AssignTenantView(APIView):
 
         room, created = ChatRoom.objects.get_or_create(
             name=private_room_name,
-            defaults={"is_group": False},
+            defaults={"is_group": False,  "label": user2.username if user1.id == sorted_ids[0] else user1.username},
+            
         )
         room.participants.add(user1, user2)
 
@@ -378,7 +379,7 @@ class AssignTenantView(APIView):
         create_private_chat_if_not_exists(tenant, landlord)
 
         if CareTaker:
-            create_private_chat_if_not_exists(tenant, CareTaker)
+            create_private_chat_if_not_exists(tenant, CareTaker.user_id)
 
         # Optionally, serialize and return room information (or tenant info, depending on your needs)
         room_data = RoomSerializer(empty_room).data  # Serialize room data to return
