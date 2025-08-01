@@ -7,6 +7,7 @@ from django.db import close_old_connections
 from urllib.parse import parse_qs
 from knox.auth import TokenAuthentication
 from .models import Message, ChatRoom
+from datetime import datetime
 
 User = get_user_model()
 
@@ -87,7 +88,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 "type": "chat_message",
                 "message": message,
                 "sender_id": sender_id,
-                "receiver_id": receiver_id
+                "sender": sender.username,
+                "receiver_id": receiver_id,
+                "timestamp": datetime.now().isoformat(),
             }
         )
 
@@ -95,7 +98,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         await self.send(text_data=json.dumps({
             "message": event["message"],
             "sender_id": event["sender_id"],
-            "receiver_id": event["receiver_id"]
+            "sender": event['sender'],
+            "receiver_id": event["receiver_id"],
+            "timestamp": event["timestamp"]
         }))
 
     @database_sync_to_async

@@ -162,21 +162,21 @@ REST_FRAMEWORK = {
 ]
 }
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             'hosts': [('127.0.0.1', 6379)],  # Ensure Redis is running
-#         },
-#     },
-# }
-
-# For now use in-memory layer (can use Redis in production)
 CHANNEL_LAYERS = {
-    "default": {
-        "BACKEND": "channels.layers.InMemoryChannelLayer"
-    }
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],  # Ensure Redis is running
+        },
+    },
 }
+
+# # For now use in-memory layer (can use Redis in production)
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels.layers.InMemoryChannelLayer"
+#     }
+# }
 
 REST_KNOX = {
     'TOKEN_TTL': None,  # Token does not expire
