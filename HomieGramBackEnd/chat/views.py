@@ -33,6 +33,10 @@ class GetOrCreateChatRoom(APIView):
         room_name = f"user_{min(user1.id, user2.id)}_{max(user1.id, user2.id)}"
         room, created = ChatRoom.objects.get_or_create(name=room_name)
         room.participants.set([user1, user2])
+
+        # Find the other user
+        other_user = user2 if user1 == request.user else user1
+
         return Response({"room_name": room.name})
 
 
@@ -90,7 +94,7 @@ class UserChatRoomsAPIView(APIView):
     def get(self, request):
         user = request.user
         rooms = ChatRoom.objects.filter(participants=user)
-        serializer = ChatRoomSerializer(rooms, many=True)
+        serializer = ChatRoomSerializer(rooms, many=True, context={'request': request})
         return Response(serializer.data)
     
 

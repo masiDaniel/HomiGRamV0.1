@@ -361,11 +361,11 @@ class AssignTenantView(APIView):
         if not payment_confirmed:
             return Response({"error": "Payment not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Assign the tenant to the room after successful payment
-        tenant = request.user  # Assuming the user sending the request is the tenant
+      
+        tenant = request.user
         empty_room.assign_tenant(tenant)
 
-        # Mark the rent status as true (meaning the rent has been paid)
+        
         empty_room.rent_status = True
         empty_room.save()
 
@@ -381,8 +381,8 @@ class AssignTenantView(APIView):
         if CareTaker:
             create_private_chat_if_not_exists(tenant, CareTaker.user_id)
 
-        # Optionally, serialize and return room information (or tenant info, depending on your needs)
-        room_data = RoomSerializer(empty_room).data  # Serialize room data to return
+       
+        room_data = RoomSerializer(empty_room).data 
         return Response(room_data, status=status.HTTP_200_OK)
     
     

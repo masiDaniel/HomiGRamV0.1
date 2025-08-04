@@ -13,7 +13,22 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class ChatRoomSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)
+    label = serializers.SerializerMethodField()
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'name', 'participants', 'messages', 'is_group']
+        fields = ['id', 'name', 'label','participants', 'messages', 'is_group']
+
+    def get_label(self, obj):
+        request = self.context.get('request')
+        if not request:
+            return None
+
+        user = request.user
+       
+        if not obj.is_group and user in obj.participants.all():
+            others = obj.participants.exclude(id=user.id)
+            if others.exists():
+                return others.first().username
+
+        return None 
