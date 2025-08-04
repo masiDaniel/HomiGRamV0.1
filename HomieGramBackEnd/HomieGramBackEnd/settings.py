@@ -25,8 +25,16 @@ SECRET_KEY = 'django-insecure-wz1s%bi$+y*#n4@42c+s3oq@f!jid@nnu&2n0k5a8q*)ncp5ck
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['192.168.0.106', '127.0.0.1', 'localhost', '192.168.8.18', '172.20.10.2', '192.168.2.127', "http://hommiegram.azurewebsites.net/"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://hommiegram.azurewebsites.net",
+]
+
+ALLOWED_HOSTS = [
+    "hommiegram.azurewebsites.net",
+    "169.254.129.4",
+    "169.254.129.2"
+]
 
 # CSRF_TRUSTED_ORIGINS = [
 #     "https://hommiegram.azurewebsites.net",
@@ -59,6 +67,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -94,10 +103,10 @@ WSGI_APPLICATION = 'HomieGramBackEnd.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': "homigram",
+        'NAME': "homiegram",
         'USER': 'dan',
-        'PASSWORD': 'danielspassword',
-        'HOST': 'localhost',
+        'PASSWORD': 'vF)iB!Q!vT7GjvL',
+        'HOST': 'hommiegram.postgres.database.azure.com',
         'PORT': '5432',
     }
 }
