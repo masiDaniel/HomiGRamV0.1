@@ -4,6 +4,7 @@ from .views import CartAPIView, CartItemAPIView, CategoryAPIView, MyBusinessAPIV
 
 urlpatterns = [
     path("getBusiness/", MyBusinessAPIView.as_view(), name="get Buinesses" ), 
+    path("updateBusiness/<int:pk>/", MyBusinessAPIView.as_view(), name="update Buinesses" ), 
     path("getCarts/", CartAPIView.as_view(), name="get carts" ),
     path("getCartItems/", CartItemAPIView.as_view(), name="get cart items" ),
     path("postCartItems/", CartItemAPIView.as_view(), name="post cart items" ),

@@ -1,3 +1,4 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive"
+    "java.configuration.updateBuildConfiguration": "interactive",
+    "cmake.sourceDirectory": "/home/azte-c/CodeByMasi/HomiGRamV0.1/Homiegram_front_end/linux"
 }

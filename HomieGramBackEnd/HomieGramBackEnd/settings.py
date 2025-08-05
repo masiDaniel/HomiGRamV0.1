@@ -46,6 +46,7 @@ ALLOWED_HOSTS = [
 # Application definition
 
 INSTALLED_APPS = [
+     'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -60,8 +61,10 @@ INSTALLED_APPS = [
     'houses.apps.HousesConfig',
     'comments.apps.CommentsConfig',
     'business.apps.BusinessConfig',
-    'chat.apps.ChatConfig',
-    'channels',
+  
+    'chat.apps.ChatConfig'
+   
+
    
 ]
 
@@ -177,6 +180,15 @@ CHANNEL_LAYERS = {
     },
 }
 
+# # For now use in-memory layer (can use Redis in production)
+# CHANNEL_LAYERS = {
+#     "default": {
+#         "BACKEND": "channels.layers.InMemoryChannelLayer"
+#     }
+# }
+
 REST_KNOX = {
     'TOKEN_TTL': None,  # Token does not expire
 }
+
+ASGI_APPLICATION = "HomieGramBackEnd.asgi.application"
