@@ -13,6 +13,7 @@ User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
+        # error handling for timeout
         query_string = self.scope["query_string"].decode()
         token = parse_qs(query_string).get("token", [None])[0]
 
@@ -80,13 +81,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 return
 
         # Save and broadcast
-        await self.save_message(sender_id, receiver_id, message, self.room_name)
-
+        saved_message = await self.save_message(sender_id, receiver_id, message, self.room_name)
+        print(f"this is the saved message if {saved_message.id}")
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 "type": "chat_message",
-                "message": message,
+                "id": saved_message.id,  
+                "message": saved_message.content,
                 "sender_id": sender_id,
                 "sender": sender.username,
                 "receiver_id": receiver_id,
@@ -96,6 +98,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
+            "id": event["id"],
             "message": event["message"],
             "sender_id": event["sender_id"],
             "sender": event['sender'],
@@ -146,14 +149,16 @@ class ChatConsumer(AsyncWebsocketConsumer):
         except ChatRoom.DoesNotExist:
             return False
 
-    @database_sync_to_async
-    def save_message(self, sender_id, receiver_id, message, room_name):
+    @database_sync_to_async  
+    def save_message(self, sender_id, receiver_id, content, room_name):
         sender = User.objects.get(id=sender_id)
         receiver = User.objects.get(id=receiver_id) if receiver_id else None
-        room = ChatRoom.objects.get(name=room_name)
-        return Message.objects.create(
+        chatroom = ChatRoom.objects.get(name=room_name)
+
+        message = Message.objects.create(
             sender=sender,
             receiver=receiver,
-            chatroom=room,
-            content=message
+            chatroom=chatroom,
+            content=content
         )
+        return message

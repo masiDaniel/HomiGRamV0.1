@@ -81,9 +81,18 @@ class ChatRoomDetailView(APIView):
 
 
 class MessageHistoryAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
     def get(self, request, room_name):
         room = get_object_or_404(ChatRoom, name=room_name)
-        messages = room.messages.order_by('-timestamp')[:50]
+        
+        last_message_id = request.query_params.get("after_id")
+        
+        if last_message_id:
+            messages = room.messages.filter(id__gt=last_message_id).order_by("timestamp")
+        else:
+            messages = room.messages.order_by("-timestamp")[:50]  # first load
+
         return Response(MessageSerializer(messages, many=True).data)
 
 
@@ -93,7 +102,12 @@ class UserChatRoomsAPIView(APIView):
 
     def get(self, request):
         user = request.user
+        updated_after = request.query_params.get("updated_after")
+
         rooms = ChatRoom.objects.filter(participants=user)
+        if updated_after:
+            rooms = rooms.filter(updated_at__gt=updated_after)
+
         serializer = ChatRoomSerializer(rooms, many=True, context={'request': request})
         return Response(serializer.data)
     
@@ -154,3 +168,4 @@ class UserChatRoomsAPIView(APIView):
 #             serializer.save(sender=request.user)
 #             return Response(serializer.data, status=status.HTTP_201_CREATED)
 #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

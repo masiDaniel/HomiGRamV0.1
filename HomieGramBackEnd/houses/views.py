@@ -95,13 +95,26 @@ class HouseAPIView(APIView):
     
     def post(self, request, *args, **kwargs):
         """
-        Create a new house
+        Create a new house and a corresponding chat room with the house name.
         """
-        serializer = HousesSerializers(data=request.data) 
-        if serializer.is_valid(): 
-            serializer.save()  
-            return Response(serializer.data, status=status.HTTP_201_CREATED)  
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST) 
+        serializer = HousesSerializers(data=request.data)
+        if serializer.is_valid():
+            house = serializer.save()
+
+            user = request.user 
+
+            
+            room, created = ChatRoom.objects.get_or_create(
+                name=house.name,
+                defaults={'is_group': True}
+            )
+
+           
+            room.participants.add(user)
+
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
     def patch(self, request, *args, **kwargs):
         """
@@ -194,6 +207,21 @@ class GetRoomssAPIView(APIView):
                 return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
         return Response({"detail": "Rooms added successfully."}, status=status.HTTP_201_CREATED)
+    
+    def patch(self, request, *args, **kwargs):
+        """
+        Partially update an existing house
+        """
+        try:
+            house = Room.objects.get(id=kwargs['house_id'])  
+        except Houses.DoesNotExist:
+            return Response({"detail": "House not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = HousesSerializers(house, data=request.data, partial=True)  
+        if serializer.is_valid():
+            serializer.save()  
+            return Response(serializer.data, status=status.HTTP_200_OK) 
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class AmenitiessAPIView(APIView):
 
