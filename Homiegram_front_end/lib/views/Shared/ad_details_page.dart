@@ -1,0 +1,101 @@
+import 'package:flutter/material.dart';
+import 'package:homi_2/models/ads.dart';
+import 'package:homi_2/services/user_sigin_service.dart';
+import 'package:intl/intl.dart';
+
+class AdDetailPage extends StatelessWidget {
+  final Ad ad;
+
+  const AdDetailPage({super.key, required this.ad});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text("Ad Details"),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: ad.imageUrl != null
+                  ? Image.network(
+                      '$devUrl${ad.imageUrl!}',
+                      height: 250,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    )
+                  : Image.asset(
+                      'assets/images/advertise.png',
+                      height: 250,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              ad.title,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              ad.description,
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Divider(
+              color: Colors.grey.shade500,
+              thickness: 1,
+              indent: 40,
+              endIndent: 40,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  'Start: ${DateFormat('MMMM d, y').format(DateTime.parse(ad.startDate))}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.calendar_today_outlined,
+                    size: 16, color: Colors.grey),
+                const SizedBox(width: 8),
+                Text(
+                  'End: ${DateFormat('MMMM d, y').format(DateTime.parse(ad.endDate))}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
