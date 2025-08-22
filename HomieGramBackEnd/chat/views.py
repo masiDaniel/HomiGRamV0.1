@@ -16,9 +16,9 @@ class GetOrCreateChatRoom(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
 
-        print("HEADERS:", request.headers)
-        print("USER:", request.user)
-        print("IS AUTH:", request.user.is_authenticated)
+        # print("HEADERS:", request.headers)
+        # print("USER:", request.user)
+        # print("IS AUTH:", request.user.is_authenticated)
         user1 = request.user
         receiver_id = request.data.get("receiver_id")
 
@@ -37,7 +37,9 @@ class GetOrCreateChatRoom(APIView):
         # Find the other user
         other_user = user2 if user1 == request.user else user1
 
-        return Response({"room_name": room.name})
+        serializer = ChatRoomSerializer(room)
+
+        return Response(serializer.data)
 
 
 class CreateGroupChatRoom(APIView):
