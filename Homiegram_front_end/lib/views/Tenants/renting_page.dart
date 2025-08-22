@@ -12,11 +12,6 @@ class RentingPage extends StatefulWidget {
   State<RentingPage> createState() => _RentingPageState();
 }
 
-/// TODO : have alll the tools a tenant will need in regards to their unit
-/// - paying rent
-/// - rasing and viewing tickets
-/// - terminating lease.
-
 class _RentingPageState extends State<RentingPage> {
   late Future<List<GetRooms>> futureRooms;
   int? userId;
@@ -40,12 +35,18 @@ class _RentingPageState extends State<RentingPage> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Renting Page'),
+        title: const Text(
+          'My Renting Space',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
+          ),
+        ),
         actions: [
           IconButton(
             onPressed: () {},
             icon: const Icon(
-              Icons.flag_circle_sharp,
+              Icons.flag_circle_rounded,
               color: Color(0xFF126E06),
               size: 30,
             ),
@@ -53,7 +54,7 @@ class _RentingPageState extends State<RentingPage> {
         ],
       ),
       body: FutureBuilder<List<GetRooms>>(
-        future: fetchRooms(),
+        future: futureRooms,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -63,246 +64,280 @@ class _RentingPageState extends State<RentingPage> {
                 'assets/animations/notFound.json',
                 width: 200,
                 height: 200,
-                fit: BoxFit.cover,
               ),
             );
           } else if (snapshot.hasData) {
             List<GetRooms>? rooms = snapshot.data;
-
             List<GetRooms> matchedRooms =
                 rooms!.where((room) => room.tenantId == userId).toList();
 
             if (matchedRooms.isEmpty) {
-              // No room found for the current user
-              return const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(16.0),
+              return _buildNoRoomFound();
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: matchedRooms.length,
+              itemBuilder: (context, index) {
+                final room = matchedRooms[index];
+                String imageUrl = '$devUrl${room.roomImages}';
+
+                return Card(
+                  elevation: 4,
+                  margin: const EdgeInsets.only(bottom: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(Icons.warning, size: 100, color: Color(0xFF126E06)),
-                      SizedBox(height: 20),
-                      Text(
-                        'You don\'t have a room assigned yet.',
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
+                      // Room Image
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(20),
+                        ),
+                        child: Image.network(
+                          imageUrl,
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const SizedBox(
+                            height: 200,
+                            child: Center(
+                              child: Text(
+                                'Image not available',
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Get a room now to access this service and enjoy seamless experience!\nHead over to the search page for multiple choices!',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                        textAlign: TextAlign.center,
+
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    room.roomName,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+
+                                  // Rent status chip
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Chip(
+                                      label: Text(
+                                        room.rentStatus ? "Paid" : "Pending",
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                      backgroundColor: room.rentStatus
+                                          ? Colors.green
+                                          : const Color(0xFF940B01),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+
+                              // Bedrooms & Rent Row
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.bed,
+                                          color: Color(0xFF126E06)),
+                                      const SizedBox(width: 6),
+                                      Text("${room.noOfBedrooms} Bedrooms"),
+                                    ],
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Icon(Icons.monetization_on,
+                                          color: Color(0xFF126E06)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        room.rentAmount,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+
+                              // Action buttons
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  // Pay Rent button
+                                  ElevatedButton.icon(
+                                    onPressed: () {
+                                      // TODO: Handle rent payment logic
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      foregroundColor: const Color(0xFF126E06),
+                                      elevation: 0,
+                                      side: const BorderSide(
+                                          color: Color(0xFF126E06), width: 1.5),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 16),
+                                    ),
+                                    icon: const Icon(Icons.payments_rounded),
+                                    label: const Text(
+                                      "Pay Rent",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+
+                                  const SizedBox(height: 12),
+
+                                  // Row with Complaint & Terminate
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {},
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFFF0B803),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                          ),
+                                          icon: const Icon(Icons.report_problem,
+                                              color: Colors.white),
+                                          label: const Text(
+                                            "Raise Complaint",
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton.icon(
+                                          onPressed: () {
+                                            _confirmTermination(context);
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                const Color(0xFF940B01),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 14),
+                                          ),
+                                          icon: const Icon(Icons.cancel,
+                                              color: Colors.white),
+                                          label: const Text(
+                                            "Terminate",
+                                            style:
+                                                TextStyle(color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            ]),
                       ),
-                      SizedBox(height: 20),
                     ],
                   ),
-                ),
-              );
-            } else {
-              // Room found for the current user
-
-              return ListView.builder(
-                itemCount: matchedRooms.length,
-                itemBuilder: (context, index) {
-                  String imageUrl = '$devUrl${matchedRooms[index].roomImages}';
-                  bool rentStatus = matchedRooms[index].rentStatus;
-
-                  return Card(
-                    elevation: 6,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15.0),
-                    ),
-                    margin: const EdgeInsets.symmetric(
-                        vertical: 10, horizontal: 16),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Container(
-                          //   height:
-                          //       250, // Adjust the height based on your needs
-                          //   width: double.infinity,
-                          //   decoration: BoxDecoration(
-                          //     borderRadius: BorderRadius.circular(15.0),
-                          //     boxShadow: const [
-                          //       BoxShadow(
-                          //         color: Color(0xFF0C6601),
-                          //         // spreadRadius: 3,
-                          //         // blurRadius: 5,
-                          //         // offset: Offset(0, 3),
-                          //       ),
-                          //     ],
-                          //   ),
-                          //   child: ClipRRect(
-                          //     borderRadius: BorderRadius.circular(15.0),
-                          //     child: Image.network(
-                          //       imageUrl,
-                          //       fit: BoxFit.cover,
-                          //       loadingBuilder:
-                          //           (context, child, loadingProgress) {
-                          //         if (loadingProgress == null) return child;
-                          //         return Center(
-                          //           child: CircularProgressIndicator(
-                          //             value:
-                          //                 loadingProgress.expectedTotalBytes !=
-                          //                         null
-                          //                     ? loadingProgress
-                          //                             .cumulativeBytesLoaded /
-                          //                         (loadingProgress
-                          //                                 .expectedTotalBytes ??
-                          //                             1)
-                          //                     : null,
-                          //           ),
-                          //         );
-                          //       },
-                          //       errorBuilder: (context, error, stackTrace) {
-                          //         return const Center(
-                          //             child: Text(
-                          //           'Image not available',
-                          //           style: TextStyle(color: Colors.white),
-                          //         ));
-                          //       },
-                          //     ),
-                          //   ),
-                          // ),
-
-                          // Room ID
-                          const SizedBox(height: 12),
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.home,
-                                color: Color(0xFF126E06)),
-                            title: const Text(
-                              'Room Name',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            subtitle: Text(matchedRooms[index].roomName),
-                          ),
-                          const Divider(),
-
-                          // Bedrooms Section
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading:
-                                const Icon(Icons.bed, color: Color(0xFF126E06)),
-                            title: const Text(
-                              'Bedrooms',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            subtitle:
-                                Text('${matchedRooms[index].noOfBedrooms}'),
-                          ),
-                          const Divider(),
-
-                          // Rent Amount Section
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.monetization_on,
-                                color: Color(0xFF126E06)),
-                            title: const Text(
-                              'Rent Amount',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            subtitle: Text(matchedRooms[index].rentAmount),
-                          ),
-                          const Divider(),
-
-                          // Rent Status Section
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            leading: const Icon(Icons.payments,
-                                color: Color(0xFF126E06)),
-                            title: const Text(
-                              'Rent Status',
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            subtitle: Text('${matchedRooms[index].rentStatus}'),
-                          ),
-
-                          const Divider(),
-                          Container(
-                            decoration: BoxDecoration(
-                                color: const Color.fromARGB(255, 240, 184, 3),
-                                borderRadius: BorderRadius.circular(12)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: GestureDetector(
-                                onTap: () {},
-                                child: const ListTile(
-                                  title: Text('Raise Complaint'),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Divider(),
-                          Container(
-                            decoration: BoxDecoration(
-                                color: const Color(0xFF940B01),
-                                borderRadius: BorderRadius.circular(12)),
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: GestureDetector(
-                                onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text('Are you sure?'),
-                                        content: const Text(
-                                            'Do you really want to terminate the contract? This action cannot be undone.'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text(
-                                              'Cancel',
-                                              style: TextStyle(
-                                                  color: Color(0xFF014901),
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            style: ElevatedButton.styleFrom(
-                                                backgroundColor:
-                                                    const Color(0xFF940B01)),
-                                            child: const Text(
-                                              'Continue',
-                                              style: TextStyle(
-                                                  color: Colors.white),
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                                child: const ListTile(
-                                  title: Text('Terminate contract'),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            }
+                );
+              },
+            );
           } else {
-            return const Center(child: Text('No rooms available'));
+            return const Center(child: Text("No rooms available"));
           }
         },
+      ),
+    );
+  }
+
+  Widget _buildNoRoomFound() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(20.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                size: 100, color: Color(0xFF126E06)),
+            SizedBox(height: 20),
+            Text(
+              "You don’t have a room assigned yet.",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 12),
+            Text(
+              "Head over to the search page to find your ideal room and unlock all renting services!",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _confirmTermination(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Confirm Termination",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+            "Are you sure you want to terminate your contract? This cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF940B01),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () => Navigator.pop(context),
+            child:
+                const Text("Continue", style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }

@@ -95,74 +95,104 @@ class _ProductsPageState extends State<ProductsPage>
               return const Center(child: Text('No products available.'));
             }
 
-            return ListView.builder(
+            return GridView.builder(
               itemCount: filteredProducts.length,
+              padding: const EdgeInsets.all(8.0),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // 2 items per row
+                crossAxisSpacing: 8.0, // space between columns
+                mainAxisSpacing: 8.0, // space between rows
+                childAspectRatio: 0.9, // adjust height/width ratio for cards
+              ),
               itemBuilder: (context, index) {
                 final product = filteredProducts[index];
 
                 return Card(
-                  margin: const EdgeInsets.all(8.0),
+                  margin: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Product Image
                         SizedBox(
                           width: double.infinity,
-                          height: 200,
+                          height: 110,
                           child: product.productImage.isNotEmpty
                               ? BlurCachedImage(
                                   imageUrl: '$devUrl${product.productImage}',
-                                  height: 180,
-                                  width: double.infinity,
                                   fit: BoxFit.cover,
                                 )
                               : Image.asset(
                                   'assets/images/ad2.jpeg',
-                                  width: double.infinity,
-                                  height: 200,
                                   fit: BoxFit.cover,
                                 ),
                         ),
-                        const SizedBox(height: 8.0),
+                        const SizedBox(height: 6.0),
+
+                        // Product Name
                         Text(
                           product.productName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 20.0,
+                            fontSize: 14.0,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 4.0),
-                        Text(product.productDescription),
-                        const SizedBox(height: 4.0),
+
+                        // Product Description
                         Text(
-                          'Price: Ksh ${product.productPrice}',
+                          product.productDescription,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 12.0,
                           ),
                         ),
-                        const SizedBox(height: 8.0),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color.fromARGB(255, 6, 95, 9)),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProductDetailPage(product: product),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              'View Details',
-                              style: TextStyle(color: Colors.white),
+                        const Spacer(),
+
+                        // Price + Button Row
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Ksh ${product.productPrice}',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13.0,
+                              ),
                             ),
-                          ),
+                            TextButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 6, 95, 9),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 6),
+                                minimumSize: Size.zero,
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProductDetailPage(product: product),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'View',
+                                style: TextStyle(
+                                    color: Colors.white, fontSize: 12),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

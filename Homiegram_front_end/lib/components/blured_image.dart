@@ -23,8 +23,23 @@ class BlurCachedImage extends StatefulWidget {
 class _BlurCachedImageState extends State<BlurCachedImage> {
   bool _isLoading = true;
 
+  bool get _isNetworkImage =>
+      widget.imageUrl.startsWith("http://") ||
+      widget.imageUrl.startsWith("https://");
+
   @override
   Widget build(BuildContext context) {
+    if (!_isNetworkImage) {
+      // Show asset directly (no blur needed)
+      return Image.asset(
+        widget.imageUrl,
+        width: widget.width,
+        height: widget.height,
+        fit: widget.fit,
+      );
+    }
+
+    // Otherwise, load network image with blur while loading
     return Stack(
       children: [
         CachedNetworkImage(
@@ -32,20 +47,14 @@ class _BlurCachedImageState extends State<BlurCachedImage> {
           width: widget.width,
           height: widget.height,
           fit: widget.fit,
-          placeholder: (context, url) {
-            return Image.network(
-              url,
-              fit: widget.fit,
-              width: widget.width,
-              height: widget.height,
-              loadingBuilder: (context, child, loadingProgress) {
-                return child;
-              },
-            );
-          },
-          errorWidget: (context, url, error) => const Icon(Icons.error),
+          placeholder: (context, url) => Container(
+            width: widget.width,
+            height: widget.height,
+            color: Colors.grey[300], // simple grey placeholder
+          ),
+          errorWidget: (context, url, error) =>
+              const Icon(Icons.broken_image, size: 40, color: Colors.grey),
           imageBuilder: (context, imageProvider) {
-            // Called when image is fully loaded
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (_isLoading) {
                 setState(() {

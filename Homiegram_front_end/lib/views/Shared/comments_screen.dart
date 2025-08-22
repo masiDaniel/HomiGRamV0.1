@@ -126,7 +126,10 @@ class _CommentsScreenState extends State<CommentsScreen> {
   Widget build(BuildContext context) {
     final TextEditingController commentController = TextEditingController();
     int housseId = widget.house.houseId;
+
     return Scaffold(
+      resizeToAvoidBottomInset:
+          true, // allows bottomSheet to move with keyboard
       appBar: AppBar(
         title: const Padding(
           padding: EdgeInsets.all(8.0),
@@ -146,50 +149,50 @@ class _CommentsScreenState extends State<CommentsScreen> {
               onReact: onReact,
               houseIdHere: housseId,
             ),
-            const SizedBox(height: 10),
-            // TODO : have this as a bottom bar
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Tell us about ${widget.house.name}',
-                    style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF126E06)),
-                  ),
-                  TextField(
-                    controller: commentController,
-                    decoration: const InputDecoration(
-                      labelText: 'Your comment',
-                      labelStyle: TextStyle(color: Color(0xFF126E06)),
-                    ),
-                    cursorColor: const Color(0xFF126E06),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      _submitComment(commentController);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0x95154D07),
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Post Comment'),
-                  ),
-                ],
-              ),
-            ),
           ],
+        ),
+      ),
+      bottomSheet: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: commentController,
+                  decoration: InputDecoration(
+                    hintText: 'Add a comment...',
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                  ),
+                  cursorColor: const Color(0xFF126E06),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: () {
+                  _submitComment(commentController);
+                },
+                style: ElevatedButton.styleFrom(
+                  shape: const CircleBorder(),
+                  padding: const EdgeInsets.all(14),
+                  backgroundColor: const Color(0xFF126E06),
+                  elevation: 2,
+                ),
+                child: const Icon(Icons.send, color: Colors.white, size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-///TODO : refactor the comments style to be more appealing
 class CommentList extends StatefulWidget {
   final List<GetComments> comments;
   final Function(int, String) onReact;
@@ -278,21 +281,38 @@ class _CommentListState extends State<CommentList> {
 
     List<GetComments> rootComments = groupedComments[null] ?? [];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SizedBox(height: 10),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: rootComments.length,
-          itemBuilder: (context, index) {
-            final comment = rootComments.reversed.toList()[index];
-            return _buildCommentTile(comment, groupedComments,
-                house: widget.houseIdHere);
-          },
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 10),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: rootComments.length,
+            itemBuilder: (context, index) {
+              final comment = rootComments.reversed.toList()[index];
+              return CommentTile(
+                comment: comment,
+                groupedComments: groupedComments,
+                depth: 0,
+                houseId: widget.houseIdHere,
+                userId: userId,
+                replyingToCommentId: replyingToCommentId,
+                likesMap: likesMap,
+                dislikesMap: dislikesMap,
+                onReact: _handleReact,
+                onDelete: widget.onDelete,
+                onReplyPressed: (id) =>
+                    setState(() => replyingToCommentId = id),
+                onSendReply: _sendReply,
+                replyController: replyController,
+              );
+            },
+          )
+        ],
+      ),
     );
   }
 
@@ -325,113 +345,272 @@ class _CommentListState extends State<CommentList> {
       fetchComments(houseIdnew);
     } else {}
   }
+}
 
-  Widget _buildCommentTile(
-    GetComments comment,
-    Map<int?, List<GetComments>> groupedComments, {
-    int depth = 0,
-    int? house,
-  }) {
+class CommentTile extends StatelessWidget {
+  final GetComments comment;
+  final Map<int?, List<GetComments>> groupedComments;
+  final int depth;
+  final int? houseId;
+  final int? userId;
+  final int? replyingToCommentId;
+  final Map<int, int> likesMap;
+  final Map<int, int> dislikesMap;
+
+  final Function(int, String) onReact;
+  final Function(int) onDelete;
+  final Function(int) onReplyPressed;
+  final Function(int, int) onSendReply;
+
+  final TextEditingController replyController;
+
+  const CommentTile({
+    super.key,
+    required this.comment,
+    required this.groupedComments,
+    required this.depth,
+    required this.houseId,
+    required this.userId,
+    required this.replyingToCommentId,
+    required this.likesMap,
+    required this.dislikesMap,
+    required this.onReact,
+    required this.onDelete,
+    required this.onReplyPressed,
+    required this.onSendReply,
+    required this.replyController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isOwner = comment.userId == userId;
+    final isReplying = replyingToCommentId == comment.commentId;
+
     return Padding(
-      padding: EdgeInsets.only(left: depth * 20.0, top: 4, bottom: 4),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: const Color(0x95154D07),
-          border: Border.all(color: const Color(0xFF126E06), width: 1.0),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(comment.comment,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                )),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding:
+          EdgeInsets.only(left: depth * 16.0, top: 6, bottom: 6, right: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Connector line for replies
+          if (depth > 0)
+            Container(
+              width: 2,
+              height: 60,
+              margin: const EdgeInsets.only(right: 8),
+              color: Colors.green.withOpacity(0.4),
+            ),
+
+          // Bubble + content
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isOwner
+                        ? const Color(0xFF126E06).withOpacity(0.1)
+                        : Colors.grey.shade200,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    comment.comment,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                // Actions row
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () => _handleReact(comment.commentId, "like"),
-                      icon: const Icon(Icons.thumb_up,
-                          size: 20, color: Colors.white),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.thumb_up_alt_outlined,
+                          size: 16, color: Colors.grey),
+                      onPressed: () => onReact(comment.commentId, "like"),
                     ),
                     Text(
                       "${likesMap[comment.commentId] ?? comment.likes}",
-                      style: const TextStyle(color: Colors.white),
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                     const SizedBox(width: 8),
                     IconButton(
-                      onPressed: () => _handleReact(
-                        comment.commentId,
-                        "dislike",
-                      ),
-                      icon: const Icon(Icons.thumb_down,
-                          size: 20, color: Colors.white),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.thumb_down_alt_outlined,
+                          size: 16, color: Colors.grey),
+                      onPressed: () => onReact(comment.commentId, "dislike"),
                     ),
                     Text(
-                        "${dislikesMap[comment.commentId] ?? comment.dislikes}",
-                        style: const TextStyle(color: Colors.white)),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          replyingToCommentId = comment.commentId;
-                        });
-                      },
+                      "${dislikesMap[comment.commentId] ?? comment.dislikes}",
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () => onReplyPressed(comment.commentId),
                       child: const Text(
                         "Reply",
-                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.green,
+                            fontWeight: FontWeight.w500),
                       ),
                     ),
+                    if (isOwner) ...[
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => onDelete(comment.commentId),
+                        child: const Icon(Icons.delete,
+                            size: 16, color: Colors.redAccent),
+                      ),
+                    ],
                   ],
                 ),
-                if (comment.userId == userId)
-                  IconButton(
-                    onPressed: () => widget.onDelete(comment.commentId),
-                    icon: const Icon(Icons.delete, color: Colors.white),
+
+                // Reply input
+                if (isReplying)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: ReplyInput(
+                      replyController: replyController,
+                      onSend: () => onSendReply(comment.commentId, houseId!),
+                    ),
                   ),
+
+                // Nested replies
+                if (groupedComments.containsKey(comment.commentId))
+                  ...groupedComments[comment.commentId]!
+                      .map((reply) => CommentTile(
+                            comment: reply,
+                            groupedComments: groupedComments,
+                            depth: depth + 1,
+                            houseId: houseId,
+                            userId: userId,
+                            replyingToCommentId: replyingToCommentId,
+                            likesMap: likesMap,
+                            dislikesMap: dislikesMap,
+                            onReact: onReact,
+                            onDelete: onDelete,
+                            onReplyPressed: onReplyPressed,
+                            onSendReply: onSendReply,
+                            replyController: replyController,
+                          ))
+                      .toList(),
               ],
             ),
-            if (replyingToCommentId == comment.commentId)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: replyController,
-                      decoration: InputDecoration(
-                        hintText: "Write a reply...",
-                        filled: true,
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Colors.green),
-                        ),
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () => _sendReply(comment.commentId, house!),
-                        child: const Text("Send"),
-                      ),
-                    )
-                  ],
-                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CommentActions extends StatelessWidget {
+  final GetComments comment;
+  final bool isOwner;
+  final Map<int, int> likesMap;
+  final Map<int, int> dislikesMap;
+  final Function(int, String) onReact;
+  final Function(int) onDelete;
+  final Function(int) onReplyPressed;
+
+  const CommentActions({
+    super.key,
+    required this.comment,
+    required this.isOwner,
+    required this.likesMap,
+    required this.dislikesMap,
+    required this.onReact,
+    required this.onDelete,
+    required this.onReplyPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            IconButton(
+              onPressed: () => onReact(comment.commentId, "like"),
+              icon: const Icon(Icons.thumb_up, size: 20, color: Colors.white),
+            ),
+            Text(
+              "${likesMap[comment.commentId] ?? comment.likes}",
+              style: const TextStyle(color: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              onPressed: () => onReact(comment.commentId, "dislike"),
+              icon: const Icon(Icons.thumb_down, size: 20, color: Colors.white),
+            ),
+            Text(
+              "${dislikesMap[comment.commentId] ?? comment.dislikes}",
+              style: const TextStyle(color: Colors.white),
+            ),
+            TextButton(
+              onPressed: () => onReplyPressed(comment.commentId),
+              child: const Text(
+                "Reply",
+                style: TextStyle(color: Colors.white70, fontSize: 13),
               ),
-            if (groupedComments.containsKey(comment.commentId))
-              ...groupedComments[comment.commentId]!
-                  .map((reply) => _buildCommentTile(reply, groupedComments,
-                      depth: depth + 1))
-                  .toList(),
+            ),
           ],
         ),
+        if (isOwner)
+          IconButton(
+            onPressed: () => onDelete(comment.commentId),
+            icon: const Icon(Icons.delete, color: Colors.white),
+          ),
+      ],
+    );
+  }
+}
+
+class ReplyInput extends StatelessWidget {
+  final TextEditingController replyController;
+  final VoidCallback onSend;
+
+  const ReplyInput({
+    super.key,
+    required this.replyController,
+    required this.onSend,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Column(
+        children: [
+          TextField(
+            controller: replyController,
+            decoration: InputDecoration(
+              hintText: "Write a reply...",
+              filled: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.green),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onSend,
+              child: const Text("Send"),
+            ),
+          )
+        ],
       ),
     );
   }

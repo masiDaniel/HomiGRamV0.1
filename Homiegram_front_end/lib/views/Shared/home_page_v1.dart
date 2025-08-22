@@ -1,8 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
+import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/chat.dart';
+import 'package:homi_2/models/get_users.dart';
+import 'package:homi_2/services/create_chat_room.dart';
 import 'package:homi_2/services/fetch_ads_service.dart';
 import 'package:homi_2/services/fetch_chat_messages_service.dart';
 import 'package:homi_2/services/user_data.dart';
@@ -11,6 +15,7 @@ import 'package:homi_2/views/Shared/ad_details_page.dart';
 import 'package:homi_2/views/Shared/chart_card.dart.dart';
 import 'package:homi_2/views/Shared/chat_page.dart';
 import 'package:video_player/video_player.dart';
+import 'package:http/http.dart' as http;
 
 ///
 /// TODO: How do i synagize the offline and onlline chats?
@@ -26,7 +31,8 @@ class _HomePageState extends State<HomePage> {
   late Future<List<ChatRoom>> chatRoomsFuture;
   late Future<List<ChatRoom>> chatRoomsFutureFromDB;
   late Future<List<Ad>> futureAds;
-  late List<Ad> ads;
+  List<Ad> ads = [];
+  List<GerUsers> users = [];
 
   String selectedFilter = 'All';
   final bool isConditionMet = true;
@@ -35,6 +41,7 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 0;
   Timer? _timer;
   bool _isPaused = false;
+  bool isLoading = false;
 
   String? authToken;
   String? currentUserEmail;
@@ -42,13 +49,16 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    _loadAuthToken();
-    _startAutoScroll();
-    _pageController = PageController(initialPage: 0);
 
+    _loadAuthToken();
     futureAds = fetchAds();
     chatRoomsFuture = fetchChatRooms();
     chatRoomsFutureFromDB = DatabaseHelper().getChatRoomsWithMessages();
+
+    _startAutoScroll();
+    _pageController = PageController(initialPage: 0);
+
+    fetchUsers();
   }
 
   List<ChatRoom> filterChats(List<ChatRoom> chats, String filter) {
@@ -63,6 +73,42 @@ class _HomePageState extends State<HomePage> {
     currentUserEmail = (await UserPreferences.getUserEmail())!;
 
     setState(() {});
+  }
+
+  Future<void> fetchUsers() async {
+    setState(() {
+      isLoading = true;
+    });
+    String? token = await UserPreferences.getAuthToken();
+
+    try {
+      final headers = {
+        'Content-Type': 'application/json',
+        'Authorization': 'Token $token',
+      };
+
+      final response = await http.get(
+        Uri.parse('$devUrl/accounts/getUsers/'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        setState(() {
+          users = data.map((user) => GerUsers.fromJSon(user)).toList();
+        });
+      } else {
+        throw Exception('Failed to fetch users');
+      }
+    } catch (e) {
+      if (!mounted) return;
+
+      showCustomSnackBar(context, 'Error fetching users:!');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   @override
@@ -104,307 +150,287 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // TODO : this page has an overflow at the bottom
-
-    return SafeArea(
-      child: Scaffold(
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.start,
-          children: <Widget>[
-            Column(
-              children: [
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 400),
-                  child: isConditionMet
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 16, vertical: 2),
-                              child: Text("Homichat",
-                                  style: TextStyle(
-                                      fontSize: 25,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF105A01))),
-                            ),
-                            SizedBox(
-                              height: 48,
-                              child: ListView(
-                                scrollDirection: Axis.horizontal,
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 16),
-                                children: [
-                                  buildFilterChip(
-                                      "All", selectedFilter == 'All', (val) {
-                                    setState(() =>
-                                        selectedFilter = val ? 'All' : '');
-                                  }),
-                                  buildFilterChip(
-                                      "Groups", selectedFilter == 'Groups',
-                                      (val) {
-                                    setState(() =>
-                                        selectedFilter = val ? 'Groups' : '');
-                                  }),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              height: MediaQuery.of(context).size.height * 0.4,
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0),
-                                child: FutureBuilder<List<ChatRoom>>(
-                                  future: chatRoomsFutureFromDB,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.connectionState ==
-                                        ConnectionState.waiting) {
-                                      return const Center(
-                                          child: CircularProgressIndicator());
-                                    } else if (snapshot.hasError) {
-                                      return const Center(
-                                          child: Text('Failed to load chats.'));
-                                    } else if (!snapshot.hasData ||
-                                        snapshot.data!.isEmpty) {
-                                      return const Center(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(Icons.chat_bubble_outline,
-                                                size: 60,
-                                                color: Color(0xFF026B13)),
-                                            SizedBox(height: 10),
-                                            Text(
-                                              'No Chats Available',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w500,
-                                                color: Color(0xFF026B13),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }
-
-                                    // Filter chats based on selectedFilter if needed
-                                    final chatRooms = snapshot.data!;
-                                    final filtered =
-                                        filterChats(chatRooms, selectedFilter);
-
-                                    return ListView.separated(
-                                      key: ValueKey(selectedFilter),
-                                      itemCount: filtered.length,
-                                      separatorBuilder: (_, __) =>
-                                          const SizedBox(height: 2),
-                                      itemBuilder: (context, index) {
-                                        final chat = filtered[index];
-                                        return GestureDetector(
-                                          onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => ChatPage(
-                                                  chat: chat,
-                                                  token: authToken!,
-                                                  userEmail: currentUserEmail!,
-                                                ),
-                                              ),
-                                            );
-                                          },
-                                          child: ChatCard(chat: chat),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        )
-                      : const Center(
-                          key: ValueKey('comingSoon'),
-                          child: Padding(
-                            padding: EdgeInsets.all(40.0),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.upcoming,
-                                    size: 80, color: Color(0xFF026B13)),
-                                SizedBox(height: 20),
-                                Text(
-                                  'Chat Feature Unavailable',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  'Coming Soon!',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+    return Scaffold(
+      resizeToAvoidBottomInset: true, // pushes body up when keyboard opens
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Homigram",
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF105A01),
+                  letterSpacing: 1.2,
                 ),
-              ],
+              ),
             ),
-            const Spacer(),
-            FutureBuilder<List<Ad>>(
-              future: futureAds,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(
+            // Ads section expands/shrinks responsively
+            Expanded(
+              flex: 1,
+              child: FutureBuilder<List<Ad>>(
+                future: futureAds,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: CircularProgressIndicator(
                         color: Colors.green,
                         strokeWidth: 6.0,
                       ),
-                      SizedBox(height: 10),
-                      Text("Loading, please wait...",
-                          style: TextStyle(fontSize: 16)),
-                    ],
-                  );
-                } else if (!snapshot.hasData ||
-                    snapshot.data == null ||
-                    snapshot.data!.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                              width: double.infinity,
-                              height: 250,
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF105A01),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.info_outline,
-                                    size: 48,
-                                    color: Colors.white,
-                                  ),
-                                  SizedBox(height: 12),
-                                  Text(
-                                    "No advertisements available",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  ads = snapshot.data!;
-                  return SizedBox(
-                    height: 300,
-                    child: PageView.builder(
+                    );
+                  } else if (!snapshot.hasData ||
+                      snapshot.data == null ||
+                      snapshot.data!.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        "No advertisements available",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey),
+                      ),
+                    );
+                  } else {
+                    final ads = snapshot.data!;
+                    return PageView.builder(
                       controller: _pageController,
                       itemCount: ads.length,
                       itemBuilder: (context, index) {
                         final ad = ads[index];
-
                         return GestureDetector(
                           onTap: () {
                             _onAdTap(index);
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (_) => AdDetailPage(
-                                  ad: ad,
-                                ),
+                                builder: (_) => AdDetailPage(ad: ad),
                               ),
                             );
                           },
-                          child: Stack(
-                            children: [
-                              Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 8.0),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.shade300,
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                        color: Colors.black26,
-                                        blurRadius: 5,
-                                        offset: Offset(0, 3)),
-                                  ],
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12.0),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 5,
+                                  offset: Offset(0, 3),
                                 ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  child: AspectRatio(
-                                    aspectRatio: 16 / 9.5,
-                                    child: ad.imageUrl != null
-                                        ? Image.network(
-                                            '$devUrl${ad.imageUrl!}',
-                                            fit: BoxFit.cover,
-                                          )
-                                        : const Center(
+                              ],
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12.0),
+                              child: Stack(
+                                children: [
+                                  // Ad image
+                                  ad.imageUrl != null
+                                      ? Image.network(
+                                          '$devUrl${ad.imageUrl!}',
+                                          fit: BoxFit.cover,
+                                          width: double.infinity,
+                                          height: double.infinity,
+                                        )
+                                      : Container(
+                                          color: Colors.grey.shade300,
+                                          child: const Center(
                                             child: Text(
                                               'No Image Available',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.w500,
+                                                color: Colors.black54,
                                               ),
                                             ),
                                           ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 15,
-                                left: 10,
-                                right: 10,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF046803),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    ad.title,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
+                                        ),
+
+                                  // Gradient overlay for text readability
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 8),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [
+                                            Colors.black.withOpacity(0.6),
+                                            Colors.transparent,
+                                          ],
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        ad.title,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          height: 1.3,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         );
                       },
+                    );
+                  }
+                },
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              child: isConditionMet
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 2),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text("Homichat",
+                                  style: TextStyle(
+                                      fontSize: 25,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF105A01))),
+                              IconButton(
+                                onPressed: () async {
+                                  await showUserDialog(context, users);
+                                },
+                                icon: const Icon(Icons.add_circle,
+                                    color: Color(0xFF105A01)),
+                              )
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: 48,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            children: [
+                              buildFilterChip("All", selectedFilter == 'All',
+                                  (val) {
+                                setState(
+                                    () => selectedFilter = val ? 'All' : '');
+                              }),
+                              buildFilterChip(
+                                  "Groups", selectedFilter == 'Groups', (val) {
+                                setState(
+                                    () => selectedFilter = val ? 'Groups' : '');
+                              }),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : const Center(
+                      key: ValueKey('comingSoon'),
+                      child: Padding(
+                        padding: EdgeInsets.all(40.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.upcoming,
+                                size: 80, color: Color(0xFF026B13)),
+                            SizedBox(height: 20),
+                            Text(
+                              'Chat Feature Unavailable',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Coming Soon!',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
-                  );
-                }
-              },
+            ),
+
+            const SizedBox(height: 10),
+
+            // Chat list grows/shrinks dynamically
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: FutureBuilder<List<ChatRoom>>(
+                  future: chatRoomsFutureFromDB,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return const Center(child: Text('Failed to load chats.'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.chat_bubble_outline,
+                                size: 60, color: Color(0xFF026B13)),
+                            SizedBox(height: 10),
+                            Text(
+                              'No Chats Available',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF026B13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    final chatRooms =
+                        filterChats(snapshot.data!, selectedFilter);
+
+                    return ListView.separated(
+                      key: ValueKey(selectedFilter),
+                      itemCount: chatRooms.length,
+                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final chat = chatRooms[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ChatPage(
+                                  chat: chat,
+                                  token: authToken!,
+                                  userEmail: currentUserEmail!,
+                                ),
+                              ),
+                            );
+                          },
+                          child: ChatCard(chat: chat),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
             ),
           ],
         ),
@@ -433,6 +459,98 @@ class _HomePageState extends State<HomePage> {
         ),
         onSelected: onSelected,
       ),
+    );
+  }
+
+  Future<GerUsers?> showUserDialog(
+      BuildContext context, List<GerUsers> users) async {
+    TextEditingController searchController = TextEditingController();
+    List<GerUsers> filteredUsers = [];
+    bool hasTyped = false;
+
+    return await showDialog<GerUsers>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Select a User"),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 350,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: searchController,
+                      decoration: const InputDecoration(
+                        labelText: "Search User",
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (query) {
+                        setState(() {
+                          hasTyped = query.isNotEmpty;
+                          filteredUsers = query.isNotEmpty
+                              ? users
+                                  .where((user) =>
+                                      user.firstName!
+                                          .toLowerCase()
+                                          .contains(query.toLowerCase()) ||
+                                      user.email!
+                                          .toLowerCase()
+                                          .contains(query.toLowerCase()))
+                                  .toList()
+                              : [];
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    hasTyped
+                        ? Expanded(
+                            child: filteredUsers.isNotEmpty
+                                ? ListView.builder(
+                                    itemCount: filteredUsers.length,
+                                    itemBuilder: (context, index) {
+                                      final user = filteredUsers[index];
+                                      return ListTile(
+                                        title: Text(
+                                            "${user.firstName} (${user.email})"),
+                                        onTap: () async {
+                                          final chatRoom =
+                                              await getOrCreatePrivateChatRoom(
+                                                  user.userId!);
+                                          Navigator.pop(context);
+
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) => ChatPage(
+                                                chat: chatRoom,
+                                                token: authToken!,
+                                                userEmail: currentUserEmail!,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  )
+                                : const Center(
+                                    child: Text("No matching users found."),
+                                  ),
+                          )
+                        : const Center(
+                            child: Text(
+                              "Start typing to search for User.",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
