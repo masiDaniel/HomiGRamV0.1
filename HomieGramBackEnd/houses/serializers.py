@@ -18,6 +18,8 @@ class TeenantsSerializer(serializers.ModelSerializer):
         fields = ['user_id', 'house_id']
 
 class HousesSerializers(serializers.ModelSerializer):
+    latitude = serializers.FloatField(required=False)
+    longitude = serializers.FloatField(required=False)
     class Meta:
         model = Houses
         fields = "__all__"

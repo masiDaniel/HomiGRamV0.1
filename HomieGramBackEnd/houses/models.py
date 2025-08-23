@@ -52,6 +52,12 @@ class Houses(models.Model):
     description = models.TextField()
     
     location_detail = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
+    latitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
+    longitude = models.DecimalField(
+        max_digits=9, decimal_places=6, null=True, blank=True
+    )
     amenities = models.ManyToManyField(Amenity, related_name='houses')
     image = models.ImageField(upload_to='house_images/', null=True, blank=True)
     image_1 = models.ImageField(upload_to='house_images/', null=True, blank=True)
