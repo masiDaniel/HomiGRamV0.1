@@ -63,8 +63,9 @@ class _SearchPageState extends State<SearchPage> {
         displayedHouses = fetchedHouses;
         isLoadingHouses = false;
       });
+      print("what we think");
     } catch (e) {
-      log('Error fetching houses: $e');
+      print("thi is happening $e");
       if (!mounted) return;
       setState(() {
         isLoadingHouses = false;
@@ -174,10 +175,16 @@ class _SearchPageState extends State<SearchPage> {
             IconButton(
               icon: const Icon(Icons.filter_list, color: Color(0xFF126E06)),
               onPressed: () async {
-                // TODO : i want to modify how the bottom of this looks
                 showModalBottomSheet(
                   context: context,
-                  builder: (_) => FilterSheet(
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(12),
+                      bottom: Radius.circular(12),
+                    ),
+                  ),
+                  builder: (_) => FilterSheetHouses(
                     locations: locations,
                     amenities: amenities,
                     onApply: _onApplyFilters,

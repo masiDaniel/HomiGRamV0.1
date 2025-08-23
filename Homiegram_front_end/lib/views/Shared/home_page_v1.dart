@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
-import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/chat.dart';
 import 'package:homi_2/models/get_users.dart';
@@ -52,13 +51,25 @@ class _HomePageState extends State<HomePage> {
 
     _loadAuthToken();
     futureAds = fetchAds();
-    chatRoomsFuture = fetchChatRooms();
+
     chatRoomsFutureFromDB = DatabaseHelper().getChatRoomsWithMessages();
+    syncChatRooms();
 
     _startAutoScroll();
     _pageController = PageController(initialPage: 0);
 
     fetchUsers();
+  }
+
+  Future<void> syncChatRooms() async {
+    final remoteChats = await fetchChatRooms();
+    for (var chat in remoteChats) {
+      await DatabaseHelper().insertOrUpdateChatroom(chat);
+    }
+
+    setState(() {
+      chatRoomsFutureFromDB = DatabaseHelper().getChatRoomsWithMessages();
+    });
   }
 
   List<ChatRoom> filterChats(List<ChatRoom> chats, String filter) {
@@ -103,7 +114,7 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       if (!mounted) return;
 
-      showCustomSnackBar(context, 'Error fetching users:!');
+      // showCustomSnackBar(context, 'Error fetching users:!');
     } finally {
       setState(() {
         isLoading = false;
@@ -151,7 +162,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: true, // pushes body up when keyboard opens
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
@@ -167,7 +178,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            // Ads section expands/shrinks responsively
             Expanded(
               flex: 1,
               child: FutureBuilder<List<Ad>>(
@@ -366,10 +376,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
             ),
-
             const SizedBox(height: 10),
-
-            // Chat list grows/shrinks dynamically
             Expanded(
               flex: 2,
               child: Padding(
@@ -408,7 +415,10 @@ class _HomePageState extends State<HomePage> {
                     return ListView.separated(
                       key: ValueKey(selectedFilter),
                       itemCount: chatRooms.length,
-                      separatorBuilder: (_, __) => const Divider(height: 1),
+                      separatorBuilder: (_, __) => const Divider(
+                        endIndent: 30,
+                        indent: 90,
+                      ),
                       itemBuilder: (context, index) {
                         final chat = chatRooms[index];
                         return GestureDetector(

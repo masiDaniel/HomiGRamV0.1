@@ -2,7 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/my_snackbar.dart';
-import 'package:homi_2/services/create_chat_room.dart';
+
+import 'package:homi_2/views/Shared/filter_businesses.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:homi_2/models/business.dart';
@@ -18,7 +20,6 @@ import 'package:homi_2/views/Shared/products_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:homi_2/views/Shared/chat_page.dart';
 
 class MarketPlace extends StatefulWidget {
   const MarketPlace({super.key});
@@ -40,9 +41,11 @@ class _MarketPlaceState extends State<MarketPlace> {
   List<GerUsers> users = [];
   bool isLoading = false;
   List<Category> categories = [];
-
+  Locations? selectedLocation;
+  Category? selectedCategory;
   String? authToken;
   String? currentUserEmail;
+  String searchQuery = "";
   @override
   void initState() {
     super.initState();
@@ -471,6 +474,48 @@ class _MarketPlaceState extends State<MarketPlace> {
     }
   }
 
+  void _onApplyFilters(Map<String, dynamic> filters) {
+    setState(() {
+      selectedLocation =
+          filters["location"] is Locations ? filters["location"] : null;
+      selectedCategory =
+          filters["category"] is Category ? filters["category"] : null;
+      // minRent = filters["min_rent"] ?? 0;
+      // maxRent = filters["max_rent"] ?? 1000000;
+    });
+
+    applyFilters();
+  }
+
+  void applyFilters() {
+    setState(() {
+      final safeSearchQuery = searchQuery.toLowerCase();
+
+      displayedBusinesses = allBusinesses.where((house) {
+        final matchesSearch =
+            house.businessName.toLowerCase().contains(safeSearchQuery);
+
+        final matchesLocation = selectedLocation == null ||
+            house.businessAddress == selectedLocation!.locationId;
+        final matchesCategory = selectedCategory == null ||
+            house.businessTypeId == selectedCategory!.categoryId;
+
+        // final matchesAmenities = selectedAmenities.isEmpty ||
+        //     selectedAmenities.every((a) => house.amenities.contains(a.name));
+
+        // final rentValue = int.tryParse(house.rentAmount) ?? 0;
+        // final safeMinRent = minRent ?? 0;
+        // final safeMaxRent = maxRent ?? 1000000;
+        // final matchesRent =
+        //     rentValue >= safeMinRent && rentValue <= safeMaxRent;
+
+        return matchesSearch && matchesLocation && matchesCategory;
+        // matchesAmenities &&
+        // matchesRent;
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -491,6 +536,26 @@ class _MarketPlaceState extends State<MarketPlace> {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.filter_list, color: Color(0xFF126E06)),
+            onPressed: () async {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(12),
+                    bottom: Radius.circular(12),
+                  ),
+                ),
+                builder: (_) => FilterSheetBusinesses(
+                  locations: locations,
+                  categories: categories,
+                  onApply: _onApplyFilters,
+                ),
               );
             },
           ),

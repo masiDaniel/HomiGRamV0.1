@@ -128,8 +128,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     int housseId = widget.house.houseId;
 
     return Scaffold(
-      resizeToAvoidBottomInset:
-          true, // allows bottomSheet to move with keyboard
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Padding(
           padding: EdgeInsets.all(8.0),
@@ -167,6 +166,13 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     filled: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(20),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF126E06),
+                        width: 2,
+                      ),
                     ),
                   ),
                   cursorColor: const Color(0xFF126E06),
@@ -410,9 +416,7 @@ class CommentTile extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: isOwner
-                        ? const Color(0xFF126E06).withOpacity(0.1)
-                        : Colors.grey.shade200,
+                    color: const Color(0xFF126E06).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

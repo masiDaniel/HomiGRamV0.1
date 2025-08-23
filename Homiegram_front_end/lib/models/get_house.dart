@@ -10,6 +10,8 @@ class GetHouse {
   final String accountNumber;
   final List<int> amenities;
   final int? locationDetail;
+  final double? latitude;
+  final double? longitude;
   final int landlordId;
   final int? caretakerId;
   final String? contractUrl;
@@ -26,6 +28,8 @@ class GetHouse {
       required this.amenities,
       required this.landlordId,
       required this.locationDetail,
+      this.latitude,
+      this.longitude,
       this.caretakerId,
       this.contractUrl});
 
@@ -55,19 +59,26 @@ class GetHouse {
     if (json['image_3'] != null) images.add(json['image_3']);
 
     return GetHouse(
-        houseId: json['id'] ?? '',
-        name: json['name'] ?? '',
-        rentAmount: json['rent_amount'] ?? '',
-        rating: json['rating'] ?? '',
-        description: json['description'] ?? '',
-        images: images,
-        bankName: json['payment_bank_name'] ?? '',
-        accountNumber: json['payment_account_number'] ?? '',
-        amenities: List<int>.from(json['amenities'] ?? []),
-        landlordId: json['landlord_id'],
-        caretakerId: json['caretaker'],
-        contractUrl: json['contract_file'],
-        locationDetail: json['location_detail']);
+      houseId: json['id'] ?? '',
+      name: json['name'] ?? '',
+      rentAmount: json['rent_amount'] ?? '',
+      rating: json['rating'] ?? '',
+      description: json['description'] ?? '',
+      images: images,
+      bankName: json['payment_bank_name'] ?? '',
+      accountNumber: json['payment_account_number'] ?? '',
+      amenities: List<int>.from(json['amenities'] ?? []),
+      landlordId: json['landlord_id'],
+      caretakerId: json['caretaker'],
+      contractUrl: json['contract_file'],
+      locationDetail: json['location_detail'],
+      latitude: json['latitude'] != null
+          ? double.parse(json['latitude'].toString())
+          : null,
+      longitude: json['longitude'] != null
+          ? double.parse(json['longitude'].toString())
+          : null,
+    );
   }
 
   Map<String, dynamic> tojson() {

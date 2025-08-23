@@ -1,54 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'package:homi_2/models/chat.dart';
-
-// class ChatCard extends StatefulWidget {
-//   final ChatRoom chat;
-
-//   const ChatCard({required this.chat, Key? key}) : super(key: key);
-
-//   @override
-//   ChatCardState createState() => ChatCardState();
-// }
-
-// class ChatCardState extends State<ChatCard> {
-//   bool isRead = false;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // TODO :  Beutify this page
-//     return Card(
-//       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-//       elevation: 2,
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-//       child: ListTile(
-//         contentPadding:
-//             const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-//         leading: const CircleAvatar(
-//           backgroundImage: AssetImage('assets/images/ad3.jpeg'),
-//           radius: 24,
-//         ),
-//         title: Text(
-//           widget.chat.isGroup
-//               ? widget.chat.name
-//               : (widget.chat.label ?? "Group"),
-//           style: const TextStyle(
-//             fontSize: 16,
-//             fontWeight: FontWeight.w600,
-//           ),
-//         ),
-//         subtitle: const Text(
-//           "chats",
-//           style: TextStyle(fontSize: 13, color: Colors.grey),
-//         ),
-
-//         // trailing: isRead || widget.chat.unreadMessage == 0
-//         //     ? const Icon(Icons.check_circle, color: Colors.grey)
-//         //     : const Icon(Icons.circle, color: Colors.green),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:flutter/material.dart';
 import 'package:homi_2/models/chat.dart';
 
@@ -74,7 +23,6 @@ class ChatCardState extends State<ChatCard> {
       ),
       child: Row(
         children: [
-          // Avatar → fallback with first letter
           CircleAvatar(
             radius: 26,
             backgroundColor: const Color(0xFFE8F5E9),
@@ -91,8 +39,6 @@ class ChatCardState extends State<ChatCard> {
             ),
           ),
           const SizedBox(width: 14),
-
-          // Chat info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +56,6 @@ class ChatCardState extends State<ChatCard> {
 
                 const SizedBox(height: 4),
 
-                // Subtitle → show last message or "No messages"
                 Text(
                   widget.chat.lastMessage?.content ?? "No messages yet",
                   maxLines: 1,
@@ -122,11 +67,9 @@ class ChatCardState extends State<ChatCard> {
               ],
             ),
           ),
-
-          // Right side → time (optional, from updatedAt)
           Text(
             _formatTime(widget.chat.updatedAt),
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
             ),
           ),
