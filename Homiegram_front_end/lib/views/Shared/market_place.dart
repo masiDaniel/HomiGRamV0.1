@@ -796,7 +796,7 @@ class _MarketPlaceState extends State<MarketPlace> {
               crossAxisCount: 2, // 2 columns
               crossAxisSpacing: 12.0, // space between columns
               mainAxisSpacing: 12.0, // space between rows
-              childAspectRatio: 0.9, // controls card height (adjust as needed)
+              childAspectRatio: 0.9, // controls card height
             ),
             itemBuilder: (context, index) {
               Products product = displayedProducts[index];
@@ -806,31 +806,39 @@ class _MarketPlaceState extends State<MarketPlace> {
 
               return InkWell(
                 onTap: () {
+                  final parentContext = context;
                   showModalBottomSheet(
                     context: context,
                     shape: const RoundedRectangleBorder(
                       borderRadius:
                           BorderRadius.vertical(top: Radius.circular(16)),
                     ),
-                    builder: (context) {
+                    builder: (sheetContext) {
                       return Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Wrap(
                           children: [
                             ListTile(
-                              leading: const Icon(Icons.message,
-                                  color: Colors.green),
+                              leading: const Icon(
+                                Icons.message,
+                              ),
                               title: const Text("Message Seller"),
                               onTap: () async {
-                                Navigator.pop(context); // close sheet
+                                Navigator.pop(
+                                    sheetContext); // close sheet first
                                 final chatRoom =
                                     await getOrCreatePrivateChatRoom(
                                         product.seller);
 
+                                print("authToken = $authToken");
+                                print("currentUserEmail = $currentUserEmail");
+                                print("chatRoom = $chatRoom");
+
+                                if (!parentContext.mounted) return;
                                 Navigator.push(
-                                  context,
+                                  parentContext,
                                   MaterialPageRoute(
-                                    builder: (context) => ChatPage(
+                                    builder: (_) => ChatPage(
                                       chat: chatRoom,
                                       token: authToken!,
                                       userEmail: currentUserEmail!,
@@ -840,11 +848,12 @@ class _MarketPlaceState extends State<MarketPlace> {
                               },
                             ),
                             ListTile(
-                              leading:
-                                  const Icon(Icons.phone, color: Colors.green),
+                              leading: const Icon(
+                                Icons.phone,
+                              ),
                               title: const Text("Call Seller"),
                               onTap: () {
-                                Navigator.pop(context);
+                                Navigator.pop(sheetContext);
                                 makePhoneCall(
                                   getBusinessPhoneNumber(
                                       product.seller, users)!,

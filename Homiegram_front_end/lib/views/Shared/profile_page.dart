@@ -170,7 +170,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     bool showInitials = currentUserProfilePicture == "N/A";
     final themeProvider = Provider.of<ThemeProvider>(context);
-    var isDark = themeProvider.themeMode == ThemeMode.dark;
 
     return Scaffold(
       appBar: AppBar(
@@ -351,26 +350,117 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const Divider(),
 
-                  // Theme Switch
-                  StatefulBuilder(
-                    builder: (BuildContext context, StateSetter setState) {
-                      return ListTile(
-                        leading: const Icon(Icons.brightness_6_outlined,
-                            color: Color(0xFF126E06)),
-                        title: const Text('Theme'),
-                        trailing: Switch(
-                          value: isDark,
-                          onChanged: (value) {
-                            setState(() => isDark = value);
-                            themeProvider.toggleTheme(value);
-                          },
-                          activeTrackColor: Colors.green[200],
-                          inactiveThumbColor: const Color(0xFF126E06),
-                          inactiveTrackColor: Colors.white,
-                          activeColor: const Color(0xFF126E06),
+                  ListTile(
+                    leading: const Icon(Icons.brightness_6_outlined,
+                        color: Color(0xFF126E06)),
+                    title: const Text('Theme'),
+                    trailing: PopupMenuButton<ThemeMode>(
+                      initialValue: themeProvider.themeMode,
+                      onSelected: (ThemeMode mode) {
+                        themeProvider.setThemeMode(mode);
+                      },
+                      color: Theme.of(context).cardColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      itemBuilder: (context) {
+                        ThemeMode currentTheme = themeProvider.themeMode;
+                        return [
+                          PopupMenuItem(
+                            value: ThemeMode.system,
+                            child: Row(
+                              children: [
+                                Icon(Icons.settings,
+                                    color: currentTheme == ThemeMode.system
+                                        ? Colors.green
+                                        : Colors.grey),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "System",
+                                  style: TextStyle(
+                                    fontWeight: currentTheme == ThemeMode.system
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: ThemeMode.light,
+                            child: Row(
+                              children: [
+                                Icon(Icons.wb_sunny,
+                                    color: currentTheme == ThemeMode.light
+                                        ? Colors.orange
+                                        : Colors.grey),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Light",
+                                  style: TextStyle(
+                                    fontWeight: currentTheme == ThemeMode.light
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: ThemeMode.dark,
+                            child: Row(
+                              children: [
+                                Icon(Icons.nights_stay,
+                                    color: currentTheme == ThemeMode.dark
+                                        ? Colors.deepPurple
+                                        : Colors.grey),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Dark",
+                                  style: TextStyle(
+                                    fontWeight: currentTheme == ThemeMode.dark
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ];
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.green[50],
+                          border: Border.all(color: Colors.green, width: 1.5),
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      );
-                    },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              themeProvider.themeMode == ThemeMode.dark
+                                  ? Icons.nights_stay
+                                  : themeProvider.themeMode == ThemeMode.light
+                                      ? Icons.wb_sunny
+                                      : Icons.settings,
+                              color: Colors.green[900],
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              _themeModeLabel(themeProvider.themeMode),
+                              style: TextStyle(
+                                color: Colors.green[900],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const Icon(Icons.arrow_drop_down,
+                                color: Colors.green),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -451,5 +541,16 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
     );
+  }
+
+  String _themeModeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return "Light";
+      case ThemeMode.dark:
+        return "Dark";
+      case ThemeMode.system:
+        return "System";
+    }
   }
 }

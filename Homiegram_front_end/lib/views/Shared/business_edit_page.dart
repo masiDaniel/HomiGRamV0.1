@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/business.dart';
+import 'package:homi_2/models/locations.dart';
+import 'package:homi_2/services/business_services.dart';
+import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
@@ -24,10 +27,13 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
   late TextEditingController businessTypeIdController;
   late TextEditingController businessImageController;
 
-  late int selectedLocation;
-  late int selectedBusinessType;
+  int? selectedLocation;
+  int? selectedBusinessType;
 
   late BusinessModel originalData;
+  List<Category> categories = [];
+  List<Locations> locations = [];
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -52,6 +58,32 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
 
     selectedLocation = widget.business.businessAddress;
     selectedBusinessType = widget.business.businessTypeId;
+
+    fetchCategories();
+    _loadLocations();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final fetchedCategories = await fetchCategorys();
+      setState(() {
+        categories = fetchedCategories;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void _loadLocations() async {
+    final fetchedLocations = await fetchLocations();
+
+    setState(() {
+      locations = fetchedLocations;
+      isLoading = false;
+    });
   }
 
   Future<void> updateBusiness() async {
@@ -67,15 +99,12 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
       updates['business_email'] = businessEmailController.text;
     }
     if (selectedLocation != originalData.businessAddress) {
-      updates['business_address'] = selectedLocation;
+      updates['location'] = selectedLocation;
     }
     if (selectedBusinessType != originalData.businessTypeId) {
-      updates['business_type_id'] = selectedBusinessType;
+      updates['business_type'] = selectedBusinessType;
     }
-    if (businessTypeIdController.text !=
-        originalData.businessTypeId.toString()) {
-      updates['business_type_id'] = int.tryParse(businessTypeIdController.text);
-    }
+
     if (businessImageController.text != originalData.businessImage) {
       updates['business_image'] = businessImageController.text;
     }
@@ -86,7 +115,7 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
     }
 
     final url = Uri.parse(
-        '$devUrl/business/updateBusiness/${widget.business.businessId}');
+        '$devUrl/business/updateBusiness/${widget.business.businessId}/');
     String? token = await UserPreferences.getAuthToken();
 
     final response = await http.patch(
@@ -99,7 +128,7 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
     );
 
     if (!mounted) return;
-    if (response.statusCode == 200) {
+    if (response.statusCode == 202) {
       showCustomSnackBar(context, "Business updated successfully");
     } else {
       showCustomSnackBar(context, "Update failed");
@@ -129,32 +158,37 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
             const SizedBox(height: 16),
             DropdownButtonFormField<int>(
               value: selectedLocation,
-              decoration: const InputDecoration(labelText: 'Location'),
-              items: const [
-                DropdownMenuItem(value: 1, child: Text('Location 1')),
-                DropdownMenuItem(value: 2, child: Text('Location 2')),
-              ],
+              decoration: const InputDecoration(labelText: "Location"),
+              items: locations.isNotEmpty
+                  ? locations.map((location) {
+                      return DropdownMenuItem(
+                        value: location.locationId,
+                        child: Text(
+                            "${location.county}, ${location.town}, ${location.area}"),
+                      );
+                    }).toList()
+                  : [],
               onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    selectedLocation = value;
-                  });
-                }
+                setState(() {
+                  selectedLocation = value;
+                });
               },
             ),
             DropdownButtonFormField<int>(
               value: selectedBusinessType,
-              decoration: const InputDecoration(labelText: 'Business Type'),
-              items: const [
-                DropdownMenuItem(value: 1, child: Text('Retail')),
-                DropdownMenuItem(value: 2, child: Text('Wholesale')),
-              ],
+              decoration: const InputDecoration(labelText: "Category"),
+              items: categories.isNotEmpty
+                  ? categories.map((category) {
+                      return DropdownMenuItem(
+                        value: category.categoryId,
+                        child: Text(category.categoryName),
+                      );
+                    }).toList()
+                  : [],
               onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    selectedBusinessType = value;
-                  });
-                }
+                setState(() {
+                  selectedBusinessType = value;
+                });
               },
             ),
             const SizedBox(height: 24),
