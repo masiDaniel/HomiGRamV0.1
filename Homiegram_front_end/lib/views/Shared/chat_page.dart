@@ -53,15 +53,7 @@ class _ChatPageState extends State<ChatPage> {
       setState(() {
         messages.add(newMessage);
       });
-      // setState(() {
-      //   messages.add(Message(
-      //     id: decoded['id'],
-      //     sender: decoded['sender'],
-      //     content: decoded['message'],
-      //     timestamp: DateTime.parse(decoded['timestamp']),
-      //     chatroomId: widget.chat.id,
-      //   ));
-      // });
+
       DatabaseHelper().insertOrUpdateMessage(newMessage, widget.chat.id);
     });
     messages = widget.chat.messages;

@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/my_snackbar.dart';
-
+import 'package:homi_2/services/create_chat_room.dart';
+import 'package:homi_2/views/Shared/chat_page.dart';
 import 'package:homi_2/views/Shared/filter_businesses.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:homi_2/models/business.dart';
@@ -540,7 +540,9 @@ class _MarketPlaceState extends State<MarketPlace> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.filter_list, color: Color(0xFF126E06)),
+            icon: const Icon(
+              Icons.filter_list,
+            ),
             onPressed: () async {
               showModalBottomSheet(
                 context: context,
@@ -802,132 +804,186 @@ class _MarketPlaceState extends State<MarketPlace> {
                   ? '$devUrl${product.productImage}'
                   : 'assets/images/mustGo.jpeg';
 
-              return Material(
-                borderRadius: BorderRadius.circular(16),
-                elevation: 4,
-                color: Theme.of(context).cardColor,
-                shadowColor: Theme.of(context).shadowColor,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Product Image
-                    ClipRRect(
+              return InkWell(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
                       borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(16)),
-                      child: BlurCachedImage(
-                        imageUrl: productImage,
-                        height: 120, // reduced for grid
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
+                          BorderRadius.vertical(top: Radius.circular(16)),
                     ),
+                    builder: (context) {
+                      return Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Wrap(
+                          children: [
+                            ListTile(
+                              leading: const Icon(Icons.message,
+                                  color: Colors.green),
+                              title: const Text("Message Seller"),
+                              onTap: () async {
+                                Navigator.pop(context); // close sheet
+                                final chatRoom =
+                                    await getOrCreatePrivateChatRoom(
+                                        product.seller);
 
-                    // Product Info
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Product Name
-                          Text(
-                            product.productName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          const SizedBox(height: 6),
-
-                          // Price
-                          Text(
-                            'Price: ${product.productPrice}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 4),
-
-                          // Seller Row
-                          Text(
-                            'Seller: ${getNameOfSeller(product.seller, users)}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          // // Message Seller Button
-                          // SizedBox(
-                          //   width: double.infinity,
-                          //   child: ElevatedButton.icon(
-                          //     icon: const Icon(Icons.message, size: 16),
-                          //     label: const Text('Message',
-                          //         style: TextStyle(fontSize: 12)),
-                          //     style: ElevatedButton.styleFrom(
-                          //       backgroundColor: const Color(0xFF065F09),
-                          //       foregroundColor: Colors.white,
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(10),
-                          //       ),
-                          //       padding: const EdgeInsets.symmetric(
-                          //         vertical: 10,
-                          //         horizontal: 8,
-                          //       ),
-                          //       elevation: 2,
-                          //     ),
-                          //     onPressed: () async {
-                          //       final chatRoom =
-                          //           await getOrCreatePrivateChatRoom(
-                          //               product.seller);
-
-                          //       Navigator.push(
-                          //         context,
-                          //         MaterialPageRoute(
-                          //           builder: (context) => ChatPage(
-                          //             chat: chatRoom,
-                          //             token: authToken!,
-                          //             userEmail: currentUserEmail!,
-                          //           ),
-                          //         ),
-                          //       );
-                          //     },
-                          //   ),
-                          // ),
-
-                          // const SizedBox(height: 2),
-
-                          // // Call Seller Button
-                          // SizedBox(
-                          //   width: double.infinity,
-                          //   child: ElevatedButton.icon(
-                          //     icon: const Icon(Icons.phone, size: 16),
-                          //     label: const Text('Call',
-                          //         style: TextStyle(fontSize: 12)),
-                          //     style: ElevatedButton.styleFrom(
-                          //       backgroundColor: const Color(0xFF065F09),
-                          //       foregroundColor: Colors.white,
-                          //       shape: RoundedRectangleBorder(
-                          //         borderRadius: BorderRadius.circular(10),
-                          //       ),
-                          //       padding: const EdgeInsets.symmetric(
-                          //         vertical: 10,
-                          //         horizontal: 8,
-                          //       ),
-                          //       elevation: 2,
-                          //     ),
-                          //     onPressed: () {
-                          //       makePhoneCall(getBusinessPhoneNumber(
-                          //           product.seller, users)!);
-                          //     },
-                          //   ),
-                          // ),
-                        ],
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ChatPage(
+                                      chat: chatRoom,
+                                      token: authToken!,
+                                      userEmail: currentUserEmail!,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            ListTile(
+                              leading:
+                                  const Icon(Icons.phone, color: Colors.green),
+                              title: const Text("Call Seller"),
+                              onTap: () {
+                                Navigator.pop(context);
+                                makePhoneCall(
+                                  getBusinessPhoneNumber(
+                                      product.seller, users)!,
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Material(
+                  borderRadius: BorderRadius.circular(16),
+                  elevation: 4,
+                  color: Theme.of(context).cardColor,
+                  shadowColor: Theme.of(context).shadowColor,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Product Image
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(16)),
+                        child: BlurCachedImage(
+                          imageUrl: productImage,
+                          height: 120, // reduced for grid
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
                       ),
-                    ),
-                  ],
+
+                      // Product Info
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Product Name
+                            Text(
+                              product.productName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+
+                            // Price
+                            Text(
+                              'Price: ${product.productPrice}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                            const SizedBox(height: 4),
+
+                            // Seller Row
+                            Text(
+                              'Seller: ${getNameOfSeller(product.seller, users)}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            // // Message Seller Button
+                            // SizedBox(
+                            //   width: double.infinity,
+                            //   child: ElevatedButton.icon(
+                            //     icon: const Icon(Icons.message, size: 16),
+                            //     label: const Text('Message',
+                            //         style: TextStyle(fontSize: 12)),
+                            //     style: ElevatedButton.styleFrom(
+                            //       backgroundColor: const Color(0xFF065F09),
+                            //       foregroundColor: Colors.white,
+                            //       shape: RoundedRectangleBorder(
+                            //         borderRadius: BorderRadius.circular(10),
+                            //       ),
+                            //       padding: const EdgeInsets.symmetric(
+                            //         vertical: 10,
+                            //         horizontal: 8,
+                            //       ),
+                            //       elevation: 2,
+                            //     ),
+                            //     onPressed: () async {
+                            //       final chatRoom =
+                            //           await getOrCreatePrivateChatRoom(
+                            //               product.seller);
+
+                            //       Navigator.push(
+                            //         context,
+                            //         MaterialPageRoute(
+                            //           builder: (context) => ChatPage(
+                            //             chat: chatRoom,
+                            //             token: authToken!,
+                            //             userEmail: currentUserEmail!,
+                            //           ),
+                            //         ),
+                            //       );
+                            //     },
+                            //   ),
+                            // ),
+
+                            // const SizedBox(height: 2),
+
+                            // // Call Seller Button
+                            // SizedBox(
+                            //   width: double.infinity,
+                            //   child: ElevatedButton.icon(
+                            //     icon: const Icon(Icons.phone, size: 16),
+                            //     label: const Text('Call',
+                            //         style: TextStyle(fontSize: 12)),
+                            //     style: ElevatedButton.styleFrom(
+                            //       backgroundColor: const Color(0xFF065F09),
+                            //       foregroundColor: Colors.white,
+                            //       shape: RoundedRectangleBorder(
+                            //         borderRadius: BorderRadius.circular(10),
+                            //       ),
+                            //       padding: const EdgeInsets.symmetric(
+                            //         vertical: 10,
+                            //         horizontal: 8,
+                            //       ),
+                            //       elevation: 2,
+                            //     ),
+                            //     onPressed: () {
+                            //       makePhoneCall(getBusinessPhoneNumber(
+                            //           product.seller, users)!);
+                            //     },
+                            //   ),
+                            // ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

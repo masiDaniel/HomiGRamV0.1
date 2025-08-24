@@ -173,7 +173,9 @@ class _SearchPageState extends State<SearchPage> {
           scrolledUnderElevation: 0,
           actions: [
             IconButton(
-              icon: const Icon(Icons.filter_list, color: Color(0xFF126E06)),
+              icon: const Icon(
+                Icons.filter_list,
+              ),
               onPressed: () async {
                 showModalBottomSheet(
                   context: context,

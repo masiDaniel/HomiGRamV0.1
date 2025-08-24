@@ -24,13 +24,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Future<Cart?> _loadCart() async {
-    try {
-      int? userId = await UserPreferences.getUserId();
-      return await cartService.getCart(userId);
-    } catch (e) {
-      debugPrint("Error loading cart: $e");
-      return null; // Return null if there's an error
-    }
+    int? userId = await UserPreferences.getUserId();
+    return await cartService.getCart(userId);
   }
 
 //  TODO creation is not working seamlesly i the frontend
@@ -66,10 +61,17 @@ class _CartScreenState extends State<CartScreen> {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return const Center(child: Text("Failed to load cart"));
+            // Show network or server error
+            return Center(
+              child: Lottie.asset(
+                'assets/animations/notFound.json',
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            );
           }
 
-// have this to reflect when there is no internet connection
           final userCart = snapshot.data;
           if (userCart == null) {
             return Center(
@@ -87,7 +89,7 @@ class _CartScreenState extends State<CartScreen> {
                       "Create Cart",
                       style: TextStyle(color: Colors.white),
                     ),
-                  )
+                  ),
                 ],
               ),
             );

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:homi_2/models/cart.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
@@ -14,17 +15,23 @@ class CartService {
     };
 
     try {
-      final response = await http.get(Uri.parse("$devUrl/business/getCarts/"),
-          headers: headers);
+      final response = await http.get(
+        Uri.parse("$devUrl/business/getCarts/"),
+        headers: headers,
+      );
 
       if (response.statusCode == 200) {
         Map<String, dynamic> data = jsonDecode(response.body);
-
         return Cart.fromJson(data);
+      } else if (response.statusCode == 404) {
+        return null;
+      } else {
+        throw Exception("Server error: ${response.statusCode}");
       }
-      return null;
+    } on SocketException {
+      throw Exception("No internet connection");
     } catch (e) {
-      return null;
+      throw Exception("Unexpected error: $e");
     }
   }
 
