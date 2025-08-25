@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/my_snackbar.dart';
-import 'package:homi_2/main.dart';
-import 'package:homi_2/map/map_page.dart';
+import 'package:homi_2/components/not_found.dart';
 import 'package:homi_2/models/amenities.dart';
 import 'package:homi_2/models/bookmark.dart';
 import 'package:homi_2/models/comments.dart';
@@ -72,11 +71,11 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
 
 // TODO: Have this populated by the backend, also have it map the respective
 // rooms, have a search feature.
-  final List<Map<String, dynamic>> roomCategories = const [
-    {'label': 'Bedsitter', 'page': NotFoundPage()},
-    {'label': '1 Bedroom', 'page': NotFoundPage()},
-    {'label': '2 Bedrooms', 'page': NotFoundPage()},
-    {'label': '3 Bedrooms', 'page': NotFoundPage()},
+  final List<Map<String, dynamic>> roomCategories = [
+    {'label': 'Bedsitter', 'page': const NotFoundPage()},
+    {'label': '1 Bedroom', 'page': const NotFoundPage()},
+    {'label': '2 Bedrooms', 'page': const NotFoundPage()},
+    {'label': '3 Bedrooms', 'page': const NotFoundPage()},
   ];
 
   Future<void> _loadUserId() async {

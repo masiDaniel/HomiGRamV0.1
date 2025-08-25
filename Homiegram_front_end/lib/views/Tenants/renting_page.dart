@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/action_button.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/services/get_rooms_service.dart';
 import 'package:homi_2/services/user_data.dart';
@@ -129,8 +130,6 @@ class _RentingPageState extends State<RentingPage> {
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
-
-                                  // Rent status chip
                                   Align(
                                     alignment: Alignment.centerRight,
                                     child: Chip(
@@ -147,8 +146,6 @@ class _RentingPageState extends State<RentingPage> {
                                 ],
                               ),
                               const SizedBox(height: 8),
-
-                              // Bedrooms & Rent Row
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -178,16 +175,11 @@ class _RentingPageState extends State<RentingPage> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-
-                              // Action buttons
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  // Pay Rent button
                                   ElevatedButton.icon(
-                                    onPressed: () {
-                                      // TODO: Handle rent payment logic
-                                    },
+                                    onPressed: () {},
                                     style: ElevatedButton.styleFrom(
                                       foregroundColor: const Color(0xFF126E06),
                                       elevation: 0,
@@ -208,58 +200,25 @@ class _RentingPageState extends State<RentingPage> {
                                       ),
                                     ),
                                   ),
-
                                   const SizedBox(height: 12),
-
-                                  // Row with Complaint & Terminate
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {},
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color(0xFFF0B803),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 14),
-                                          ),
-                                          icon: const Icon(Icons.report_problem,
-                                              color: Colors.white),
-                                          label: const Text(
-                                            "Raise Complaint",
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                        ),
+                                      ActionButton(
+                                        label: "Raise Complaint",
+                                        icon: Icons.report_problem,
+                                        backgroundColor:
+                                            const Color(0xFFF0B803),
+                                        onPressed: () {},
                                       ),
                                       const SizedBox(width: 12),
-                                      Expanded(
-                                        child: ElevatedButton.icon(
-                                          onPressed: () {
-                                            _confirmTermination(context);
-                                          },
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor:
-                                                const Color(0xFF940B01),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12),
-                                            ),
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 14),
-                                          ),
-                                          icon: const Icon(Icons.cancel,
-                                              color: Colors.white),
-                                          label: const Text(
-                                            "Terminate",
-                                            style:
-                                                TextStyle(color: Colors.white),
-                                          ),
-                                        ),
+                                      ActionButton(
+                                        label: "Terminate",
+                                        icon: Icons.cancel,
+                                        backgroundColor:
+                                            const Color(0xFF940B01),
+                                        onPressed: () {
+                                          _confirmTermination(context);
+                                        },
                                       ),
                                     ],
                                   ),

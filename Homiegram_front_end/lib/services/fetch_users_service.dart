@@ -8,7 +8,7 @@ const Map<String, String> headers = {
   "Content-Type": "application/json",
 };
 
-Future<List<GetComments>> fetchUsers() async {
+Future<List<GetComments>> fetchUsersComment() async {
   String? token = await UserPreferences.getAuthToken();
   try {
     final headersWithToken = {

@@ -32,7 +32,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       return await cartService.getCart(userId);
     } catch (e) {
       debugPrint("Error loading cart: $e");
-      return null; // Return null if there's an error
+      return null;
     }
   }
 
@@ -88,8 +88,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                   fit: BoxFit.contain,
                 )),
             const SizedBox(height: 16.0),
-
-            // Product Name
             Text(
               widget.product.productName,
               style: const TextStyle(
@@ -97,18 +95,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 8.0),
-
-            // Product Description
             Text(
               widget.product.productDescription,
               style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
-
             const SizedBox(height: 16.0),
-
-            // Price
             Text(
               'Price: Ksh ${widget.product.productPrice}',
               style: const TextStyle(
@@ -117,10 +109,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 color: Colors.green,
               ),
             ),
-
             const SizedBox(height: 16.0),
-
-            // Stock Availability
             Text(
               'Stock: ${widget.product.stockAvailable}',
               style: const TextStyle(
@@ -128,10 +117,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 fontWeight: FontWeight.w500,
               ),
             ),
-
-            const Spacer(), // Pushes buttons to the bottom
-
-            // Buttons: Buy Now
+            const Spacer(),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

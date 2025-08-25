@@ -66,6 +66,11 @@ class _FilterSheetState extends State<FilterSheetHouses> {
                 selectedLocation = value;
               });
             },
+            // popup background
+            borderRadius: BorderRadius.circular(12), // rounded popup corners
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+            ),
           ),
 
           const SizedBox(height: 16),
@@ -116,7 +121,7 @@ class _FilterSheetState extends State<FilterSheetHouses> {
           // Buttons
 
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               OutlinedButton(
                 onPressed: resetFilters,

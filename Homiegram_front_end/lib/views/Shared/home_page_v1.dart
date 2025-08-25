@@ -67,6 +67,8 @@ class _HomePageState extends State<HomePage> {
       await DatabaseHelper().insertOrUpdateChatroom(chat);
     }
 
+    if (!mounted) return;
+
     setState(() {
       chatRoomsFutureFromDB = DatabaseHelper().getChatRoomsWithMessages();
     });
@@ -163,24 +165,21 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
+      appBar: AppBar(
+        title: const Text(
+          "Homigram",
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF105A01),
+            letterSpacing: 1.2,
+          ),
+        ),
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  "Homigram",
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF105A01),
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-            ),
             Expanded(
               flex: 1,
               child: FutureBuilder<List<Ad>>(

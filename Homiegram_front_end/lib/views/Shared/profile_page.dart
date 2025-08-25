@@ -175,7 +175,6 @@ class _ProfilePageState extends State<ProfilePage> {
       appBar: AppBar(
         elevation: 4,
         backgroundColor: const Color(0xFF126E06),
-        // centerTitle: true,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
             bottom: Radius.circular(16),
@@ -225,7 +224,6 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left Column: Username & Phone
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -241,7 +239,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  // Right Column: Profile Picture and Edit
                   Column(
                     children: [
                       GestureDetector(

@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/star_ratings.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/amenities.dart';
 import 'package:homi_2/models/locations.dart';
@@ -63,9 +63,7 @@ class _SearchPageState extends State<SearchPage> {
         displayedHouses = fetchedHouses;
         isLoadingHouses = false;
       });
-      print("what we think");
     } catch (e) {
-      print("thi is happening $e");
       if (!mounted) return;
       setState(() {
         isLoadingHouses = false;
@@ -296,8 +294,9 @@ class _SearchPageState extends State<SearchPage> {
                                           Row(
                                             children: [
                                               const Text("Rating:"),
-                                              buildSimpleStars(
-                                                  house.rating.toDouble()),
+                                              RatingStars(
+                                                  rating:
+                                                      house.rating.toDouble())
                                             ],
                                           ),
                                           const SizedBox(height: 4),
@@ -315,19 +314,6 @@ class _SearchPageState extends State<SearchPage> {
                 ),
               ],
             ),
-    );
-  }
-
-  Widget buildSimpleStars(double rating) {
-    return RatingBarIndicator(
-      rating: rating,
-      itemBuilder: (context, index) => const Icon(
-        Icons.star,
-        color: Color(0xFF126E06),
-      ),
-      itemCount: 5,
-      itemSize: 20.0,
-      direction: Axis.horizontal,
     );
   }
 }

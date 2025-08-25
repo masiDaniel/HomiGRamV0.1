@@ -12,21 +12,20 @@ class AdDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
         elevation: 0,
         title: const Text("Ad Details"),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: ad.imageUrl != null
                   ? Image.network(
                       '$devUrl${ad.imageUrl!}',
-                      height: 250,
+                      height: 450,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     )
@@ -46,6 +45,12 @@ class AdDetailPage extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
+            const SizedBox(height: 5),
+            Divider(
+              color: Colors.grey.shade500,
+              thickness: 1,
+              endIndent: 40,
+            ),
             const SizedBox(height: 16),
             Text(
               ad.description,
@@ -59,36 +64,36 @@ class AdDetailPage extends StatelessWidget {
             Divider(
               color: Colors.grey.shade500,
               thickness: 1,
-              indent: 40,
               endIndent: 40,
             ),
             const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.calendar_today, size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.calendar_today,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'Start: ${DateFormat('MMMM d, y').format(DateTime.parse(ad.startDate))}',
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.calendar_today_outlined,
-                    size: 16, color: Colors.grey),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 16,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   'End: ${DateFormat('MMMM d, y').format(DateTime.parse(ad.endDate))}',
                   style: const TextStyle(
                     fontSize: 14,
-                    color: Colors.grey,
                   ),
                 ),
               ],

@@ -17,7 +17,7 @@ class VideoSplashScreenState extends State<VideoSplashScreen> {
     super.initState();
     _controller = VideoPlayerController.asset("assets/videos/splash_video.mp4")
       ..initialize().then((_) {
-        setState(() {}); // Refresh screen once video is initialized
+        setState(() {});
         _controller.play();
       });
 
@@ -48,7 +48,6 @@ class VideoSplashScreenState extends State<VideoSplashScreen> {
       backgroundColor: Colors.black,
       body: _controller.value.isInitialized
           ? SizedBox.expand(
-              // Expands to full screen
               child: FittedBox(
                 fit: BoxFit.cover,
                 child: SizedBox(

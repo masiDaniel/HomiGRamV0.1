@@ -4,11 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:homi_2/components/my_button.dart';
 
 class WelcomePage extends StatelessWidget {
-  ///
-  /// this page holds the homigram animation together with,
-  /// three buttons: login, signup and about us
-  ///
-
   const WelcomePage({super.key});
   @override
   Widget build(BuildContext context) {
@@ -47,9 +42,8 @@ class WelcomePage extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(15),
                 child: Image.asset(
-                  "assets/images/production_splash.png", // Replace with your image path
-                  fit: BoxFit
-                      .cover, // Ensures image fits well inside the container
+                  "assets/images/production_splash.png",
+                  fit: BoxFit.cover,
                 ),
               ),
             ),

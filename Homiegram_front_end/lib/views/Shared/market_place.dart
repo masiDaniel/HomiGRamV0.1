@@ -46,6 +46,7 @@ class _MarketPlaceState extends State<MarketPlace> {
   String? authToken;
   String? currentUserEmail;
   String searchQuery = "";
+
   @override
   void initState() {
     super.initState();
@@ -726,7 +727,6 @@ class _MarketPlaceState extends State<MarketPlace> {
                                       topLeft: Radius.circular(12),
                                       topRight: Radius.circular(12),
                                     ),
-                                    // TODO : Display image when the image is not present
                                     child: BlurCachedImage(
                                       imageUrl: businessImage,
                                       height: 180,
@@ -824,15 +824,10 @@ class _MarketPlaceState extends State<MarketPlace> {
                               ),
                               title: const Text("Message Seller"),
                               onTap: () async {
-                                Navigator.pop(
-                                    sheetContext); // close sheet first
+                                Navigator.pop(sheetContext);
                                 final chatRoom =
                                     await getOrCreatePrivateChatRoom(
                                         product.seller);
-
-                                print("authToken = $authToken");
-                                print("currentUserEmail = $currentUserEmail");
-                                print("chatRoom = $chatRoom");
 
                                 if (!parentContext.mounted) return;
                                 Navigator.push(
@@ -874,25 +869,21 @@ class _MarketPlaceState extends State<MarketPlace> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Product Image
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(16)),
                         child: BlurCachedImage(
                           imageUrl: productImage,
-                          height: 120, // reduced for grid
+                          height: 120,
                           width: double.infinity,
                           fit: BoxFit.cover,
                         ),
                       ),
-
-                      // Product Info
                       Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Product Name
                             Text(
                               product.productName,
                               maxLines: 1,
@@ -905,89 +896,18 @@ class _MarketPlaceState extends State<MarketPlace> {
                                   ),
                             ),
                             const SizedBox(height: 6),
-
-                            // Price
                             Text(
                               'Price: ${product.productPrice}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                             const SizedBox(height: 4),
-
-                            // Seller Row
                             Text(
                               'Seller: ${getNameOfSeller(product.seller, users)}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
-
                             const SizedBox(height: 4),
-
-                            // // Message Seller Button
-                            // SizedBox(
-                            //   width: double.infinity,
-                            //   child: ElevatedButton.icon(
-                            //     icon: const Icon(Icons.message, size: 16),
-                            //     label: const Text('Message',
-                            //         style: TextStyle(fontSize: 12)),
-                            //     style: ElevatedButton.styleFrom(
-                            //       backgroundColor: const Color(0xFF065F09),
-                            //       foregroundColor: Colors.white,
-                            //       shape: RoundedRectangleBorder(
-                            //         borderRadius: BorderRadius.circular(10),
-                            //       ),
-                            //       padding: const EdgeInsets.symmetric(
-                            //         vertical: 10,
-                            //         horizontal: 8,
-                            //       ),
-                            //       elevation: 2,
-                            //     ),
-                            //     onPressed: () async {
-                            //       final chatRoom =
-                            //           await getOrCreatePrivateChatRoom(
-                            //               product.seller);
-
-                            //       Navigator.push(
-                            //         context,
-                            //         MaterialPageRoute(
-                            //           builder: (context) => ChatPage(
-                            //             chat: chatRoom,
-                            //             token: authToken!,
-                            //             userEmail: currentUserEmail!,
-                            //           ),
-                            //         ),
-                            //       );
-                            //     },
-                            //   ),
-                            // ),
-
-                            // const SizedBox(height: 2),
-
-                            // // Call Seller Button
-                            // SizedBox(
-                            //   width: double.infinity,
-                            //   child: ElevatedButton.icon(
-                            //     icon: const Icon(Icons.phone, size: 16),
-                            //     label: const Text('Call',
-                            //         style: TextStyle(fontSize: 12)),
-                            //     style: ElevatedButton.styleFrom(
-                            //       backgroundColor: const Color(0xFF065F09),
-                            //       foregroundColor: Colors.white,
-                            //       shape: RoundedRectangleBorder(
-                            //         borderRadius: BorderRadius.circular(10),
-                            //       ),
-                            //       padding: const EdgeInsets.symmetric(
-                            //         vertical: 10,
-                            //         horizontal: 8,
-                            //       ),
-                            //       elevation: 2,
-                            //     ),
-                            //     onPressed: () {
-                            //       makePhoneCall(getBusinessPhoneNumber(
-                            //           product.seller, users)!);
-                            //     },
-                            //   ),
-                            // ),
                           ],
                         ),
                       ),
