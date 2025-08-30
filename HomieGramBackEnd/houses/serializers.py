@@ -24,6 +24,19 @@ class HousesSerializers(serializers.ModelSerializer):
         model = Houses
         fields = "__all__"
 
+class RoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = "__all__"
+
+
+class HouseWithRoomsSerializer(serializers.ModelSerializer):
+    rooms = RoomSerializer(many=True, read_only=True)  
+
+    class Meta:
+        model = Houses
+        fields = "__all__"
+
 class HouseRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = HouseRating
@@ -35,10 +48,6 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class RoomSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Room
-        fields = "__all__"
 
 class AmenitiesSerializer(serializers.ModelSerializer):
     class Meta:

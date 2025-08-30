@@ -12,7 +12,7 @@ from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 
 from .utils import check_payment_status, get_safe_group_name
-from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HousesSerializers, LocationSerializer, RoomSerializer,  PendingAdvertisementSerializer
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomSerializer,  PendingAdvertisementSerializer
 from accounts.serializers import MessageSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating, Houses, Location, Room, PendingAdvertisement
 from .utils import get_safe_group_name
@@ -45,52 +45,6 @@ class HouseAPIView(APIView):
         """
         houses = Houses.objects.all()
         serializer = HousesSerializers(houses, many=True)
-        # if serializer:
-        #     mpesa_client = MpesaHandler()
-        #     stk_data = {
-        #         'amount': 10000,
-        #         'phone_number': '254799212379'
-        #     }
-        #     res_status, res_data = mpesa_client.make_stk_push(stk_data)
-        #     if res_status  == 200:
-        #         num_of_tries = 0
-        #         while True:
-
-        #             #asynchronus progrgramming
-        #             time.sleep(1)
-        #             trans_status, trans_response = mpesa_client.query_transaction_status(res_data['CheckoutRequestID'])
-
-        #             if trans_status == 200:
-        #                 break
-
-        #             if num_of_tries == 60:
-        #                 break
-
-        #             num_of_tries += 1
-
-
-        #         if trans_status == 200 and trans_response['ResultCode'] == '0':
-        #             serializer.save()
-
-        #             pass
-        #         else:
-        #             return Response({'error': trans_response['ResultDesc']}, status=status.HTTP_400_BAD_REQUEST)
-
-                
-        #     else:
-        #         return Response({'error': res_data['errorMessage']}, status=status.HTTP_400_BAD_REQUEST)
-                
-
-
-
-        #     ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
-        #     payment_reference=str(uuid.uuid4())
-
-        #     return Response(
-        #         {"message": "Payment required", "payment_link": payment_reference},
-        #         status=status.HTTP_202_ACCEPTED
-        #     )
-     
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request, *args, **kwargs):
@@ -132,6 +86,15 @@ class HouseAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class HouseWithRoomsAPIView(APIView):
+    """
+    Fetches all houses along with their rooms
+    """
+    def get(self, request, *args, **kwargs):
+        houses = Houses.objects.prefetch_related('rooms').all()
+        serializer = HouseWithRoomsSerializer(houses, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SearchApiView(RetrieveAPIView):
     lookup_field = "name"
@@ -452,3 +415,50 @@ class GetCaretakersAPIView(APIView):
         caretakers = CareTaker.objects.all()
         serializer = CareTakersSerializer(caretakers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+ # if serializer:
+        #     mpesa_client = MpesaHandler()
+        #     stk_data = {
+        #         'amount': 10000,
+        #         'phone_number': '254799212379'
+        #     }
+        #     res_status, res_data = mpesa_client.make_stk_push(stk_data)
+        #     if res_status  == 200:
+        #         num_of_tries = 0
+        #         while True:
+
+        #             #asynchronus progrgramming
+        #             time.sleep(1)
+        #             trans_status, trans_response = mpesa_client.query_transaction_status(res_data['CheckoutRequestID'])
+
+        #             if trans_status == 200:
+        #                 break
+
+        #             if num_of_tries == 60:
+        #                 break
+
+        #             num_of_tries += 1
+
+
+        #         if trans_status == 200 and trans_response['ResultCode'] == '0':
+        #             serializer.save()
+
+        #             pass
+        #         else:
+        #             return Response({'error': trans_response['ResultDesc']}, status=status.HTTP_400_BAD_REQUEST)
+
+                
+        #     else:
+        #         return Response({'error': res_data['errorMessage']}, status=status.HTTP_400_BAD_REQUEST)
+                
+
+
+
+        #     ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
+        #     payment_reference=str(uuid.uuid4())
+
+        #     return Response(
+        #         {"message": "Payment required", "payment_link": payment_reference},
+        #         status=status.HTTP_202_ACCEPTED
+        #     )
