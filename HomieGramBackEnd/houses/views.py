@@ -11,11 +11,11 @@ from chat.models import ChatRoom
 from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 
-from .utils import check_payment_status
+from .utils import check_payment_status, get_safe_group_name
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HousesSerializers, LocationSerializer, RoomSerializer,  PendingAdvertisementSerializer
 from accounts.serializers import MessageSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating, Houses, Location, Room, PendingAdvertisement
-
+from .utils import get_safe_group_name
 # Create your views here.
 
 def create_private_chat_if_not_exists(user1, user2):
@@ -103,9 +103,10 @@ class HouseAPIView(APIView):
 
             user = request.user 
 
+            safe_name = get_safe_group_name(house.name, house.id)
             
             room, created = ChatRoom.objects.get_or_create(
-                name=house.name,
+                name=safe_name,
                 defaults={'is_group': True}
             )
 

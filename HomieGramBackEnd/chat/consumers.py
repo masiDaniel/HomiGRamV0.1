@@ -161,4 +161,6 @@ class ChatConsumer(AsyncWebsocketConsumer):
             chatroom=chatroom,
             content=content
         )
+        chatroom.updated_at = message.created_at
+        chatroom.save()
         return message
