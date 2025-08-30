@@ -1,11 +1,13 @@
 from django.urls import path
-from .views import AddBookmarkView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView
+from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
     path('gethousesWithRooms/', HouseWithRoomsAPIView.as_view(), name="get_houses_with_rooms"),
     path('updateHouse/<int:house_id>/', HouseAPIView.as_view(), name="update-house"),
     path('getRooms/', GetRoomssAPIView.as_view(), name="get_houses"),
+    path('getMyRooms/', MyRoomsAPIView.as_view(), name="get_houses"),
+    path('updateRoom/<int:room_id>/', GetRoomssAPIView.as_view()),
     path("search/<str:name>", SearchApiView.as_view(), name="search_house"),
     path('rate/<int:house_id>/', RateHouseAPIView.as_view(), name='rate-house'),
     path('locations/', LocationsAPIView.as_view(), name="get_locations"),
@@ -20,6 +22,8 @@ urlpatterns = [
     path('bookmark/remove/<int:house_id>/', RemoveBookmarkView.as_view(), name='remove_bookmark'),
 
     path('assign-tenant/<int:house_id>/', AssignTenantView.as_view(), name='assign_tenant'),
+    path('request-contract-termination/<int:agreement_id>/', RequestTerminationAPIView.as_view(), name='request_contract_termination'),
+    path('approve-contract-termination/<int:agreement_id>/', ApproveTerminationAPIView.as_view(), name='assign_tenant'),
     path('assign-caretaker/', AssignCaretakerView.as_view(), name='assign_caretaker'),
     path('remove-caretaker/', RemoveCaretakerView.as_view(), name='remove_caretaker'),
     path('get-all-caretaker/', GetCaretakersAPIView.as_view(), name='get_caretakers'),

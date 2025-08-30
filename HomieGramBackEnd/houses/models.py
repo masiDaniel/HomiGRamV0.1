@@ -59,10 +59,6 @@ class Houses(models.Model):
         max_digits=9, decimal_places=6, null=True, blank=True
     )
     amenities = models.ManyToManyField(Amenity, related_name='houses')
-    image = models.ImageField(upload_to='house_images/', null=True, blank=True)
-    image_1 = models.ImageField(upload_to='house_images/', null=True, blank=True)
-    image_2 = models.ImageField(upload_to='house_images/', null=True, blank=True)
-    image_3 = models.ImageField(upload_to='house_images/', null=True, blank=True)
     video = models.FileField(upload_to='house_videos/', null=True, blank=True)
     payment_bank_name = models.CharField(max_length=100, blank=True)
     payment_account_number = models.CharField(max_length=50, blank=True)
@@ -89,6 +85,15 @@ class Houses(models.Model):
     def __str__(self):
         return f'{self.name} - Rating: {self.rating}'
 
+
+class HouseImage(models.Model):
+    house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='house_images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.house.name}"
+    
 class HouseRating(models.Model):
     house = models.ForeignKey(Houses, related_name='ratings', on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -151,8 +156,27 @@ class Room(models.Model):
         self.occupied = False
         self.save()
     def __str__(self):
-        # name = apartment + self.id
-        return f"{self.apartment.name} {self.id}"
+        return f"{self.apartment.name} {self.room_name}"
+
+
+class TenancyAgreement(models.Model):
+    AGREEMENT_STATUS = (
+        ('pending', 'Pending'),   
+        ('active', 'Active'),     
+        ('terminated', 'Terminated'), 
+    )
+
+    tenant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    house = models.ForeignKey(Houses, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=AGREEMENT_STATUS, default='pending')
+    termination_requested = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status})"
+
 
 
 class Payment(models.Model):

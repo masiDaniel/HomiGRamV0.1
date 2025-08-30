@@ -4,17 +4,17 @@ from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveAPIView
-from datetime import  datetime, timezone
-import uuid
+from django.utils import timezone
+
 
 from chat.models import ChatRoom
 from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 
 from .utils import check_payment_status, get_safe_group_name
-from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomSerializer,  PendingAdvertisementSerializer
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer
 from accounts.serializers import MessageSerializer
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating, Houses, Location, Room, PendingAdvertisement
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating, Houses, Location, Room, PendingAdvertisement, TenancyAgreement
 from .utils import get_safe_group_name
 # Create your views here.
 
@@ -67,24 +67,34 @@ class HouseAPIView(APIView):
            
             room.participants.add(user)
 
+            if request.FILES:
+            # Loop through all uploaded images
+                for key, image in request.FILES.items():
+                    # You can have a separate model like HouseImage
+                    HouseImage.objects.create(house=house, image=image)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    def patch(self, request, *args, **kwargs):
-        """
-        Partially update an existing house
-        """
+    def patch(self, request, house_id):
         try:
-            house = Houses.objects.get(id=kwargs['house_id'])  
+            house = Houses.objects.get(id=house_id)
         except Houses.DoesNotExist:
-            return Response({"detail": "House not found."}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = HousesSerializers(house, data=request.data, partial=True)  
+            return Response({"detail": "House not found"}, status=404)
+        print(f"this is the data {request.data}")
+        serializer = HousesSerializers(house, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()  
-            return Response(serializer.data, status=status.HTTP_200_OK) 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            house = serializer.save()
+
+          
+            if 'images' in request.FILES:
+                images = request.FILES.getlist('images')
+                for image in images:
+                    HouseImage.objects.create(house=house, image=image)
+
+            return Response(serializer.data, status=200)
+        return Response(serializer.errors, status=400)
 
 
 class HouseWithRoomsAPIView(APIView):
@@ -170,18 +180,28 @@ class GetRoomssAPIView(APIView):
     
     def patch(self, request, *args, **kwargs):
         """
-        Partially update an existing house
+        Partially update an existing room
         """
         try:
-            house = Room.objects.get(id=kwargs['house_id'])  
-        except Houses.DoesNotExist:
-            return Response({"detail": "House not found."}, status=status.HTTP_404_NOT_FOUND)
+            room = Room.objects.get(id=kwargs['room_id'])  
+        except Room.DoesNotExist:
+            return Response({"detail": "Room not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = HousesSerializers(house, data=request.data, partial=True)  
+        serializer = RoomSerializer(room, data=request.data, partial=True)  
         if serializer.is_valid():
             serializer.save()  
             return Response(serializer.data, status=status.HTTP_200_OK) 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MyRoomsAPIView(APIView):
+    def get(self, request, *args, **kwargs):
+        """
+        Get rooms that belong to the current logged-in user
+        """
+        user = request.user
+        my_rooms = Room.objects.filter(tenant=user)  # filter rooms by tenant
+        serializer = RoomAndTenancySerializer(my_rooms, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AmenitiessAPIView(APIView):
 
@@ -292,7 +312,7 @@ class ConfirmPaymentAPIView(APIView):
 class GetAdvertisementsAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
-        today = datetime.now(timezone.utc).date()
+        today = timezone.now
 
       
         status_param = request.query_params.get('status', None)
@@ -330,47 +350,70 @@ class AssignTenantView(APIView):
     def post(self, request, house_id):
         # Get the house object
         house = Houses.objects.filter(id=house_id).first()
-        landlord = house.landlord_id
-        CareTaker = house.caretaker
-        house_group_name = f"{house.name}_official" 
-        
         if not house:
             return Response({"error": "House not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Find an empty room in the house (where occupied=False)
-        empty_room = Room.objects.filter(apartment=house, occupied=False).first()
+        landlord = house.landlord_id
+        caretaker = house.caretaker
+        house_group_name = f"{house.name}_official"
 
-        if not empty_room:
-            return Response({"error": "No empty rooms available in this house"}, status=status.HTTP_400_BAD_REQUEST)
+        # Get room_id from request
+        room_id = request.data.get("room_id")
+        if not room_id:
+            return Response({"error": "room_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Simulate checking payment status (you would integrate with an actual payment gateway here)
-        payment_confirmed = check_payment_status(empty_room)
-        
+        # Find the specific room (and assume FE only sends empty ones)
+        try:
+            room = Room.objects.get(id=room_id, apartment=house, occupied=False)
+        except Room.DoesNotExist:
+            return Response({"error": "Room not available"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Simulate checking payment status (stub for now)
+        payment_confirmed = check_payment_status(room)
         if not payment_confirmed:
             return Response({"error": "Payment not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
 
-      
         tenant = request.user
-        empty_room.assign_tenant(tenant)
 
-        
-        empty_room.rent_status = True
-        empty_room.save()
-
-        house_group, created = ChatRoom.objects.get_or_create(
-        name=house_group_name,
-        defaults={"is_group": True},
+        # Create tenancy agreement first
+        agreement = TenancyAgreement.objects.create(
+            tenant=tenant,
+            house=house,
+            room=room,
+            status="pending"  
         )
-        
+
+
+        # Simulate payment check
+        payment_confirmed = check_payment_status(room)
+        if not payment_confirmed:
+            return Response({"error": "Payment not confirmed", "agreement_id": agreement.id}, status=400)
+
+        # Approve agreement
+        agreement.status = "active"
+        agreement.save()
+        # Assign tenant
+      
+        room.assign_tenant(tenant)
+        room.rent_status = True
+        room.save()
+
+        # Ensure official house group exists
+        house_group, created = ChatRoom.objects.get_or_create(
+            name=house_group_name,
+            defaults={"is_group": True},
+        )
         house_group.participants.add(tenant)
 
+        # Landlord chat
         create_private_chat_if_not_exists(tenant, landlord)
 
-        if CareTaker:
-            create_private_chat_if_not_exists(tenant, CareTaker.user_id)
+        # Caretaker chat
+        if caretaker:
+            create_private_chat_if_not_exists(tenant, caretaker.user_id)
 
-       
-        room_data = RoomSerializer(empty_room).data 
+        # Return updated room data
+        room_data = RoomSerializer(room).data
         return Response(room_data, status=status.HTTP_200_OK)
     
     
@@ -417,6 +460,43 @@ class GetCaretakersAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+class RequestTerminationAPIView(APIView):
+    def post(self, request, agreement_id):
+        try:
+            agreement = TenancyAgreement.objects.get(id=agreement_id, tenant=request.user)
+        except TenancyAgreement.DoesNotExist:
+            return Response({"error": "Agreement not found"}, status=404)
+
+        if agreement.status != "active":
+            return Response({"error": "Agreement is not active"}, status=400)
+
+        agreement.termination_requested = True
+        agreement.save()
+
+        return Response({"message": "Termination request submitted, awaiting approval"}, status=200)
+
+
+class ApproveTerminationAPIView(APIView):
+    def post(self, request, agreement_id):
+        # Only system/admins should hit this endpoint
+        try:
+            agreement = TenancyAgreement.objects.get(id=agreement_id, termination_requested=True)
+        except TenancyAgreement.DoesNotExist:
+            return Response({"error": "No termination request found"}, status=404)
+
+        agreement.status = "terminated"
+        agreement.end_date = timezone.now()
+        agreement.save()
+
+        # Free the room
+        room = agreement.room
+        room.tenant = None
+        room.occupied = False
+        room.rent_status = False
+        room.save()
+
+        return Response({"message": "Agreement terminated successfully"}, status=200)
+    
  # if serializer:
         #     mpesa_client = MpesaHandler()
         #     stk_data = {
