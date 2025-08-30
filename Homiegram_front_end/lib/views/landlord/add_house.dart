@@ -75,14 +75,14 @@ class AddHousePageState extends State<AddHousePage> {
   }
 
   Future<void> _pickImages() async {
-    if (_imageUrls.length >= 4) {
+    if (_imageUrls.length >= 16) {
       showCustomSnackBar(context, 'You can only select up to 4 images.');
       return;
     }
 
     final List<XFile> images = await _picker.pickMultiImage();
 
-    final int remainingSlots = 4 - _imageUrls.length;
+    final int remainingSlots = 16 - _imageUrls.length;
 
     setState(() {
       _imageUrls.addAll(
@@ -94,7 +94,7 @@ class AddHousePageState extends State<AddHousePage> {
 
     if (images.length > remainingSlots) {
       showCustomSnackBar(
-          context, 'Some images were not added due to the 4-image limit.');
+          context, 'Some images were not added due to the 16-image limit.');
     }
   }
 
@@ -169,7 +169,7 @@ class AddHousePageState extends State<AddHousePage> {
                   controller: houseAddressController,
                   readOnly: true,
                   decoration: InputDecoration(
-                    labelText: "Business Location",
+                    labelText: "Location",
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.search),
                       onPressed: () => showLocationDialog(context),
@@ -229,7 +229,7 @@ class AddHousePageState extends State<AddHousePage> {
                 _imageUrls.isNotEmpty
                     ? Wrap(
                         spacing: 8.0,
-                        children: _imageUrls.take(4).map((url) {
+                        children: _imageUrls.take(16).map((url) {
                           return Stack(
                             alignment: Alignment.topRight,
                             children: [

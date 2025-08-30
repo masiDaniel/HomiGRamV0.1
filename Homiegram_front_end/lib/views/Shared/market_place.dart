@@ -550,8 +550,7 @@ class _MarketPlaceState extends State<MarketPlace> {
                 isScrollControlled: true,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(12),
-                    bottom: Radius.circular(12),
+                    top: Radius.circular(48),
                   ),
                 ),
                 builder: (_) => FilterSheetBusinesses(

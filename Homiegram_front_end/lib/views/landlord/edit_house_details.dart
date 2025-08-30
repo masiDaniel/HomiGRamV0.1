@@ -84,7 +84,7 @@ class _EditHouseDetailsPageState extends State<EditHouseDetailsPage> {
       'description': description,
       'payment_bank_name': bankName,
       'payment_account_number': accountNumber,
-      'amenities': selectedAmenities.toList(),
+      // 'amenities': selectedAmenities.toList(),
       'images': _imageUrls
     };
 

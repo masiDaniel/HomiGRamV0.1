@@ -139,14 +139,6 @@ class _LandlordManagementState extends State<LandlordManagement> {
                   padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16.0),
-                    // boxShadow: [
-                    //   BoxShadow(
-                    //     color: Colors.grey.withOpacity(0.15),
-                    //     spreadRadius: 3,
-                    //     blurRadius: 12,
-                    //     offset: const Offset(0, 6),
-                    //   ),
-                    // ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,10 +1,11 @@
+import 'package:homi_2/models/room.dart';
+
 class GetHouse {
   final int houseId;
   final String name;
   final String rentAmount;
   final int rating;
   final String description;
-
   final List<String>? images;
   final String bankName;
   final String accountNumber;
@@ -15,6 +16,7 @@ class GetHouse {
   final int landlordId;
   final int? caretakerId;
   final String? contractUrl;
+  final Map<String, List<GetRooms>>? rooms;
 
   GetHouse(
       {required this.houseId,
@@ -31,7 +33,8 @@ class GetHouse {
       this.latitude,
       this.longitude,
       this.caretakerId,
-      this.contractUrl});
+      this.contractUrl,
+      this.rooms});
 
   @override
   String toString() {
@@ -46,18 +49,33 @@ class GetHouse {
   houseId: $houseId,
   bankName: $bankName,
   accountNumber: $accountNumber,
-  location_detail: $locationDetail
+  location_detail: $locationDetail,
+    rooms: $rooms
 }''';
   }
 
   factory GetHouse.fromJSon(Map<String, dynamic> json) {
-    // TODO : have this include upto 10 images. Also refactor the backend
     List<String> images = [];
-    if (json['image'] != null) images.add(json['image']);
-    if (json['image_1'] != null) images.add(json['image_1']);
-    if (json['image_2'] != null) images.add(json['image_2']);
-    if (json['image_3'] != null) images.add(json['image_3']);
+    if (json['images'] != null) {
+      images = (json['images'] as List)
+          .map((imgObj) => imgObj['image'] as String)
+          .toList();
+    }
 
+    Map<String, List<GetRooms>>? roomsMap;
+
+    if (json['rooms'] != null) {
+      roomsMap = {};
+
+      (json['rooms'] as Map<String, dynamic>).forEach((key, value) {
+        final roomList = (value as List<dynamic>)
+            .where((roomJson) => roomJson != null)
+            .map((roomJson) => GetRooms.fromJSon(roomJson))
+            .toList();
+
+        roomsMap![key] = roomList;
+      });
+    }
     return GetHouse(
       houseId: json['id'] ?? '',
       name: json['name'] ?? '',
@@ -78,6 +96,7 @@ class GetHouse {
       longitude: json['longitude'] != null
           ? double.parse(json['longitude'].toString())
           : null,
+      rooms: roomsMap,
     );
   }
 

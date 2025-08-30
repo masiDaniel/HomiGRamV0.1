@@ -41,6 +41,7 @@ class MyTextFieldState extends State<MyTextField> {
       child: TextField(
         controller: widget.controller,
         obscureText: _obscureText,
+        cursorColor: const Color(0xFF149204),
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
             borderSide:
@@ -48,8 +49,7 @@ class MyTextFieldState extends State<MyTextField> {
             borderRadius: BorderRadius.circular(12.0),
           ),
           focusedBorder: OutlineInputBorder(
-            borderSide:
-                const BorderSide(color: Color.fromARGB(255, 20, 146, 4)),
+            borderSide: const BorderSide(color: Color(0xFF149204)),
             borderRadius: BorderRadius.circular(12.0),
           ),
           hintText: widget.hintText,

@@ -34,147 +34,250 @@ class _FilterSheetState extends State<FilterSheetHouses> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 5,
-            margin: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.grey[400],
-              borderRadius: BorderRadius.circular(10),
+          // Top handle for modal
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
 
-          // Location dropdown
-          Text("Location", style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            "Location",
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+          ),
           const SizedBox(height: 8),
-          DropdownButton<Locations>(
+          DropdownButtonFormField<Locations>(
             value: selectedLocation,
             items: widget.locations.map((location) {
               return DropdownMenuItem<Locations>(
                 value: location,
                 child: Text(
-                    '${location.county!}, ${location.town!}, ${location.area!}'),
+                  '${location.county!}, ${location.town!}, ${location.area!}',
+                ),
               );
             }).toList(),
-            onChanged: (Locations? value) {
-              setState(() {
-                selectedLocation = value;
-              });
+            onChanged: (value) {
+              setState(() => selectedLocation = value);
             },
-            // popup background
-            borderRadius: BorderRadius.circular(12), // rounded popup corners
-            icon: const Icon(
-              Icons.keyboard_arrow_down_rounded,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          // // Amenities chips
-          // Text("Amenities", style: Theme.of(context).textTheme.titleMedium),
-          // const SizedBox(height: 8),
-          // Wrap(
-          //   spacing: 8,
-          //   children: widget.amenities.map((amenity) {
-          //     final isSelected = selectedAmenities.contains(amenity);
-          //     return FilterChip(
-          //       label: Text(amenity.name!),
-          //       selected: isSelected,
-          //       onSelected: (selected) {
-          //         setState(() {
-          //           if (selected) {
-          //             selectedAmenities.add(amenity);
-          //           } else {
-          //             selectedAmenities.remove(amenity);
-          //           }
-          //         });
-          //       },
-          //     );
-          //   }).toList(),
-          // ),
-
-          // const SizedBox(height: 16),
-
-          // // Rent range slider
-          // Text("Rent Range", style: Theme.of(context).textTheme.titleMedium),
-          // RangeSlider(
-          //   values: rentRange,
-          //   min: 0,
-          //   max: 10000,
-          //   divisions: 50,
-          //   labels: RangeLabels(
-          //     "${rentRange.start.toInt()}",
-          //     "${rentRange.end.toInt()}",
-          //   ),
-          //   onChanged: (values) {
-          //     setState(() => rentRange = values);
-          //   },
-          // ),
-
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
           // Buttons
-
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              OutlinedButton(
-                onPressed: resetFilters,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor:
-                      const Color(0xFF126E06), // text + border color
-                  side: const BorderSide(color: Color(0xFF126E06), width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: resetFilters,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF126E06),
+                    side:
+                        const BorderSide(color: Color(0xFF126E06), width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                ),
-                child: const Text(
-                  "Reset",
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  child: const Text("Reset"),
                 ),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  final safeLocation = selectedLocation ?? "";
-                  // final safeAmenities = selectedAmenities.toList();
-                  // print("these are the amenities $selectedAmenities");
-                  // final safeMinRent = rentRange?.start.toInt() ?? 0;
-                  // final safeMaxRent = rentRange?.end.toInt() ?? 1000000;
-
-                  widget.onApply({
-                    "location": safeLocation,
-                    // "amenities": safeAmenities,
-                    // "min_rent": safeMinRent,
-                    // "max_rent": safeMaxRent,
-                  });
-                  Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF126E06),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    final safeLocation = selectedLocation ?? "";
+                    widget.onApply({"location": safeLocation});
+                    Navigator.pop(context);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF126E06),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 4,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  elevation: 3,
-                ),
-                child: const Text(
-                  "Apply",
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                  child: const Text("Apply"),
                 ),
               ),
             ],
-          )
+          ),
         ],
       ),
     );
   }
 }
+
+//  return Padding(
+//       padding: const EdgeInsets.all(16),
+//       child: Column(
+//         mainAxisSize: MainAxisSize.min,
+//         crossAxisAlignment: CrossAxisAlignment.center,
+//         children: [
+//           Container(
+//             width: 40,
+//             height: 5,
+//             margin: const EdgeInsets.symmetric(vertical: 10),
+//             decoration: BoxDecoration(
+//               color: Colors.grey[400],
+//               borderRadius: BorderRadius.circular(10),
+//             ),
+//           ),
+
+//           // Location dropdown
+//           Text("Location", style: Theme.of(context).textTheme.titleMedium),
+//           const SizedBox(height: 8),
+//           DropdownButton<Locations>(
+//             value: selectedLocation,
+//             items: widget.locations.map((location) {
+//               return DropdownMenuItem<Locations>(
+//                 value: location,
+//                 child: Text(
+//                     '${location.county!}, ${location.town!}, ${location.area!}'),
+//               );
+//             }).toList(),
+//             onChanged: (Locations? value) {
+//               setState(() {
+//                 selectedLocation = value;
+//               });
+//             },
+//             // popup background
+//             borderRadius: BorderRadius.circular(12), // rounded popup corners
+//             icon: const Icon(
+//               Icons.keyboard_arrow_down_rounded,
+//             ),
+//           ),
+
+//           const SizedBox(height: 16),
+
+//           // // Amenities chips
+//           // Text("Amenities", style: Theme.of(context).textTheme.titleMedium),
+//           // const SizedBox(height: 8),
+//           // Wrap(
+//           //   spacing: 8,
+//           //   children: widget.amenities.map((amenity) {
+//           //     final isSelected = selectedAmenities.contains(amenity);
+//           //     return FilterChip(
+//           //       label: Text(amenity.name!),
+//           //       selected: isSelected,
+//           //       onSelected: (selected) {
+//           //         setState(() {
+//           //           if (selected) {
+//           //             selectedAmenities.add(amenity);
+//           //           } else {
+//           //             selectedAmenities.remove(amenity);
+//           //           }
+//           //         });
+//           //       },
+//           //     );
+//           //   }).toList(),
+//           // ),
+
+//           // const SizedBox(height: 16),
+
+//           // // Rent range slider
+//           // Text("Rent Range", style: Theme.of(context).textTheme.titleMedium),
+//           // RangeSlider(
+//           //   values: rentRange,
+//           //   min: 0,
+//           //   max: 10000,
+//           //   divisions: 50,
+//           //   labels: RangeLabels(
+//           //     "${rentRange.start.toInt()}",
+//           //     "${rentRange.end.toInt()}",
+//           //   ),
+//           //   onChanged: (values) {
+//           //     setState(() => rentRange = values);
+//           //   },
+//           // ),
+
+//           const SizedBox(height: 20),
+
+//           // Buttons
+
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               OutlinedButton(
+//                 onPressed: resetFilters,
+//                 style: OutlinedButton.styleFrom(
+//                   foregroundColor:
+//                       const Color(0xFF126E06), // text + border color
+//                   side: const BorderSide(color: Color(0xFF126E06), width: 1.5),
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(12),
+//                   ),
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+//                 ),
+//                 child: const Text(
+//                   "Reset",
+//                   style: TextStyle(fontWeight: FontWeight.w600),
+//                 ),
+//               ),
+//               ElevatedButton(
+//                 onPressed: () {
+//                   final safeLocation = selectedLocation ?? "";
+//                   // final safeAmenities = selectedAmenities.toList();
+//                   // print("these are the amenities $selectedAmenities");
+//                   // final safeMinRent = rentRange?.start.toInt() ?? 0;
+//                   // final safeMaxRent = rentRange?.end.toInt() ?? 1000000;
+
+//                   widget.onApply({
+//                     "location": safeLocation,
+//                     // "amenities": safeAmenities,
+//                     // "min_rent": safeMinRent,
+//                     // "max_rent": safeMaxRent,
+//                   });
+//                   Navigator.pop(context);
+//                 },
+//                 style: ElevatedButton.styleFrom(
+//                   backgroundColor: const Color(0xFF126E06),
+//                   foregroundColor: Colors.white,
+//                   shape: RoundedRectangleBorder(
+//                     borderRadius: BorderRadius.circular(12),
+//                   ),
+//                   padding:
+//                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+//                   elevation: 3,
+//                 ),
+//                 child: const Text(
+//                   "Apply",
+//                   style: TextStyle(fontWeight: FontWeight.w600),
+//                 ),
+//               ),
+//             ],
+//           )
+//         ],
+//       ),
+//     );

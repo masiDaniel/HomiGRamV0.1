@@ -3,7 +3,7 @@ import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 
-Future<String?> rentRoom(int houseId) async {
+Future<String?> rentRoom(int houseId, int roomId) async {
   String? token = await UserPreferences.getAuthToken();
   try {
     final Map<String, String> headers = {
@@ -12,9 +12,9 @@ Future<String?> rentRoom(int houseId) async {
     };
 
     final response = await http.post(
-      Uri.parse("$devUrl/houses/assign-tenant/$houseId/"),
-      headers: headers,
-    );
+        Uri.parse("$devUrl/houses/assign-tenant/$houseId/"),
+        headers: headers,
+        body: jsonEncode({"room_id": roomId}));
 
     if (response.statusCode == 200) {
       return "Room successfully rented!";
