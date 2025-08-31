@@ -1,4 +1,5 @@
 import time
+import uuid
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework import status
@@ -14,7 +15,7 @@ from accounts.models import CustomUser
 from .utils import check_payment_status, get_safe_group_name
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer
 from accounts.serializers import MessageSerializer
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating, Houses, Location, Room, PendingAdvertisement, TenancyAgreement
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating, Houses, Location, Payment, Room, PendingAdvertisement, TenancyAgreement
 from .utils import get_safe_group_name
 # Create your views here.
 
@@ -368,11 +369,6 @@ class AssignTenantView(APIView):
         except Room.DoesNotExist:
             return Response({"error": "Room not available"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Simulate checking payment status (stub for now)
-        payment_confirmed = check_payment_status(room)
-        if not payment_confirmed:
-            return Response({"error": "Payment not confirmed"}, status=status.HTTP_400_BAD_REQUEST)
-
         tenant = request.user
 
         # Create tenancy agreement first
@@ -383,42 +379,143 @@ class AssignTenantView(APIView):
             status="pending"  
         )
 
-
-        # Simulate payment check
-        payment_confirmed = check_payment_status(room)
-        if not payment_confirmed:
-            return Response({"error": "Payment not confirmed", "agreement_id": agreement.id}, status=400)
-
-        # Approve agreement
-        agreement.status = "active"
-        agreement.save()
-        # Assign tenant
-      
-        room.assign_tenant(tenant)
-        room.rent_status = True
-        room.save()
-
-        # Ensure official house group exists
-        house_group, created = ChatRoom.objects.get_or_create(
-            name=house_group_name,
-            defaults={"is_group": True},
+        # 2) Create a payment entry (pending by default)
+        payment = Payment.objects.create(
+            tenant=tenant,
+            house=house,
+            room=room,
+            amount=room.rent,
+            payment_reference=str(uuid.uuid4()),
+            status="pending",
+            valid_until=timezone.now(),  # will update when confirmed
         )
-        house_group.participants.add(tenant)
 
-        # Landlord chat
-        create_private_chat_if_not_exists(tenant, landlord)
+        mpesa_client = MpesaHandler()
+        stk_data = {
+            'amount': room.rent,
+            'phone_number': tenant.phone_number,
+        }
 
-        # Caretaker chat
-        if caretaker:
-            create_private_chat_if_not_exists(tenant, caretaker.user_id)
+        res_status, res_data = mpesa_client.make_stk_push(stk_data)
 
-        # Return updated room data
-        room_data = RoomSerializer(room).data
-        return Response(room_data, status=status.HTTP_200_OK)
-    
-    
+        if res_status != 200:
+                payment.mark_failed(res_data)
+                return Response(
+                    {
+                        "error": res_data.get("errorMessage", "Failed to initiate STK push"),
+                        "payment_id": payment.id,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        
+        payment.save()
+
+        checkout_id = res_data.get("CheckoutRequestID")
+
+        num_of_tries = 0
+        trans_status, trans_response = None, None
+        while True:
+            time.sleep(12)
+            trans_status, trans_response = mpesa_client.query_transaction_status(checkout_id)
+
+            # break when we get a meaningful response or timeout
+            if trans_status == 200 and trans_response and "ResultCode" in trans_response:
+                break
+
+            if num_of_tries >= 60:
+                break
+
+            num_of_tries += 1
 
 
+        # # Simulate payment check
+        # payment_confirmed = check_payment_status(room)
+        # if not payment_confirmed:
+        #     return Response({"error": "Payment not confirmed", "agreement_id": agreement.id}, status=400)
+
+        # # Approve agreement
+        # agreement.status = "active"
+        # agreement.save()
+        # # Assign tenant
+      
+        # room.assign_tenant(tenant)
+        # room.rent_status = True
+        # room.save()
+
+        # # Ensure official house group exists
+        # house_group, created = ChatRoom.objects.get_or_create(
+        #     name=house_group_name,
+        #     defaults={"is_group": True},
+        # )
+        # house_group.participants.add(tenant)
+
+        # # Landlord chat
+        # create_private_chat_if_not_exists(tenant, landlord)
+
+        # # Caretaker chat
+        # if caretaker:
+        #     create_private_chat_if_not_exists(tenant, caretaker.user_id)
+
+        # # Return updated room data
+        # room_data = RoomSerializer(room).data
+        # return Response(room_data, status=status.HTTP_200_OK)
+        # 5) Handle result
+        if trans_status == 200 and trans_response.get("ResultCode") == "0":
+            # Payment confirmed
+            payment.status = "confirmed"
+            payment.save()
+            print("we get here")
+            # Approve agreement and assign tenant to room
+            agreement.status = "active"
+            agreement.save()
+
+            print("tenancy status should change here")
+
+            room.assign_tenant(tenant)  # assuming this method exists and saves
+            room.rent_status = True
+            room.save()
+
+            # Ensure official house group exists and add participant
+            house_group_name = f"{house.name}_official"
+            house_group, created = ChatRoom.objects.get_or_create(
+                name=house_group_name,
+                defaults={"is_group": True},
+            )
+            house_group.participants.add(tenant)
+
+            # Landlord & caretaker chats
+            landlord = house.landlord_id
+            caretaker = house.caretaker
+            create_private_chat_if_not_exists(tenant, landlord)
+            if caretaker:
+                create_private_chat_if_not_exists(tenant, caretaker.user_id)
+
+            # Return updated room data + payment info
+            room_data = RoomSerializer(room).data
+            return Response(
+                {
+                    "status": "success",
+                    "message": "Payment confirmed and tenancy activated",
+                    "room": room_data,
+                    "payment_id": payment.id,
+                    "payment_reference": payment.payment_reference,
+                    
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        # Payment failed / timed out
+        payment.status = "failed"
+        payment.save()
+        return Response(
+            {
+                "status": "error",
+                "message": (trans_response or {}).get("ResultDesc", "Payment failed or timed out"),
+                "payment_id": payment.id,
+                "mpesa_result": trans_response,
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 class AssignCaretakerView(APIView):
     def post(self, request):
@@ -497,48 +594,3 @@ class ApproveTerminationAPIView(APIView):
 
         return Response({"message": "Agreement terminated successfully"}, status=200)
     
- # if serializer:
-        #     mpesa_client = MpesaHandler()
-        #     stk_data = {
-        #         'amount': 10000,
-        #         'phone_number': '254799212379'
-        #     }
-        #     res_status, res_data = mpesa_client.make_stk_push(stk_data)
-        #     if res_status  == 200:
-        #         num_of_tries = 0
-        #         while True:
-
-        #             #asynchronus progrgramming
-        #             time.sleep(1)
-        #             trans_status, trans_response = mpesa_client.query_transaction_status(res_data['CheckoutRequestID'])
-
-        #             if trans_status == 200:
-        #                 break
-
-        #             if num_of_tries == 60:
-        #                 break
-
-        #             num_of_tries += 1
-
-
-        #         if trans_status == 200 and trans_response['ResultCode'] == '0':
-        #             serializer.save()
-
-        #             pass
-        #         else:
-        #             return Response({'error': trans_response['ResultDesc']}, status=status.HTTP_400_BAD_REQUEST)
-
-                
-        #     else:
-        #         return Response({'error': res_data['errorMessage']}, status=status.HTTP_400_BAD_REQUEST)
-                
-
-
-
-        #     ad = serializer.save(payment_reference=str(uuid.uuid4()))  # Generate payment reference
-        #     payment_reference=str(uuid.uuid4())
-
-        #     return Response(
-        #         {"message": "Payment required", "payment_link": payment_reference},
-        #         status=status.HTTP_202_ACCEPTED
-        #     )

@@ -23,7 +23,7 @@ class MpesaHandler:
     def __init__(self):
         self.now = datetime.now()
         
-        self.shortcode = '3663544'
+        self.shortcode = '174379'
         self.consumer_key = "OHN0GbhpYbjBkRA1LKogzRKrGJ3D6NAesoihimvPySW416mO"
         self.consumer_secret = "mCGvywmRVUoGl3upFbtSehzsbclQyOkoUGRXox4JYQfqNiup5JysVls6IwRIrdMc"
         self.access_token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
@@ -83,7 +83,7 @@ class MpesaHandler:
             "BusinessShortCode": self.shortcode,
             "Password": self.password,
             "Timestamp": self.timestamp,
-            "TransactionType": "CustomerBuyGoodsOnline",
+            "TransactionType": "CustomerPayBillOnline",
             "Amount": math.ceil(float(amount)),
             "PartyA": phone_number,
             "PartyB": self.shortcode,

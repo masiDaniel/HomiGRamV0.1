@@ -2,12 +2,10 @@ from django.utils import timezone
 from django.conf import settings
 from django.db import models
 from dynaconf import ValidationError
-# from django.utils import timezone
 from accounts.models import CustomUser
+from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+
 
 
 
@@ -144,7 +142,7 @@ class Room(models.Model):
     # entry_date = models.DateField(default=timezone.now())
     room_images = models.ImageField(upload_to='room_images/', default="Homi rooms")
     rent_status = models.BooleanField(default=False)
-    last_payment_date = models.DateField(null=True, blank=True)
+    last_payment_date = models.DateTimeField(null=True, blank=True)
     
     def assign_tenant(self, tenant):
         self.tenant = tenant
@@ -178,19 +176,37 @@ class TenancyAgreement(models.Model):
         return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status})"
 
 
+    
+
 
 class Payment(models.Model):
     tenant = models.ForeignKey(CustomUser, related_name="payments", on_delete=models.CASCADE)
     room = models.ForeignKey(Room, related_name="payments", on_delete=models.CASCADE)
+    house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name="payments")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateTimeField(default=timezone.now)
-    payment_status = models.BooleanField(default=True)  # True if payment was successful
+    payment_reference = models.CharField(max_length=100, unique=True)
+    
+    paid_at = models.DateTimeField(default=timezone.now)
+    valid_until = models.DateTimeField()
 
+    status = models.CharField(
+        max_length=20,
+        choices=(("pending", "Pending"), ("confirmed", "Confirmed"), ("failed", "Failed")),
+        default="pending",
+    )
+
+    #refactor this to be untill next payment date
+    def mark_confirmed(self):
+        """Mark payment as confirmed and valid for 30 days."""
+        self.status = "confirmed"
+        self.valid_until = timezone.now() + timedelta(days=30)
+        self.save()
+    
     def save(self, *args, **kwargs):
         """Automatically update rent status when payment is saved."""
         super().save(*args, **kwargs)  # Save payment record
         self.room.rent_status = True
-        self.room.last_payment_date = self.payment_date
+        self.room.last_payment_date = self.paid_at
         self.room.save()
 
 
