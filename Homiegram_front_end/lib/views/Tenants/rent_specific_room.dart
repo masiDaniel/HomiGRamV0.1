@@ -14,9 +14,8 @@ class RoomDetailsScreen extends StatelessWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // AppBar with image
           SliverAppBar(
-            expandedHeight: 250,
+            expandedHeight: 450,
             pinned: true,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(room.roomName,
@@ -25,31 +24,18 @@ class RoomDetailsScreen extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                   )),
               background: Expanded(
-                child: room.roomImages != null
-                    ? Image.network(
-                        '$devUrl${room.roomImages}',
-                        fit: BoxFit.cover,
-                      )
-                    : Container(
-                        color: Colors.grey[300],
-                        child: const Icon(
-                          Icons.image,
-                          size: 50,
-                          color: Colors.white,
-                        ),
-                      ),
-              ),
+                  child: Image.network(
+                '$devUrl${room.roomImages}',
+                fit: BoxFit.cover,
+              )),
             ),
           ),
-
-          // Content
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Room name
                   Text(
                     room.roomName,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -58,8 +44,6 @@ class RoomDetailsScreen extends StatelessWidget {
                         ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Bedrooms + Size
                   Row(
                     children: [
                       Icon(Icons.bed_outlined, color: Colors.grey[600]),
@@ -72,18 +56,15 @@ class RoomDetailsScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 16),
-
-                  // Rent
                   Text(
                     "Rent: KES ${room.rentAmount}",
                     style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87),
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 20),
-
-                  const SizedBox(height: 100), // space for bottom bar
+                  const SizedBox(height: 100),
                 ],
               ),
             ),

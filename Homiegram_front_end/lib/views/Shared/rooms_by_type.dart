@@ -94,20 +94,10 @@ class _RoomsByTypePageState extends State<RoomsByTypePage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                child: room.roomImages != null
-                                    ? Image.network(
-                                        '$devUrl${room.roomImages}',
-                                        fit: BoxFit.cover,
-                                      )
-                                    : Container(
-                                        color: Colors.grey[300],
-                                        child: const Icon(
-                                          Icons.image,
-                                          size: 50,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                              ),
+                                  child: Image.network(
+                                '$devUrl${room.roomImages}',
+                                fit: BoxFit.cover,
+                              )),
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(

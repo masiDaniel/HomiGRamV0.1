@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/action_button.dart';
 import 'package:homi_2/models/tenancy_agreement_model.dart';
 import 'package:homi_2/services/agreement_service.dart';
 
@@ -106,45 +107,12 @@ class AgreementDetailsPage extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.refresh, color: Colors.white),
-                  label: const Text("Renew",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 14),
-                  ),
+                ActionButton(
+                  label: "Terminate",
+                  icon: Icons.cancel,
+                  backgroundColor: const Color(0xFF940B01),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("Renew request sent")));
-                  },
-                ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.cancel, color: Colors.white),
-                  label: const Text("Terminate",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 14),
-                  ),
-                  onPressed: () async {
-                    bool success = await AgreementService()
-                        .terminateAgreement(agreement.id);
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(success
-                              ? "Termination request sent"
-                              : "Termination failed")),
-                    );
+                    _confirmTermination(context);
                   },
                 ),
               ],
@@ -172,6 +140,52 @@ class AgreementDetailsPage extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+
+  void _confirmTermination(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          "Confirm Termination",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+            "Are you sure you want to terminate your contract? This cannot be undone."),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "Cancel",
+              style: TextStyle(color: Colors.black54),
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF940B01),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () async {
+              bool success =
+                  await AgreementService().terminateAgreement(agreement.id);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                    content: Text(success
+                        ? "Termination request sent"
+                        : "Termination failed")),
+              );
+              Navigator.pop(context);
+            },
+            child:
+                const Text("Continue", style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
 }
