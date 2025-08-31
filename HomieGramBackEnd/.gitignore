@@ -109,3 +109,8 @@ local_settings.py
 .venv
 db.sqlite3
 
+.env.production
+.env.development
+
+HomieGramBackEnd/media/ 
+HomieGramBackEnd/house_images/
