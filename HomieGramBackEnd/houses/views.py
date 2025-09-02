@@ -1,3 +1,4 @@
+from django.utils.text import slugify
 import time
 import uuid
 from django.shortcuts import render
@@ -69,9 +70,7 @@ class HouseAPIView(APIView):
             room.participants.add(user)
 
             if request.FILES:
-            # Loop through all uploaded images
                 for key, image in request.FILES.items():
-                    # You can have a separate model like HouseImage
                     HouseImage.objects.create(house=house, image=image)
 
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -469,14 +468,15 @@ class AssignTenantView(APIView):
             agreement.status = "active"
             agreement.save()
 
-            print("tenancy status should change here")
+            print("Agreement saved")
 
             room.assign_tenant(tenant)  # assuming this method exists and saves
             room.rent_status = True
             room.save()
-
+            print("tenancy saved")
             # Ensure official house group exists and add participant
-            house_group_name = f"{house.name}_official"
+            
+            house_group_name = f"{slugify(house.name)}-official"
             house_group, created = ChatRoom.objects.get_or_create(
                 name=house_group_name,
                 defaults={"is_group": True},
