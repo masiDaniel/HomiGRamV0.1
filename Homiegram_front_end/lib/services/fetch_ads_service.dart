@@ -7,6 +7,7 @@ import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 
 Future<List<Ad>> fetchAds() async {
+  print(">>> Fetching ads from DB/API...");
   String? token = await UserPreferences.getAuthToken();
 
   final Map<String, String> headers = {

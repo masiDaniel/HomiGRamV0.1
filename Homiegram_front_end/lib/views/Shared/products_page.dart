@@ -101,7 +101,7 @@ class _ProductsPageState extends State<ProductsPage>
                 crossAxisCount: 2, // 2 items per row
                 crossAxisSpacing: 8.0, // space between columns
                 mainAxisSpacing: 8.0, // space between rows
-                childAspectRatio: 0.9, // adjust height/width ratio for cards
+                childAspectRatio: 0.8, // adjust height/width ratio for cards
               ),
               itemBuilder: (context, index) {
                 final product = filteredProducts[index];

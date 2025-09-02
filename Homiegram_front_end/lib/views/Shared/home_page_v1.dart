@@ -28,11 +28,10 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Future<List<ChatRoom>> chatRoomsFuture;
-  late Future<List<ChatRoom>> chatRoomsFutureFromDB;
+  late Stream<List<ChatRoom>> chatRoomsStream;
   late Future<List<Ad>> futureAds;
   List<Ad> _ads = [];
-  List<GerUsers> users = [];
+  late Future<List<GerUsers>> users;
 
   String selectedFilter = 'All';
   final bool isConditionMet = true;
@@ -45,6 +44,7 @@ class _HomePageState extends State<HomePage> {
 
   String? authToken;
   String? currentUserEmail;
+  final DatabaseHelper dbHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -52,27 +52,21 @@ class _HomePageState extends State<HomePage> {
 
     _loadAuthToken();
     futureAds = fetchAds();
+    users = fetchUsers();
 
-    chatRoomsFutureFromDB = DatabaseHelper().getChatRoomsWithMessages();
+    chatRoomsStream = dbHelper.watchChatRooms();
     syncChatRooms();
 
     _startAutoScroll();
     _pageController = PageController(initialPage: 0);
-
-    fetchUsers();
   }
 
   Future<void> syncChatRooms() async {
+    print(">>> syncChatRooms called");
     final remoteChats = await fetchChatRooms();
     for (var chat in remoteChats) {
       await DatabaseHelper().insertOrUpdateChatroom(chat);
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      chatRoomsFutureFromDB = DatabaseHelper().getChatRoomsWithMessages();
-    });
   }
 
   List<ChatRoom> filterChats(List<ChatRoom> chats, String filter) {
@@ -87,7 +81,7 @@ class _HomePageState extends State<HomePage> {
     currentUserEmail = (await UserPreferences.getUserEmail())!;
   }
 
-  Future<void> fetchUsers() async {
+  Future<List<GerUsers>> fetchUsers() async {
     String? token = await UserPreferences.getAuthToken();
 
     try {
@@ -103,14 +97,17 @@ class _HomePageState extends State<HomePage> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          users = data.map((user) => GerUsers.fromJSon(user)).toList();
-        });
+
+        final fetchedUsers =
+            data.map((user) => GerUsers.fromJSon(user)).toList();
+
+        return fetchedUsers;
       } else {
         throw Exception('Failed to fetch users');
       }
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return [];
+      rethrow;
     }
   }
 
@@ -119,6 +116,7 @@ class _HomePageState extends State<HomePage> {
     _timer?.cancel();
     _pageController.dispose();
     _videoController?.dispose();
+
     super.dispose();
   }
 
@@ -183,11 +181,6 @@ class _HomePageState extends State<HomePage> {
                     );
                   } else {
                     _ads = snapshot.data!;
-
-                    if (_timer == null) {
-                      _startAutoScroll();
-                    }
-
                     return PageView.builder(
                       controller: _pageController,
                       itemCount: _ads.length,
@@ -288,8 +281,8 @@ class _HomePageState extends State<HomePage> {
               flex: 2,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: FutureBuilder<List<ChatRoom>>(
-                  future: chatRoomsFutureFromDB,
+                child: StreamBuilder<List<ChatRoom>>(
+                  stream: chatRoomsStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return _buildChatShimmer();
@@ -356,7 +349,7 @@ class _HomePageState extends State<HomePage> {
               ),
               IconButton(
                 onPressed: () async {
-                  await showUserDialog(context, users);
+                  await showUserDialog(context, await users);
                 },
                 icon: const Icon(Icons.add_circle, color: Color(0xFF105A01)),
               ),

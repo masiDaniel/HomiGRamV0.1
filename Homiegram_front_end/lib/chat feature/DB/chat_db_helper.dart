@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:homi_2/models/chat.dart';
 import 'package:path/path.dart';
@@ -10,6 +11,8 @@ class DatabaseHelper {
   DatabaseHelper._internal();
 
   static Database? _database;
+  final StreamController<List<ChatRoom>> _chatRoomsController =
+      StreamController.broadcast();
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -55,6 +58,7 @@ class DatabaseHelper {
   }
 
   Future<List<ChatRoom>> getChatRoomsWithMessages() async {
+    print(">>> Fetching chat rooms from DB...");
     final db = await database;
 
     final List<Map<String, dynamic>> maps = await db.query(
@@ -74,7 +78,9 @@ class DatabaseHelper {
           name: map['name'],
           label: map['label'],
           participants: map['participants'] != null
-              ? List<int>.from(json.decode(map['participants']))
+              ? (json.decode(map['participants']) as List)
+                  .map((p) => Participants.fromJson(p))
+                  .toList()
               : [],
           lastMessage: map['last_message'] != null
               ? Message.fromJson(json.decode(map['last_message']))
@@ -98,7 +104,9 @@ class DatabaseHelper {
         'id': chatroom.id,
         'name': chatroom.name,
         'label': chatroom.label,
-        'participants': json.encode(chatroom.participants),
+        'participants': json.encode(
+          chatroom.participants.map((p) => p.toJson()).toList(),
+        ),
         'last_message': chatroom.lastMessage != null
             ? json.encode(chatroom.lastMessage!.toJson())
             : null,
@@ -107,6 +115,7 @@ class DatabaseHelper {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+    _notifyChatRooms();
   }
 
   // Insert or update message
@@ -139,7 +148,9 @@ class DatabaseHelper {
         name: maps[i]['name'],
         label: maps[i]['label'],
         participants: maps[i]['participants'] != null
-            ? List<int>.from(json.decode(maps[i]['participants']))
+            ? (json.decode(maps[i]['participants']) as List)
+                .map((p) => Participants.fromJson(p))
+                .toList()
             : [],
         lastMessage: maps[i]['last_message'] != null
             ? Message.fromJson(json.decode(maps[i]['last_message']))
@@ -190,5 +201,20 @@ class DatabaseHelper {
     final db = await database;
     await db.delete('chatrooms');
     await db.delete('messages');
+  }
+
+  /// Expose stream
+  Stream<List<ChatRoom>> watchChatRooms() {
+    _notifyChatRooms(); // emit initial data
+    return _chatRoomsController.stream;
+  }
+
+  Future<void> _notifyChatRooms() async {
+    final chats = await getChatRoomsWithMessages();
+    _chatRoomsController.add(chats);
+  }
+
+  void dispose() {
+    _chatRoomsController.close();
   }
 }

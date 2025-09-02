@@ -30,7 +30,7 @@ Future<List<GetHouse>> fetchHouses() async {
       final List<GetHouse> houses =
           housesData.map((json) => GetHouse.fromJSon(json)).toList();
 
-      allHouses = houses;
+      // allHouses = houses;
       return houses;
     } else {
       throw Exception('failed to fetch arguments');

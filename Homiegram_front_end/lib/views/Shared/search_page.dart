@@ -114,22 +114,40 @@ class _SearchPageState extends State<SearchPage> {
         final matchesSearch =
             house.name.toLowerCase().contains(safeSearchQuery);
 
-        final matchesLocation = selectedLocation == null ||
-            house.locationDetail == selectedLocation!.locationId;
+        // 🟢 Location filter (optional)
+        final matchesLocation = selectedLocation == null
+            ? true
+            : house.locationDetail == selectedLocation!.locationId;
 
-        // final matchesAmenities = selectedAmenities.isEmpty ||
-        //     selectedAmenities.every((a) => house.amenities.contains(a.name));
+        // 🟢 Amenities filter (optional)
+        final matchesAmenities = selectedAmenities.isEmpty
+            ? true
+            : selectedAmenities.every((a) => house.amenities.contains(a.id));
 
-        // final rentValue = int.tryParse(house.rentAmount) ?? 0;
-        // final safeMinRent = minRent ?? 0;
-        // final safeMaxRent = maxRent ?? 1000000;
-        // final matchesRent =
-        //     rentValue >= safeMinRent && rentValue <= safeMaxRent;
+        // 🟢 Rent filter (optional)
+        final rentValue = double.tryParse(house.rentAmount) ?? 0;
+        final matchesRent = (minRent == 0 && maxRent == 1000000)
+            ? true
+            : (rentValue >= minRent! && rentValue <= maxRent!);
+        // 🐛 Debug
+        print("---- Checking house: ${house.name} ----");
+        print("Rent: $rentValue | Allowed Range: $minRent - $maxRent");
+        print("Matches Rent: $matchesRent");
+        print("Matches Location: $matchesLocation");
+        print("Matches Search: $matchesSearch");
+        print("Matches Amenities: $matchesAmenities");
 
-        return matchesSearch && matchesLocation;
-        // matchesAmenities &&
-        // matchesRent;
+        print("House: ${house.name}, amenities: ${house.amenities}");
+        print(
+            "Selected amenities: ${selectedAmenities.map((a) => a.id).toList()}");
+
+        return matchesSearch &&
+            matchesLocation &&
+            matchesRent &&
+            matchesAmenities;
       }).toList();
+
+      print("Filtered Houses Count: ${displayedHouses.length}");
     });
   }
 
@@ -137,10 +155,24 @@ class _SearchPageState extends State<SearchPage> {
     setState(() {
       selectedLocation =
           filters["location"] is Locations ? filters["location"] : null;
-      // selectedAmenities =
-      //     filters["amenities"].map((e) => e as Amenities).toList();
-      // minRent = filters["min_rent"] ?? 0;
-      // maxRent = filters["max_rent"] ?? 1000000;
+      selectedAmenities = filters["amenities"] != null
+          ? List<Amenities>.from(filters["amenities"])
+          : [];
+
+      if (filters["rent"] is RangeValues) {
+        final range = filters["rent"] as RangeValues;
+
+        if (range.start > 0 || range.end < 500000) {
+          minRent = range.start.toInt();
+          maxRent = range.end.toInt();
+        } else {
+          minRent = 0;
+          maxRent = 500000;
+        }
+      } else {
+        minRent = 0;
+        maxRent = 500000;
+      }
     });
 
     applyFilters();
