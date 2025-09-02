@@ -1,17 +1,48 @@
-# homi_2
+# Homigram Frontend
+> Flutter app for Homigram – a student rental management system.
 
-A new Flutter project.
+---
 
-## Getting Started
+## 📖 Overview
+The **Homigram frontend** is a cross-platform Flutter app that allows students and landlords to interact seamlessly. Students can browse rooms, sign rental agreements, and chat directly with landlords, while landlords can list properties and manage tenants.
 
-This project is a starting point for a Flutter application.
+---
 
-A few resources to get you started if this is your first Flutter project:
+## ✨ Features
+- Room listing and details
+- Authentication (JWT-based login/signup)
+- Chat with landlords and tenants
+- Bookmark & favorite listings
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
+---
 
-samples, guidance on mobile development, and a full API reference.
+## 🛠 Tech Stack
+- **Framework:** Flutter (Dart)
+- **State Management:** Provider 
+- **Networking:** HTTP / Dio
+- **Local Storage:** SQLite
+
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Install [Flutter](https://docs.flutter.dev/get-started/install)
+- Android Studio or VS Code
+
+### Installation
+```bash
+# Clone repo
+git clone https://github.com/masiDaniel/HomiGRamV0.1.git
+cd Homiegram_front_end
+
+# Install dependencies
+flutter pub get
+
+# Run the app
+flutter run
+```
+
+### Happy coding

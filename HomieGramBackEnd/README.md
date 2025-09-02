@@ -1,28 +1,55 @@
-**HomieGram Backend**
+# Homigram Backend
+> Django REST API for Homigram – a student rental management system.
 
-homiegram is a platform that can be used by university students and landlords to get and rent better and accountable housing, 
-this will esasen and streamline most of the processes making it easier for all parties and maximizing their interactions.
+---
 
-## Getting started 
+##  Overview
+The **Homigram backend** powers the rental management system with APIs for user authentication, property listings, chat, and rental agreements. It is built with Django and Django REST Framework, ensuring scalability and security.
 
-to get started with the backend of HomieGram, follow these steps:
+---
 
-1. Clone this repository on your local machine:
-   ```bash
-   git clone https://github.com/CodexRodney/HomieGramBackEnd
+##  Features
+- JWT-based Authentication
+- User management (Students & Landlords)
+- Rental listings CRUD
+- Real-time chat (WebSocket/REST fallback)
+- Rental agreements management
+- Location-based queries
 
-2. run the virtual environment:
-   ```bash
-   source myenv/bin/activate
+---
 
-3. install the requirements:
-   ```bash
-   pip install -r requirements.txt
+## 🛠 Tech Stack
+- **Framework:** Django, Django REST Framework
+- **Database:** PostgreSQL / SQLite (dev)
+- **Auth:** JWT
+- **Deployment:** Gunicorn + Nginx (production)
 
-4. apply migrations to create the necessary database schema :
-   ```bash
-   python manage.py migrate
+---
 
-5. run the development server:
-   ```bash
-   python manage.py runserver
+##  Getting Started
+
+### Prerequisites
+- Python 3.0+
+- pip & virtualenv
+- PostgreSQL (or SQLite for local dev)
+
+### Installation
+```bash
+# Clone repo
+git clone https://github.com/masiDaniel/HomiGRamV0.1.git
+cd HomieGramBackEnd/
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Apply migrations
+python manage.py migrate
+
+# Run server
+python manage.py runserver
+```
+### Happy coding.
