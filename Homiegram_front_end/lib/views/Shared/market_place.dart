@@ -550,8 +550,7 @@ class _MarketPlaceState extends State<MarketPlace> {
                 isScrollControlled: true,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(12),
-                    bottom: Radius.circular(12),
+                    top: Radius.circular(48),
                   ),
                 ),
                 builder: (_) => FilterSheetBusinesses(
@@ -796,7 +795,7 @@ class _MarketPlaceState extends State<MarketPlace> {
               crossAxisCount: 2, // 2 columns
               crossAxisSpacing: 12.0, // space between columns
               mainAxisSpacing: 12.0, // space between rows
-              childAspectRatio: 0.9, // controls card height
+              childAspectRatio: 0.8, // controls card height
             ),
             itemBuilder: (context, index) {
               Products product = displayedProducts[index];

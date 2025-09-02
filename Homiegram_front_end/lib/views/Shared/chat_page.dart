@@ -131,6 +131,25 @@ class _ChatPageState extends State<ChatPage> {
     return utcTime.toLocal();
   }
 
+// Define participant colors (you can expand this palette)
+  final participantColors = [
+    Colors.blue,
+    Colors.purple,
+    Colors.orange,
+    Colors.teal,
+    Colors.red,
+    Colors.brown,
+    Colors.pink,
+    Colors.indigo,
+  ];
+
+// Helper: map emails to colors
+  Color getParticipantColor(String email) {
+    final index = widget.chat.participants.indexWhere((p) => p.email == email);
+    if (index == -1) return Colors.grey; // fallback
+    return participantColors[index % participantColors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -225,6 +244,17 @@ class _ChatPageState extends State<ChatPage> {
                           ? CrossAxisAlignment.end
                           : CrossAxisAlignment.start,
                       children: [
+                        if (widget.chat.isGroup && !isMe) ...[
+                          Text(
+                            msg.sender, // assuming msg.sender == email
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: getParticipantColor(msg.sender),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         Text(
                           msg.content,
                           style: TextStyle(

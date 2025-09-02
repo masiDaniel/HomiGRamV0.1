@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homi_2/models/room.dart';
+import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/landlord/edit_room_page.dart';
 
 class RoomDetailsPage extends StatelessWidget {
@@ -16,8 +17,9 @@ class RoomDetailsPage extends StatelessWidget {
         child: Column(
           children: [
             // Room Image
+
             room.roomImages.isNotEmpty
-                ? Image.network(room.roomImages)
+                ? Image.network('$devUrl${room.roomImages}')
                 : const Placeholder(
                     fallbackHeight: 200,
                     fallbackWidth: double.infinity,

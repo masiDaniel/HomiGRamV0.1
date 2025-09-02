@@ -17,9 +17,9 @@ const Map<String, String> headers = {
 
 // String chatUrl = 'wss://hommiegram.azurewebsites.net';
 
-String devUrl = 'http://192.168.100.18:8000';
+String devUrl = 'http://192.168.0.107:8000';
 
-String chatUrl = 'ws://192.168.100.18:8000';
+String chatUrl = 'ws://192.168.0.107:8000';
 Future fetchUserSignIn(
     BuildContext context, String username, String password) async {
   try {
@@ -75,26 +75,46 @@ Future updateUserInfo(Map<String, dynamic> updateData) async {
 Future updateHouseInfo(Map<String, dynamic> updateData, int houseId) async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    log("this is the data $updateData");
-    final headersWithToken = {
+    var uri = Uri.parse("$devUrl/houses/updateHouse/$houseId/");
+    var request = http.MultipartRequest('PATCH', uri);
+
+    // Add text fields
+    updateData.forEach((key, value) {
+      if (key != 'images') {
+        request.fields[key] = value.toString();
+      }
+    });
+
+    // Add images as files
+    if (updateData['images'] != null) {
+      for (var imagePath in updateData['images']) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'images',
+            imagePath,
+          ),
+        );
+      }
+    }
+
+    request.headers.addAll({
       ...headers,
       'Authorization': 'Token $token',
-    };
-    final response = await http
-        .patch(
-          Uri.parse("$devUrl/houses/updateHouse/$houseId/"),
-          headers: headersWithToken,
-          body: jsonEncode(updateData),
-        )
-        .timeout(const Duration(seconds: 10));
+    });
+
+    var streamedResponse = await request.send();
+    var response = await http.Response.fromStream(streamedResponse);
 
     if (response.statusCode == 200) {
+      log('House updated successfully');
       return true;
+    } else {
+      log('Update failed: ${response.statusCode} ${response.body}');
+      return false;
     }
   } catch (e) {
     rethrow;
   }
-  return null;
 }
 
 Future<bool> updateProfilePicture(String imagePath) async {

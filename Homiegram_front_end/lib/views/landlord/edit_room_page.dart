@@ -59,11 +59,12 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   Future<void> saveRoomDetails() async {
     String? token = await UserPreferences.getAuthToken();
-    final uri = Uri.parse("$devUrl/updateHouse/${widget.room.roomId}/");
+    final uri = Uri.parse("$devUrl/houses/updateRoom/${widget.room.roomId}/");
 
     var request = http.MultipartRequest("PATCH", uri);
 
     // Add form fields
+
     request.fields['room_name'] = nameController.text;
     request.fields['number_of_bedrooms'] = bedroomsController.text;
     request.fields['size_in_sq_meters'] = sizeController.text;

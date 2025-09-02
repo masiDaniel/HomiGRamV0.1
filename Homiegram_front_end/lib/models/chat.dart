@@ -36,11 +36,37 @@ class Message {
   }
 }
 
+class Participants {
+  final int id;
+  final String username;
+  final String email;
+  Participants({
+    required this.id,
+    required this.username,
+    required this.email,
+  });
+  factory Participants.fromJson(Map<String, dynamic> json) {
+    return Participants(
+      id: json['id'],
+      username: json['username'],
+      email: json['email'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      "id": id,
+      "username": username,
+      "email": email,
+    };
+  }
+}
+
 class ChatRoom {
   final int id;
   final String name;
   final String? label;
-  final List<int> participants;
+  final List<Participants> participants;
   late final List<Message> messages;
   final Message? lastMessage;
   final bool isGroup;
@@ -62,7 +88,11 @@ class ChatRoom {
       id: json['id'],
       name: json['name'],
       label: json['label'],
-      participants: List<int>.from(json['participants']),
+      participants: json['participants'] != null
+          ? (json['participants'] as List)
+              .map((p) => Participants.fromJson(p))
+              .toList()
+          : [],
       messages: json['messages'] != null
           ? (json['messages'] as List<dynamic>)
               .map((m) => Message.fromJson(m))
@@ -107,7 +137,7 @@ class ChatRoom {
       name: map['name'],
       label: map['label'],
       participants: map['participants'] != null
-          ? List<int>.from(json.decode(map['participants']))
+          ? List<Participants>.from(json.decode(map['participants']))
           : [],
       messages: map['messages'] != null
           ? (json.decode(map['messages']) as List<dynamic>)

@@ -45,4 +45,6 @@ class GetRooms {
       "apartment": apartmentID,
     };
   }
+
+  static fromJson(roomJson) {}
 }

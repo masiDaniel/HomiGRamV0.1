@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from accounts.models import CustomUser
 from .models import ChatRoom, Message
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -11,10 +13,16 @@ class MessageSerializer(serializers.ModelSerializer):
     def get_sender(self, obj):
         return obj.sender.email
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email']
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)
     label = serializers.SerializerMethodField()
     last_message = serializers.SerializerMethodField()
+    participants = UserSerializer(many=True, read_only=True)
 
     class Meta:
         model = ChatRoom

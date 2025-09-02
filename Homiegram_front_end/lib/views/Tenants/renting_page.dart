@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/action_button.dart';
-import 'package:homi_2/models/room.dart';
+import 'package:homi_2/models/room_with_agrrement_model.dart';
 import 'package:homi_2/services/get_rooms_service.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
+import 'package:homi_2/views/Tenants/tenant_agreement_page.dart';
 import 'package:lottie/lottie.dart';
 
 class RentingPage extends StatefulWidget {
@@ -14,13 +15,13 @@ class RentingPage extends StatefulWidget {
 }
 
 class _RentingPageState extends State<RentingPage> {
-  late Future<List<GetRooms>> futureRooms;
+  late Future<List<RoomWithAgreement>> futureRooms;
   int? userId;
 
   @override
   void initState() {
     super.initState();
-    futureRooms = fetchRooms();
+    futureRooms = fetchRoomsWithAgreements();
     _loadUserId();
   }
 
@@ -54,7 +55,7 @@ class _RentingPageState extends State<RentingPage> {
           )
         ],
       ),
-      body: FutureBuilder<List<GetRooms>>(
+      body: FutureBuilder<List<RoomWithAgreement>>(
         future: futureRooms,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -68,8 +69,8 @@ class _RentingPageState extends State<RentingPage> {
               ),
             );
           } else if (snapshot.hasData) {
-            List<GetRooms>? rooms = snapshot.data;
-            List<GetRooms> matchedRooms =
+            List<RoomWithAgreement>? rooms = snapshot.data;
+            List<RoomWithAgreement> matchedRooms =
                 rooms!.where((room) => room.tenantId == userId).toList();
 
             if (matchedRooms.isEmpty) {
@@ -179,7 +180,26 @@ class _RentingPageState extends State<RentingPage> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   ElevatedButton.icon(
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      if (room.agreement != null) {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                AgreementDetailsPage(
+                                              agreement: room.agreement!,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  "No agreement available")),
+                                        );
+                                      }
+                                    },
                                     style: ElevatedButton.styleFrom(
                                       foregroundColor: const Color(0xFF126E06),
                                       elevation: 0,
@@ -193,15 +213,17 @@ class _RentingPageState extends State<RentingPage> {
                                     ),
                                     icon: const Icon(Icons.payments_rounded),
                                     label: const Text(
-                                      "Pay Rent",
+                                      "View Agreement",
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 6),
                                   Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
                                     children: [
                                       ActionButton(
                                         label: "Raise Complaint",
@@ -210,15 +232,13 @@ class _RentingPageState extends State<RentingPage> {
                                             const Color(0xFFF0B803),
                                         onPressed: () {},
                                       ),
-                                      const SizedBox(width: 12),
+                                      const SizedBox(width: 20),
                                       ActionButton(
-                                        label: "Terminate",
-                                        icon: Icons.cancel,
+                                        label: "Pay Rent",
+                                        icon: Icons.money,
                                         backgroundColor:
-                                            const Color(0xFF940B01),
-                                        onPressed: () {
-                                          _confirmTermination(context);
-                                        },
+                                            const Color(0xFF126E06),
+                                        onPressed: () {},
                                       ),
                                     ],
                                   ),
@@ -262,41 +282,6 @@ class _RentingPageState extends State<RentingPage> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  void _confirmTermination(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
-          "Confirm Termination",
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-            "Are you sure you want to terminate your contract? This cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text(
-              "Cancel",
-              style: TextStyle(color: Colors.black54),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF940B01),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () => Navigator.pop(context),
-            child:
-                const Text("Continue", style: TextStyle(color: Colors.white)),
-          ),
-        ],
       ),
     );
   }

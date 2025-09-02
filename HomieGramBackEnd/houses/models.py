@@ -2,12 +2,10 @@ from django.utils import timezone
 from django.conf import settings
 from django.db import models
 from dynaconf import ValidationError
-# from django.utils import timezone
 from accounts.models import CustomUser
+from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.auth.models import User
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+
 
 
 
@@ -59,10 +57,6 @@ class Houses(models.Model):
         max_digits=9, decimal_places=6, null=True, blank=True
     )
     amenities = models.ManyToManyField(Amenity, related_name='houses')
-    image = models.ImageField(upload_to='house_images/', null=True, blank=True)
-    image_1 = models.ImageField(upload_to='house_images/', null=True, blank=True)
-    image_2 = models.ImageField(upload_to='house_images/', null=True, blank=True)
-    image_3 = models.ImageField(upload_to='house_images/', null=True, blank=True)
     video = models.FileField(upload_to='house_videos/', null=True, blank=True)
     payment_bank_name = models.CharField(max_length=100, blank=True)
     payment_account_number = models.CharField(max_length=50, blank=True)
@@ -89,6 +83,15 @@ class Houses(models.Model):
     def __str__(self):
         return f'{self.name} - Rating: {self.rating}'
 
+
+class HouseImage(models.Model):
+    house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='house_images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.house.name}"
+    
 class HouseRating(models.Model):
     house = models.ForeignKey(Houses, related_name='ratings', on_delete=models.CASCADE)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -139,7 +142,7 @@ class Room(models.Model):
     # entry_date = models.DateField(default=timezone.now())
     room_images = models.ImageField(upload_to='room_images/', default="Homi rooms")
     rent_status = models.BooleanField(default=False)
-    last_payment_date = models.DateField(null=True, blank=True)
+    last_payment_date = models.DateTimeField(null=True, blank=True)
     
     def assign_tenant(self, tenant):
         self.tenant = tenant
@@ -151,22 +154,59 @@ class Room(models.Model):
         self.occupied = False
         self.save()
     def __str__(self):
-        # name = apartment + self.id
-        return f"{self.apartment.name} {self.id}"
+        return f"{self.apartment.name} {self.room_name}"
+
+
+class TenancyAgreement(models.Model):
+    AGREEMENT_STATUS = (
+        ('pending', 'Pending'),   
+        ('active', 'Active'),     
+        ('terminated', 'Terminated'), 
+    )
+
+    tenant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    house = models.ForeignKey(Houses, on_delete=models.CASCADE)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=AGREEMENT_STATUS, default='pending')
+    termination_requested = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status})"
+
+
+    
 
 
 class Payment(models.Model):
     tenant = models.ForeignKey(CustomUser, related_name="payments", on_delete=models.CASCADE)
     room = models.ForeignKey(Room, related_name="payments", on_delete=models.CASCADE)
+    house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name="payments")
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_date = models.DateTimeField(default=timezone.now)
-    payment_status = models.BooleanField(default=True)  # True if payment was successful
+    payment_reference = models.CharField(max_length=100, unique=True)
+    
+    paid_at = models.DateTimeField(default=timezone.now)
+    valid_until = models.DateTimeField()
 
+    status = models.CharField(
+        max_length=20,
+        choices=(("pending", "Pending"), ("confirmed", "Confirmed"), ("failed", "Failed")),
+        default="pending",
+    )
+
+    #refactor this to be untill next payment date
+    def mark_confirmed(self):
+        """Mark payment as confirmed and valid for 30 days."""
+        self.status = "confirmed"
+        self.valid_until = timezone.now() + timedelta(days=30)
+        self.save()
+    
     def save(self, *args, **kwargs):
         """Automatically update rent status when payment is saved."""
         super().save(*args, **kwargs)  # Save payment record
         self.room.rent_status = True
-        self.room.last_payment_date = self.payment_date
+        self.room.last_payment_date = self.paid_at
         self.room.save()
 
 

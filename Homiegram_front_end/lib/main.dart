@@ -6,7 +6,6 @@ import 'package:homi_2/views/Shared/about_app.dart';
 import 'package:homi_2/views/Shared/splash_screen.dart';
 import 'package:homi_2/views/Shared/video_splash_screen.dart';
 import 'package:homi_2/views/Shared/navigation_bar.dart';
-import 'package:homi_2/views/Shared/all_houses.dart';
 import 'package:homi_2/views/Shared/search_page.dart';
 import 'package:homi_2/views/landlord/management.dart';
 import 'package:homi_2/views/Shared/sign_in.dart';
@@ -64,7 +63,6 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignUp(),
         '/about': (context) => AboutHomiegram(),
         '/homescreen': (context) => const CustomBottomNavigartion(),
-        '/allHouses': (context) => const AllHouses(),
         '/searchPage': (context) => const SearchPage(),
         '/landlordManagement': (context) => const LandlordManagement(),
       },
