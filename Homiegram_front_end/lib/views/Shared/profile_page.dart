@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/services/theme_provider.dart';
 import 'package:homi_2/services/user_data.dart';
@@ -12,6 +13,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

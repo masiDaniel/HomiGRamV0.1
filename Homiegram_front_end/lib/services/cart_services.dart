@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/cart.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
+
+const devUrl = AppConstants.baseUrl;
 
 class CartService {
   Future<Cart?> getCart(int? userId) async {

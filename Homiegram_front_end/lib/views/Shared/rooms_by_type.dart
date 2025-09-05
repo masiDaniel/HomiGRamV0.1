@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/room.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Tenants/rent_specific_room.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class RoomsByTypePage extends StatefulWidget {
   final int houseId;
@@ -16,10 +18,10 @@ class RoomsByTypePage extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _RoomsByTypePageState createState() => _RoomsByTypePageState();
+  RoomsByTypePageState createState() => RoomsByTypePageState();
 }
 
-class _RoomsByTypePageState extends State<RoomsByTypePage> {
+class RoomsByTypePageState extends State<RoomsByTypePage> {
   List<GetRooms> filteredRooms = [];
   String searchQuery = '';
 

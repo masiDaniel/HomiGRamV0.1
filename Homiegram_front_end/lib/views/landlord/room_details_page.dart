@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/room.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/landlord/edit_room_page.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class RoomDetailsPage extends StatelessWidget {
   final GetRooms room;

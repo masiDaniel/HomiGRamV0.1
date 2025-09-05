@@ -1,27 +1,25 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/business.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart';
 
-const Map<String, String> headers = {
-  "Content-Type": "application/json",
-};
+const devUrl = AppConstants.baseUrl;
 
 Future<List<BusinessModel>> fetchBusinesses() async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
-      'Authorization': 'Token $token',
-    };
-
-    final response = await http.get(Uri.parse('$devUrl/business/getBusiness/'),
-        headers: headersWithToken);
+    final response = await http.get(
+      Uri.parse('$devUrl/business/getBusiness/'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Token $token",
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> businessData = json.decode(response.body);
@@ -90,13 +88,13 @@ Future<bool> postBusiness(
 Future<List<Category>> fetchCategorys() async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
-      'Authorization': 'Token $token',
-    };
-
-    final response = await http.get(Uri.parse('$devUrl/business/getCategorys/'),
-        headers: headersWithToken);
+    final response = await http.get(
+      Uri.parse('$devUrl/business/getCategorys/'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Token $token",
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> categoryData = json.decode(response.body);
@@ -116,13 +114,13 @@ Future<List<Category>> fetchCategorys() async {
 Future<List<Products>> fetchProducts() async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
-      'Authorization': 'Token $token',
-    };
-
-    final response = await http.get(Uri.parse('$devUrl/business/getProducts/'),
-        headers: headersWithToken);
+    final response = await http.get(
+      Uri.parse('$devUrl/business/getProducts/'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Token $token",
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> productsData = json.decode(response.body);
@@ -142,14 +140,13 @@ Future<List<Products>> fetchProducts() async {
 Future<List<Products>> fetchProductsSeller() async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
-      'Authorization': 'Token $token',
-    };
-
     final response = await http.get(
-        Uri.parse('$devUrl/business/getProducts/?business=null'),
-        headers: headersWithToken);
+      Uri.parse('$devUrl/business/getProducts/?business=null'),
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Token $token",
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> productsData = json.decode(response.body);
@@ -171,14 +168,12 @@ Future<bool> postProducts(
 ) async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
-      'Authorization': 'Token $token',
-    };
-
     final response = await http.post(
       Uri.parse('$devUrl/business/postProducts/'),
-      headers: headersWithToken,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Token $token",
+      },
       body: json.encode(productData),
     );
 

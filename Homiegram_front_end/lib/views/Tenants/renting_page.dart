@@ -3,7 +3,6 @@ import 'package:homi_2/components/action_button.dart';
 import 'package:homi_2/models/room_with_agrrement_model.dart';
 import 'package:homi_2/services/get_rooms_service.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Tenants/tenant_agreement_page.dart';
 import 'package:lottie/lottie.dart';
 

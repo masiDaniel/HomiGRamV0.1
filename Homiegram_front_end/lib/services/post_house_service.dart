@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class PostHouseService {
   final String apiUrl = '${devUrl}houses/gethouses/';

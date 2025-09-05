@@ -1,14 +1,12 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/comments.dart';
 import 'package:homi_2/models/get_house.dart';
-import 'package:homi_2/models/post_comments.dart';
+import 'package:homi_2/services/comments_service_refined.dart';
+import 'package:homi_2/services/post_comments_service.dart';
 import 'package:homi_2/services/comments_service.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
-import 'package:http/http.dart' as http;
 
 class CommentsScreen extends StatefulWidget {
   final GetHouse house;
@@ -67,58 +65,40 @@ class _CommentsScreenState extends State<CommentsScreen> {
   }
 
   Future<void> deleteComment(int commentId) async {
-    String? token = await UserPreferences.getAuthToken();
-    String url = '$devUrl/comments/deleteComments/$commentId/';
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
-    };
-
     try {
-      final response = await http.delete(Uri.parse(url), headers: headers);
+      final statusCode = await CommentService.deleteComment(commentId);
 
-      if (response.statusCode == 204) {
+      if (!mounted) return;
+
+      if (statusCode == 204) {
         setState(() {
           _comments.removeWhere((comment) => comment.commentId == commentId);
         });
-      } else if (response.statusCode == 404) {
-        if (!mounted) return;
-
+      } else if (statusCode == 404) {
         showCustomSnackBar(context, 'Comment already deleted',
             type: SnackBarType.warning);
       } else {
-        if (!mounted) return;
-
         showCustomSnackBar(context, 'We have problems',
             type: SnackBarType.warning);
       }
     } catch (e) {
       if (!mounted) return;
-
       showCustomSnackBar(context, 'Error deleting comment',
           type: SnackBarType.error);
     }
   }
 
   Future<void> onReact(int commentId, String action) async {
-    final userId = await UserPreferences.getUserId();
-    String? token = await UserPreferences.getAuthToken();
-    if (userId == null) return;
-    final url = Uri.parse("$devUrl/comments/post/");
-    final response = await http.put(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': 'Token $token',
-      },
-      body: jsonEncode(
-          {"comment_id": commentId, "action": action, "user_id": userId}),
+    final statusCode = await CommentService.reactToComment(
+      commentId: commentId,
+      action: action,
     );
 
-    if (response.statusCode == 200) {
-      setState(() {});
+    if (statusCode == 200) {
+      setState(() {}); // refresh UI
     } else {
-      log("Failed to react: ${response.body}");
+      log("Failed to react, status: $statusCode");
+      showCustomSnackBar(context, "Failed to react");
     }
   }
 
@@ -322,34 +302,26 @@ class _CommentListState extends State<CommentList> {
     );
   }
 
-  void _sendReply(int parentCommentId, int houseIdnew) async {
+  void _sendReply(int parentCommentId, int houseId) async {
     final replyText = replyController.text.trim();
     if (replyText.isEmpty) return;
 
-    final url = Uri.parse("$devUrl/comments/post/");
-    String? token = await UserPreferences.getAuthToken();
-
-    final response = await http.post(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        "authorization": "Token $token"
-      },
-      body: jsonEncode({
-        "house_id": houseIdnew,
-        "user_id": userId,
-        "comment": replyText,
-        "parent": parentCommentId,
-      }),
+    final statusCode = await CommentService.sendReply(
+      parentCommentId: parentCommentId,
+      houseId: houseId,
+      userId: userId,
+      replyText: replyText,
     );
 
-    if (response.statusCode == 201 || response.statusCode == 200) {
+    if (statusCode == 201 || statusCode == 200) {
       replyController.clear();
       setState(() {
         replyingToCommentId = null;
       });
-      fetchComments(houseIdnew);
-    } else {}
+      fetchComments(houseId);
+    } else {
+      showCustomSnackBar(context, "Failed to send reply");
+    }
   }
 }
 

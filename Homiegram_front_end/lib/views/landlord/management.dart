@@ -1,18 +1,18 @@
 import 'dart:developer';
-
-// import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/get_house_service.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/landlord/landlord_house_details.dart';
 import 'package:homi_2/views/landlord/add_house.dart';
 import 'package:lottie/lottie.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class LandlordManagement extends StatefulWidget {
   const LandlordManagement({super.key});

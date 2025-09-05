@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/user_signin.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
@@ -17,14 +18,13 @@ const Map<String, String> headers = {
 
 // String chatUrl = 'wss://hommiegram.azurewebsites.net';
 
-String devUrl = 'http://192.168.0.107:8000';
+const devUrlTest = AppConstants.baseUrl;
 
-String chatUrl = 'ws://192.168.0.107:8000';
 Future fetchUserSignIn(
     BuildContext context, String username, String password) async {
   try {
     final response = await http.post(
-      Uri.parse("$devUrl/accounts/login/"),
+      Uri.parse("$devUrlTest/accounts/login/"),
       headers: headers,
       body: jsonEncode({
         "email": username,
@@ -56,7 +56,7 @@ Future updateUserInfo(Map<String, dynamic> updateData) async {
     };
     final response = await http
         .patch(
-          Uri.parse("$devUrl/accounts/user/update/"),
+          Uri.parse("$devUrlTest/accounts/user/update/"),
           headers: headersWithToken,
           body: jsonEncode(updateData),
         )
@@ -75,7 +75,7 @@ Future updateUserInfo(Map<String, dynamic> updateData) async {
 Future updateHouseInfo(Map<String, dynamic> updateData, int houseId) async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    var uri = Uri.parse("$devUrl/houses/updateHouse/$houseId/");
+    var uri = Uri.parse("$devUrlTest/houses/updateHouse/$houseId/");
     var request = http.MultipartRequest('PATCH', uri);
 
     // Add text fields
@@ -121,7 +121,7 @@ Future<bool> updateProfilePicture(String imagePath) async {
   String? token = await UserPreferences.getAuthToken();
 
   try {
-    final uri = Uri.parse("$devUrl/accounts/user/update/");
+    final uri = Uri.parse("$devUrlTest/accounts/user/update/");
 
     var request = http.MultipartRequest('PATCH', uri);
     request.headers.addAll({

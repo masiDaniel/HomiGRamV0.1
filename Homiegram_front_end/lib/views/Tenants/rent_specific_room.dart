@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/services/rent_room_service.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 
 class RoomDetailsScreen extends StatelessWidget {
   final GetRooms room;
@@ -53,8 +52,12 @@ class RoomDetailsScreen extends StatelessWidget {
                       Icon(Icons.square_foot_outlined, color: Colors.grey[600]),
                       const SizedBox(width: 6),
                       Text("${room.sizeInSqMeters} m²"),
+                      const SizedBox(height: 6),
                     ],
                   ),
+                  Text("${room.roomId} room id²"),
+                  const SizedBox(height: 6),
+                  Text("${room.apartmentID} apartment id²"),
                   const SizedBox(height: 16),
                   Text(
                     "Rent: KES ${room.rentAmount}",

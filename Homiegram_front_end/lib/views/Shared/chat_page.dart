@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/chat.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 // import 'package:intl/intl.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
+
+const chatUrl = AppConstants.chatBaseUrl;
+const devUrl = AppConstants.baseUrl;
 
 class ChatPage extends StatefulWidget {
   final ChatRoom chat;

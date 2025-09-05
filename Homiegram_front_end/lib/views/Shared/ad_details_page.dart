@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/ads.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:intl/intl.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class AdDetailPage extends StatelessWidget {
   final Ad ad;

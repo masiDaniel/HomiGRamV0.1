@@ -1,6 +1,6 @@
 import 'dart:convert';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/user_signup.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 
 const Map<String, String> headers = {
@@ -9,6 +9,9 @@ const Map<String, String> headers = {
 
 /// what is the difference of using Future<UserSignUp?> fetchUserSignIp and just writting Future fetchUserSignUp?
 ///
+
+const devUrl = AppConstants.baseUrl;
+
 Future<UserSignUp?> fetchUserSignUp(
     String firstName, String lastName, String email, String password) async {
   try {

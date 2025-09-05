@@ -1,20 +1,19 @@
 import 'dart:convert';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:http/http.dart' as http;
 
+const devUrl = AppConstants.baseUrl;
 Future<String?> rentRoom(int houseId, int roomId) async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
-    };
-
-    final response = await http.post(
-        Uri.parse("$devUrl/houses/assign-tenant/$houseId/"),
-        headers: headers,
-        body: jsonEncode({"room_id": roomId}));
+    final response =
+        await http.post(Uri.parse("$devUrl/houses/assign-tenant/$houseId/"),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Token $token',
+            },
+            body: jsonEncode({"room_id": roomId}));
 
     if (response.statusCode == 200) {
       return "Room successfully rented!";

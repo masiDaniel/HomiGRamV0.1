@@ -1,7 +1,8 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
+import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/chat.dart';
 import 'package:homi_2/models/get_users.dart';
@@ -9,13 +10,14 @@ import 'package:homi_2/services/create_chat_room.dart';
 import 'package:homi_2/services/fetch_ads_service.dart';
 import 'package:homi_2/services/fetch_chat_messages_service.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
+import 'package:homi_2/services/user_service.dart';
 import 'package:homi_2/views/Shared/ad_details_page.dart';
 import 'package:homi_2/views/Shared/chart_card.dart.dart';
 import 'package:homi_2/views/Shared/chat_page.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:video_player/video_player.dart';
-import 'package:http/http.dart' as http;
+
+const devUrl = AppConstants.baseUrl;
 
 ///
 /// TODO: How do i synagize the offline and onlline chats?
@@ -31,7 +33,7 @@ class _HomePageState extends State<HomePage> {
   late Stream<List<ChatRoom>> chatRoomsStream;
   late Future<List<Ad>> futureAds;
   List<Ad> _ads = [];
-  late Future<List<GerUsers>> users;
+  List<GerUsers> users = [];
 
   String selectedFilter = 'All';
   final bool isConditionMet = true;
@@ -52,7 +54,7 @@ class _HomePageState extends State<HomePage> {
 
     _loadAuthToken();
     futureAds = fetchAds();
-    users = fetchUsers();
+    fetchUsers();
 
     chatRoomsStream = dbHelper.watchChatRooms();
     syncChatRooms();
@@ -81,33 +83,25 @@ class _HomePageState extends State<HomePage> {
     currentUserEmail = (await UserPreferences.getUserEmail())!;
   }
 
-  Future<List<GerUsers>> fetchUsers() async {
-    String? token = await UserPreferences.getAuthToken();
+  Future<void> fetchUsers() async {
+    setState(() {
+      isLoading = true;
+    });
 
     try {
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      };
-
-      final response = await http.get(
-        Uri.parse('$devUrl/accounts/getUsers/'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-
-        final fetchedUsers =
-            data.map((user) => GerUsers.fromJSon(user)).toList();
-
-        return fetchedUsers;
-      } else {
-        throw Exception('Failed to fetch users');
-      }
+      final fetchedUsers = await UserService.fetchUsers();
+      if (!mounted) return;
+      setState(() {
+        users = fetchedUsers;
+      });
     } catch (e) {
-      if (!mounted) return [];
-      rethrow;
+      if (!mounted) return;
+      showCustomSnackBar(context, 'Error fetching users!');
+    } finally {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 

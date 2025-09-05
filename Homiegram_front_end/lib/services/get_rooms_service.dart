@@ -1,15 +1,12 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/models/room_with_agrrement_model.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
-
 import 'package:http/http.dart' as http;
 
-const Map<String, String> headers = {
-  "Content-Type": "application/json",
-};
+const devUrl = AppConstants.baseUrl;
 List<GetRooms> allRooms = [];
 List<RoomWithAgreement> allRoomsAndAgreements = [];
 String? houseId;
@@ -17,13 +14,11 @@ String? houseId;
 Future<List<GetRooms>> fetchRooms() async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
+    final response =
+        await http.get(Uri.parse('$devUrl/houses/getRooms/'), headers: {
+      "Content-Type": "application/json",
       'Authorization': 'Token $token',
-    };
-
-    final response = await http.get(Uri.parse('$devUrl/houses/getRooms/'),
-        headers: headersWithToken);
+    });
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
@@ -50,13 +45,11 @@ Future<List<GetRooms>> fetchRooms() async {
 Future<List<RoomWithAgreement>> fetchRoomsWithAgreements() async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
+    final response =
+        await http.get(Uri.parse('$devUrl/houses/getMyRooms/'), headers: {
+      "Content-Type": "application/json",
       'Authorization': 'Token $token',
-    };
-
-    final response = await http.get(Uri.parse('$devUrl/houses/getMyRooms/'),
-        headers: headersWithToken);
+    });
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
@@ -83,13 +76,11 @@ Future<List<RoomWithAgreement>> fetchRoomsWithAgreements() async {
 Future<List<GetRooms>> fetchRoomsByHouse(int houseId) async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
+    final response =
+        await http.get(Uri.parse('$devUrl/houses/getRooms/'), headers: {
+      "Content-Type": "application/json",
       'Authorization': 'Token $token',
-    };
-
-    final response = await http.get(Uri.parse('$devUrl/houses/getRooms/'),
-        headers: headersWithToken);
+    });
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
@@ -114,14 +105,12 @@ Future<List<GetRooms>> fetchRoomsByHouse(int houseId) async {
 Future<String> postRoomsByHouse(int houseId, GetRooms newRoom) async {
   String? token = await UserPreferences.getAuthToken();
   try {
-    final headersWithToken = {
-      ...headers,
-      'Authorization': 'Token $token',
-    };
-
     final response = await http.post(
       Uri.parse('$devUrl/houses/getRooms/'),
-      headers: headersWithToken,
+      headers: {
+        "Content-Type": "application/json",
+        'Authorization': 'Token $token',
+      },
       body: jsonEncode([newRoom.tojson()]),
     );
 

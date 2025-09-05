@@ -1,25 +1,26 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/amenities.dart';
 import 'package:homi_2/models/bookmark.dart';
 import 'package:homi_2/models/comments.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/locations.dart';
-import 'package:homi_2/models/post_comments.dart';
+import 'package:homi_2/services/comments_service_refined.dart';
+import 'package:homi_2/services/post_comments_service.dart';
 import 'package:homi_2/services/comments_service.dart';
 import 'package:homi_2/services/fetch_bookmarks.dart';
 import 'package:homi_2/services/get_amenities.dart';
 import 'package:homi_2/services/get_house_service.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Shared/comments_screen.dart';
 import 'package:homi_2/views/Shared/rooms_by_type.dart';
-import 'package:http/http.dart' as http;
+
+const devUrl = AppConstants.baseUrl;
 
 class SpecificHouseDetailsScreen extends StatefulWidget {
   final GetHouse house;
@@ -103,33 +104,26 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
   /// how should i refactor this?
   /// have it in a seperate file?
   Future<void> deleteComment(int commentId) async {
-    String? token = await UserPreferences.getAuthToken();
-    String url = '$devUrl/comments/deleteComments/$commentId/';
-    final Map<String, String> headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
-    };
-
     try {
-      final response = await http.delete(Uri.parse(url), headers: headers);
+      final statusCode = await CommentService.deleteComment(commentId);
 
-      if (response.statusCode == 204) {
+      if (!mounted) return;
+
+      if (statusCode == 204) {
         setState(() {
           _comments.removeWhere((comment) => comment.commentId == commentId);
         });
-      } else if (response.statusCode == 404) {
-        if (!mounted) return;
-
-        showCustomSnackBar(context, 'Comment already deleted');
+      } else if (statusCode == 404) {
+        showCustomSnackBar(context, 'Comment already deleted',
+            type: SnackBarType.warning);
       } else {
-        if (!mounted) return;
-
-        showCustomSnackBar(context, 'We have problems!');
+        showCustomSnackBar(context, 'We have problems',
+            type: SnackBarType.warning);
       }
     } catch (e) {
       if (!mounted) return;
-
-      showCustomSnackBar(context, 'Error deleting comment');
+      showCustomSnackBar(context, 'Error deleting comment',
+          type: SnackBarType.error);
     }
   }
 
@@ -154,24 +148,15 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
   }
 
   Future<void> onReact(int commentId, String action) async {
-    final userId = await UserPreferences.getUserId();
-    String? token = await UserPreferences.getAuthToken();
-    if (userId == null) return;
-    final url = Uri.parse("$devUrl/comments/post/");
-    final response = await http.put(
-      url,
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': 'Token $token',
-      },
-      body: jsonEncode(
-          {"comment_id": commentId, "action": action, "user_id": userId}),
+    final statusCode = await CommentService.reactToComment(
+      commentId: commentId,
+      action: action,
     );
-
-    if (response.statusCode == 200) {
+    if (statusCode == 200) {
       setState(() {});
     } else {
-      log("Failed to react: ${response.body}");
+      log("Failed to react, status: $statusCode");
+      showCustomSnackBar(context, "Failed to react");
     }
   }
 
@@ -598,77 +583,6 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
                           horizontal: 12, vertical: 10),
                     ),
                   ),
-
-                  // ElevatedButton.icon(
-                  //   onPressed: () async {
-                  //     String? userTypeShared =
-                  //         await UserPreferences.getUserType();
-
-                  //     if (userTypeShared == "landlord") {
-                  //       showDialog(
-                  //         context: context,
-                  //         builder: (BuildContext context) {
-                  //           return AlertDialog(
-                  //             title: const Text('Error'),
-                  //             content:
-                  //                 const Text('Landlords cannot rent rooms.'),
-                  //             actions: [
-                  //               TextButton(
-                  //                 style: const ButtonStyle(
-                  //                   backgroundColor: WidgetStatePropertyAll(
-                  //                       Color(0x95154D07)),
-                  //                 ),
-                  //                 onPressed: () => Navigator.of(context).pop(),
-                  //                 child: const Text('OK',
-                  //                     style: TextStyle(color: Colors.white)),
-                  //               ),
-                  //             ],
-                  //           );
-                  //         },
-                  //       );
-                  //     } else {
-                  //       int houseId = widget.house.houseId;
-                  //       String? message = await rentRoom(houseId, );
-
-                  //       showDialog(
-                  //         context: context,
-                  //         builder: (BuildContext context) {
-                  //           return AlertDialog(
-                  //             title: Text(message == "Room successfully rented!"
-                  //                 ? 'Success'
-                  //                 : 'Error'),
-                  //             content: Text(
-                  //                 message ?? 'An unexpected error occurred.'),
-                  //             actions: [
-                  //               TextButton(
-                  //                 style: const ButtonStyle(
-                  //                   backgroundColor: WidgetStatePropertyAll(
-                  //                       Color(0x95154D07)),
-                  //                 ),
-                  //                 onPressed: () => Navigator.of(context).pop(),
-                  //                 child: const Text('OK',
-                  //                     style: TextStyle(color: Colors.white)),
-                  //               ),
-                  //             ],
-                  //           );
-                  //         },
-                  //       );
-                  //     }
-                  //   },
-                  //   icon: const Icon(Icons.home, color: Colors.white),
-                  //   label: const Text("Rent",
-                  //       style: TextStyle(color: Colors.white)),
-                  //   style: ElevatedButton.styleFrom(
-                  //     backgroundColor: const Color(0x95154D07),
-                  //     shape: RoundedRectangleBorder(
-                  //       borderRadius: BorderRadius.circular(12),
-                  //     ),
-                  //     padding: const EdgeInsets.symmetric(
-                  //         horizontal: 12, vertical: 10),
-                  //   ),
-                  // ),
-
-                  // Comments Button
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(

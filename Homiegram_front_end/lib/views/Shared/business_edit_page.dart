@@ -1,13 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/business.dart';
 import 'package:homi_2/models/locations.dart';
+import 'package:homi_2/services/business_service_refined.dart';
 import 'package:homi_2/services/business_services.dart';
 import 'package:homi_2/services/get_locations.dart';
-import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
-import 'package:http/http.dart' as http;
 
 class BusinessEditPage extends StatefulWidget {
   final BusinessModel business;
@@ -104,7 +101,6 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
     if (selectedBusinessType != originalData.businessTypeId) {
       updates['business_type'] = selectedBusinessType;
     }
-
     if (businessImageController.text != originalData.businessImage) {
       updates['business_image'] = businessImageController.text;
     }
@@ -114,23 +110,19 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
       return;
     }
 
-    final url = Uri.parse(
-        '$devUrl/business/updateBusiness/${widget.business.businessId}/');
-    String? token = await UserPreferences.getAuthToken();
+    try {
+      final success = await BusinessService.updateBusiness(
+        businessId: widget.business.businessId,
+        updates: updates,
+      );
 
-    final response = await http.patch(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      },
-      body: jsonEncode(updates),
-    );
+      if (!mounted) return;
 
-    if (!mounted) return;
-    if (response.statusCode == 202) {
-      showCustomSnackBar(context, "Business updated successfully");
-    } else {
+      if (success) {
+        showCustomSnackBar(context, "Business updated successfully");
+      }
+    } catch (e) {
+      if (!mounted) return;
       showCustomSnackBar(context, "Update failed");
     }
   }

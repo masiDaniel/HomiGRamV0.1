@@ -4,7 +4,7 @@ import 'package:homi_2/models/business.dart';
 import 'package:homi_2/models/cart.dart';
 import 'package:homi_2/services/cart_services.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
+
 import 'package:lottie/lottie.dart';
 
 class ProductDetailPage extends StatefulWidget {

@@ -1,11 +1,11 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/services/create_chat_room.dart';
+import 'package:homi_2/services/user_service.dart';
 import 'package:homi_2/views/Shared/chat_page.dart';
 import 'package:homi_2/views/Shared/filter_businesses.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:homi_2/models/business.dart';
 import 'package:homi_2/models/get_users.dart';
@@ -13,13 +13,14 @@ import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/business_services.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Shared/add_product_screen.dart';
 import 'package:homi_2/views/Shared/cart_page.dart';
 import 'package:homi_2/views/Shared/products_page.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class MarketPlace extends StatefulWidget {
   const MarketPlace({super.key});
@@ -124,31 +125,16 @@ class _MarketPlaceState extends State<MarketPlace> {
     setState(() {
       isLoading = true;
     });
-    String? token = await UserPreferences.getAuthToken();
 
     try {
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      };
-
-      final response = await http.get(
-        Uri.parse('$devUrl/accounts/getUsers/'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          users = data.map((user) => GerUsers.fromJSon(user)).toList();
-        });
-      } else {
-        throw Exception('Failed to fetch users');
-      }
+      final fetchedUsers = await UserService.fetchUsers();
+      if (!mounted) return;
+      setState(() {
+        users = fetchedUsers;
+      });
     } catch (e) {
       if (!mounted) return;
-
-      showCustomSnackBar(context, "Error fetching users");
+      showCustomSnackBar(context, 'Error fetching users!');
     } finally {
       setState(() {
         isLoading = false;

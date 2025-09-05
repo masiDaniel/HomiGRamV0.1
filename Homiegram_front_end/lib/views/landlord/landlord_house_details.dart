@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/get_house.dart';
@@ -11,17 +12,16 @@ import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/fetch_ads_service.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/get_rooms_service.dart';
-import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
+import 'package:homi_2/services/house_service.dart';
+import 'package:homi_2/services/user_service.dart';
 import 'package:homi_2/views/landlord/add_room.dart';
 import 'package:homi_2/views/landlord/edit_house_details.dart';
 import 'package:homi_2/views/landlord/room_details_page.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 final DateFormat dateFormat = DateFormat('yyyy-MM-dd');
+const devUrl = AppConstants.baseUrl;
 
 class HouseDetailsPage extends StatefulWidget {
   final GetHouse house;
@@ -83,38 +83,22 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
     return '${caretaker.firstName}, ${caretaker.email}';
   }
 
-  ///
-  ///how will i transfer this to its own individual file?
   Future<void> fetchUsers() async {
     setState(() {
       isLoading = true;
     });
-    String? token = await UserPreferences.getAuthToken();
 
     try {
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      };
-
-      final response = await http.get(
-        Uri.parse('$devUrl/accounts/getUsers/'),
-        headers: headers,
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        setState(() {
-          users = data.map((user) => GerUsers.fromJSon(user)).toList();
-        });
-      } else {
-        throw Exception('Failed to fetch users');
-      }
+      final fetchedUsers = await UserService.fetchUsers();
+      if (!mounted) return;
+      setState(() {
+        users = fetchedUsers;
+      });
     } catch (e) {
       if (!mounted) return;
-
-      showCustomSnackBar(context, 'Error fetching users:!');
+      showCustomSnackBar(context, 'Error fetching users!');
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -126,69 +110,42 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
       showCustomSnackBar(context, 'Please select a user');
       return;
     }
-    String? token = await UserPreferences.getAuthToken();
 
     try {
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      };
-      print(
-          'house_id: ${widget.house.houseId} \n caretaker_id: ${selectedUser!.userId}');
-
-      final response = await http.post(
-        Uri.parse('$devUrl/houses/assign-caretaker/'),
-        headers: headers,
-        body: json.encode({
-          'house_id': widget.house.houseId,
-          'user_id': selectedUser!.userId,
-        }),
+      final success = await HouseService.assignCaretaker(
+        houseId: widget.house.houseId,
+        userId: selectedUser!.userId,
       );
 
-      if (response.statusCode == 200) {
-        if (!mounted) return;
+      if (!mounted) return;
 
+      if (success) {
         showCustomSnackBar(context, 'Caretaker assigned successfully!');
-      } else {
-        throw Exception('Failed to assign caretaker');
       }
     } catch (e) {
       if (!mounted) return;
-
-      showCustomSnackBar(context, 'Error assigning caretaker',
-          type: SnackBarType.error);
+      showCustomSnackBar(
+        context,
+        'Error assigning caretaker',
+        type: SnackBarType.error,
+      );
     }
   }
 
   Future<void> _removeCaretaker() async {
-    String? token = await UserPreferences.getAuthToken();
     try {
-      final headers = {
-        'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
-      };
-      print(
-          'house_id: ${widget.house.houseId} \n caretaker_id: ${widget.house.caretakerId}');
-
-      final response = await http.delete(
-        Uri.parse('$devUrl/houses/remove-caretaker/'),
-        headers: headers,
-        body: json.encode({
-          'house_id': widget.house.houseId,
-          'caretaker_id': widget.house.caretakerId,
-        }),
+      final success = await HouseService.removeCaretaker(
+        houseId: widget.house.houseId,
+        caretakerId: widget.house.caretakerId!,
       );
 
       if (!mounted) return;
-      if (response.statusCode == 200) {
+
+      if (success) {
         showCustomSnackBar(context, 'Caretaker removed successfully!');
-      } else {
-        final error = json.decode(response.body)['error'] ?? 'Unknown error';
-        throw Exception(error);
       }
     } catch (e) {
       if (!mounted) return;
-
       showCustomSnackBar(context, 'Error removing caretaker!');
     }
   }
@@ -812,51 +769,3 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
     );
   }
 }
-
-
-//  Center(
-//               child: Text(
-//                 'Assign Caretaker',
-//                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.grey[700],
-//                     ),
-//               ),
-//             ),
-//             const SizedBox(height: 16),
-            // if (widget.house.caretakerId == null)
-            //   isLoading
-            //       ? const Center(child: CircularProgressIndicator())
-            //       : IconButton(
-            //           icon: const Icon(Icons.search),
-            //           onPressed: () async {
-            //             GerUsers? picked =
-            //                 await showCaretakerDialog(context, users);
-            //             if (picked != null) {
-            //               setState(() {
-            //                 selectedUser = picked;
-            //                 caretakerController.text =
-            //                     "${picked.firstName} (${picked.email}) (${picked.userId})";
-            //               });
-            //             }
-            //           },
-            //         ),
-            // const SizedBox(height: 16),
-            // ElevatedButton(
-            //   onPressed:
-            //       isCaretakerAssigned ? _removeCaretaker : _assignCaretaker,
-            //   style: ElevatedButton.styleFrom(
-            //     padding:
-            //         const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
-            //     backgroundColor: isCaretakerAssigned
-            //         ? const Color.fromARGB(255, 124, 15, 5)
-            //         : const Color(0xFF013803),
-            //     shape: RoundedRectangleBorder(
-            //       borderRadius: BorderRadius.circular(8),
-            //     ),
-            //   ),
-            //   child: Text(
-            //     isCaretakerAssigned ? 'Remove Caretaker' : 'Assign Caretaker',
-            //     style: const TextStyle(fontSize: 16, color: Colors.white),
-            //   ),
-            // ),

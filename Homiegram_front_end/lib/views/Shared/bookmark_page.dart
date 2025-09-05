@@ -1,13 +1,15 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/bookmark.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/services/fetch_bookmarks.dart';
 import 'package:homi_2/services/get_house_service.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Shared/house_details_screen.dart';
 import 'package:lottie/lottie.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class BookmarkedHousesPage extends StatefulWidget {
   final int userId;

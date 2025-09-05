@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/star_ratings.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/amenities.dart';
@@ -9,11 +10,12 @@ import 'package:homi_2/services/get_amenities.dart';
 import 'package:homi_2/services/get_house_service.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Shared/bookmark_page.dart';
 import 'package:homi_2/views/Shared/filter_houses.dart';
 import 'package:homi_2/views/Shared/house_details_screen.dart';
 import 'package:lottie/lottie.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -114,40 +116,24 @@ class _SearchPageState extends State<SearchPage> {
         final matchesSearch =
             house.name.toLowerCase().contains(safeSearchQuery);
 
-        // 🟢 Location filter (optional)
         final matchesLocation = selectedLocation == null
             ? true
             : house.locationDetail == selectedLocation!.locationId;
 
-        // 🟢 Amenities filter (optional)
         final matchesAmenities = selectedAmenities.isEmpty
             ? true
             : selectedAmenities.every((a) => house.amenities.contains(a.id));
 
-        // 🟢 Rent filter (optional)
         final rentValue = double.tryParse(house.rentAmount) ?? 0;
         final matchesRent = (minRent == 0 && maxRent == 1000000)
             ? true
             : (rentValue >= minRent! && rentValue <= maxRent!);
-        // 🐛 Debug
-        print("---- Checking house: ${house.name} ----");
-        print("Rent: $rentValue | Allowed Range: $minRent - $maxRent");
-        print("Matches Rent: $matchesRent");
-        print("Matches Location: $matchesLocation");
-        print("Matches Search: $matchesSearch");
-        print("Matches Amenities: $matchesAmenities");
-
-        print("House: ${house.name}, amenities: ${house.amenities}");
-        print(
-            "Selected amenities: ${selectedAmenities.map((a) => a.id).toList()}");
 
         return matchesSearch &&
             matchesLocation &&
             matchesRent &&
             matchesAmenities;
       }).toList();
-
-      print("Filtered Houses Count: ${displayedHouses.length}");
     });
   }
 
@@ -181,9 +167,6 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      /// TODO: search & Filters: Students can search for rooms based on
-      /// - price range (50% complete)
-      /// - available amenities.(50% complete)
       appBar: AppBar(
           automaticallyImplyLeading: false,
           title: TextField(
