@@ -4,6 +4,9 @@ import base64
 import requests
 from datetime import datetime
 from requests.auth import HTTPBasicAuth
+import os
+
+
 
 
 class MpesaHandler:
@@ -23,14 +26,14 @@ class MpesaHandler:
     def __init__(self):
         self.now = datetime.now()
         
-        self.shortcode = '174379'
-        self.consumer_key = "OHN0GbhpYbjBkRA1LKogzRKrGJ3D6NAesoihimvPySW416mO"
-        self.consumer_secret = "mCGvywmRVUoGl3upFbtSehzsbclQyOkoUGRXox4JYQfqNiup5JysVls6IwRIrdMc"
-        self.access_token_url = "https://sandbox.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials"
-        self.passkey = "bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919"
-        self.stk_push_url = "https://sandbox.safaricom.co.ke/mpesa/stkpush/v1/processrequest"
-        self.query_status_url = "https://sandbox.safaricom.co.ke/mpesa/stkpushquery/v1/query"
-        self.my_callback_url = "https://mydomain.com/path"
+        self.shortcode = os.getenv("MPESA_SHORTCODE")
+        self.consumer_key = os.getenv("MPESA_CONSUMER_KEY")
+        self.consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
+        self.passkey = os.getenv("MPESA_PASSKEY")
+        self.access_token_url = os.getenv("MPESA_ACCESS_TOKEN_URL")
+        self.stk_push_url = os.getenv("MPESA_STK_PUSH_URL")
+        self.query_status_url = os.getenv("MPESA_QUERY_STATUS_URL")
+        self.my_callback_url = os.getenv("MPESA_CALLBACK_URL")
         self.password = self.generate_password()
 
         try:

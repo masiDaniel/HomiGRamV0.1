@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 import time
 import uuid
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 
 from .utils import check_payment_status, get_safe_group_name
-from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer, TenancyAgreementSerializer
 from accounts.serializers import MessageSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating, Houses, Location, Payment, Room, PendingAdvertisement, TenancyAgreement
 from .utils import get_safe_group_name
@@ -82,7 +82,6 @@ class HouseAPIView(APIView):
             house = Houses.objects.get(id=house_id)
         except Houses.DoesNotExist:
             return Response({"detail": "House not found"}, status=404)
-        print(f"this is the data {request.data}")
         serializer = HousesSerializers(house, data=request.data, partial=True)
         if serializer.is_valid():
             house = serializer.save()
@@ -517,6 +516,65 @@ class AssignTenantView(APIView):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+# step 1: initiate.
+class StartRentView(APIView):
+    # what happens when i send multiple requests of the same house and room
+    def post(self, request, *args, **kwargs):
+        house_id = request.data.get("house_id")
+        room_id = request.data.get("room_id")
+
+        if not house_id or not room_id:
+            return Response({"error": "house_id and room_id are required"}, status=400)
+
+        room = get_object_or_404(Room, id=room_id, apartment_id=house_id, occupied=False)
+        agreement = TenancyAgreement.objects.create(
+            tenant=request.user,
+            house=room.apartment,
+            room=room,
+            status="pending"
+        )
+        return Response({"agreement": TenancyAgreementSerializer(agreement).data})
+
+# Step 2: Confirm agreement
+class ConfirmAgreementView(APIView):
+    # review those statuses.
+    def post(self, request, *args, **kwargs):
+        agreement_id = request.data.get("agreement_id")
+        agreement = get_object_or_404(TenancyAgreement, id=agreement_id, tenant=request.user, status="pending")
+        agreement.status = "confirmed_pending_payment"
+        agreement.save()
+        return Response({"message": "Agreement confirmed. Proceed to payment."})
+
+# Step 3: Initiate payment
+class RentPaymentView(APIView):
+    #factor in deposits and initial payments vs monthly payments
+    def post(self, request, *args, **kwargs):
+        agreement_id = request.data.get("agreement_id")
+        agreement = get_object_or_404(TenancyAgreement, id=agreement_id, tenant=request.user, status="confirmed_pending_payment")
+        payment = Payment.objects.create(
+            tenant=request.user,
+            house=agreement.house,
+            room=agreement.room,
+            amount=agreement.room.rent,
+            status="pending"
+        )
+        # Trigger M-Pesa
+        mpesa = MpesaHandler()
+        res_status, res_data = mpesa.make_stk_push({
+            "amount": agreement.room.rent,
+            "phone_number": request.user.phone_number
+        })
+
+        # so how is the payment status supossed to change ? 
+        return Response({"payment_id": payment.id, "mpesa_response": res_data})
+
+class PaymentStatusView(APIView):
+    def get(self, request, *args, **kwargs):
+        payment_id = request.data.get("payment_id")
+        payment = get_object_or_404(Payment, id=payment_id, tenant=request.user)
+        if payment.status == "confirmed":
+            return Response({"status": "confirmed", "agreement_id": payment.agreement.id})
+        return Response({"status": payment.status})
 class AssignCaretakerView(APIView):
     def post(self, request):
         user_id = request.data.get('user_id')

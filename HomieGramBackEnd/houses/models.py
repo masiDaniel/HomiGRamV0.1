@@ -169,7 +169,7 @@ class TenancyAgreement(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=AGREEMENT_STATUS, default='pending')
+    status = models.CharField(max_length=50, choices=AGREEMENT_STATUS, default='pending')
     termination_requested = models.BooleanField(default=False)
 
     def __str__(self):
@@ -180,6 +180,7 @@ class TenancyAgreement(models.Model):
 
 
 class Payment(models.Model):
+    # how should i handle the valid until?
     tenant = models.ForeignKey(CustomUser, related_name="payments", on_delete=models.CASCADE)
     room = models.ForeignKey(Room, related_name="payments", on_delete=models.CASCADE)
     house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name="payments")
@@ -187,7 +188,7 @@ class Payment(models.Model):
     payment_reference = models.CharField(max_length=100, unique=True)
     
     paid_at = models.DateTimeField(default=timezone.now)
-    valid_until = models.DateTimeField()
+    valid_until = models.DateTimeField(null=True, blank=True)
 
     status = models.CharField(
         max_length=20,
