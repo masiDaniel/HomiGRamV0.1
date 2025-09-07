@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/services/user_data.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -15,10 +15,10 @@ class PostComments {
     required bool nested,
     required String nestedId,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
     try {
       final response = await http.post(

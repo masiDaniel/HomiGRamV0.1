@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/business.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'package:path/path.dart';
@@ -11,13 +11,13 @@ import 'package:path/path.dart';
 const devUrl = AppConstants.baseUrl;
 
 Future<List<BusinessModel>> fetchBusinesses() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http.get(
       Uri.parse('$devUrl/business/getBusiness/'),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Token $token",
+        "Authorization": "Bearer $token",
       },
     );
 
@@ -40,14 +40,14 @@ Future<bool> postBusiness(
   Map<String, Object?> businessData,
   BuildContext context,
 ) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
 
   try {
     final uri = Uri.parse("$devUrl/business/getBusiness/");
     var request = http.MultipartRequest('POST', uri);
 
     request.headers.addAll({
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     });
 
@@ -86,13 +86,13 @@ Future<bool> postBusiness(
 }
 
 Future<List<Category>> fetchCategorys() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http.get(
       Uri.parse('$devUrl/business/getCategorys/'),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Token $token",
+        "Authorization": "Bearer $token",
       },
     );
 
@@ -112,13 +112,13 @@ Future<List<Category>> fetchCategorys() async {
 }
 
 Future<List<Products>> fetchProducts() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http.get(
       Uri.parse('$devUrl/business/getProducts/'),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Token $token",
+        "Authorization": "Bearer $token",
       },
     );
 
@@ -138,13 +138,13 @@ Future<List<Products>> fetchProducts() async {
 }
 
 Future<List<Products>> fetchProductsSeller() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http.get(
       Uri.parse('$devUrl/business/getProducts/?business=null'),
       headers: {
         "Content-Type": "application/json",
-        "Authorization": "Token $token",
+        "Authorization": "Bearer $token",
       },
     );
 
@@ -166,7 +166,7 @@ Future<List<Products>> fetchProductsSeller() async {
 Future<bool> postProducts(
   Map<String, Object?> productData,
 ) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http.post(
       Uri.parse('$devUrl/business/postProducts/'),

@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
         '/welcome': (context) => const WelcomePage(),
         '/signin': (context) => const SignIn(),
         '/signup': (context) => const SignUp(),
-        '/about': (context) => AboutHomiegram(),
+        '/about': (context) => const AboutHomiegram(),
         '/homescreen': (context) => const CustomBottomNavigartion(),
         '/searchPage': (context) => const SearchPage(),
         '/landlordManagement': (context) => const LandlordManagement(),

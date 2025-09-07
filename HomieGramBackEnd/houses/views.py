@@ -18,6 +18,8 @@ from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkS
 from accounts.serializers import MessageSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating, Houses, Location, Payment, Room, PendingAdvertisement, TenancyAgreement
 from .utils import get_safe_group_name
+
+from rest_framework.permissions import  IsAuthenticated
 # Create your views here.
 
 def create_private_chat_if_not_exists(user1, user2):
@@ -39,6 +41,8 @@ class HouseAPIView(APIView):
     """
     Handles All House Processes
     """
+
+    permission_classes = [IsAuthenticated]
 
 
     def get (self, request, *args , **kwargs):
@@ -100,18 +104,20 @@ class HouseWithRoomsAPIView(APIView):
     """
     Fetches all houses along with their rooms
     """
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         houses = Houses.objects.prefetch_related('rooms').all()
         serializer = HouseWithRoomsSerializer(houses, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SearchApiView(RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
     lookup_field = "name"
     queryset = Houses.objects.all()
     serializer_class = HousesSerializers
 
 class RateHouseAPIView(APIView):
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, house_id, *args, **kwargs):
         house = Houses.objects.get(id=house_id)
@@ -130,6 +136,7 @@ class RateHouseAPIView(APIView):
 
 class LocationsAPIView(APIView):
 
+    permission_classes = [IsAuthenticated]
     def get (self, request, *args , **kwargs):
         """
         get all locations in the database
@@ -150,7 +157,7 @@ class LocationsAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 class GetRoomssAPIView(APIView):
-
+    permission_classes = [IsAuthenticated]
     def get (self, request, *args , **kwargs):
         """
         get all rooms in the database
@@ -193,6 +200,8 @@ class GetRoomssAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class MyRoomsAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         """
         Get rooms that belong to the current logged-in user
@@ -203,6 +212,8 @@ class MyRoomsAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class AmenitiessAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
 
     def get (self, request, *args , **kwargs):
         """
@@ -225,6 +236,7 @@ class AmenitiessAPIView(APIView):
 
     
 class GetBookmarksAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get (self, request, *args , **kwargs):
         """
@@ -236,6 +248,7 @@ class GetBookmarksAPIView(APIView):
         
 
 class AddBookmarkView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, house_id, *args, **kwargs):
         try:
             house = Houses.objects.get(id=house_id)
@@ -248,6 +261,7 @@ class AddBookmarkView(APIView):
         return Response({'message': 'Bookmark already exists',}, status=status.HTTP_200_OK)
 
 class RemoveBookmarkView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, house_id, *args, **kwargs):
         try:
             bookmark = Bookmark.objects.get(house=house_id, user=request.user.id)
@@ -262,6 +276,7 @@ class SubmitAdvertisementAPIView(APIView):
     """
     User submits an ad, but it's not saved in the main advertisement model until payment is confirmed.
     """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         serializer = AdvertisementSerializer(data=request.data)
@@ -277,6 +292,7 @@ class ConfirmPaymentAPIView(APIView):
     """
     After payment, this endpoint verifies payment status and moves the ad to the main model.
     """
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         payment_reference = request.data.get("payment_reference")
@@ -309,6 +325,7 @@ class ConfirmPaymentAPIView(APIView):
 
 
 class GetAdvertisementsAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         today = timezone.now
@@ -330,6 +347,7 @@ class GetAdvertisementsAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
 class AssignTenantView(APIView):
+    permission_classes = [IsAuthenticated]
      
     def create_private_chat_if_not_exists(user1, user2):
         if user1 == user2:
@@ -518,6 +536,7 @@ class AssignTenantView(APIView):
 
 # step 1: initiate.
 class StartRentView(APIView):
+    permission_classes = [IsAuthenticated]
     # what happens when i send multiple requests of the same house and room
     def post(self, request, *args, **kwargs):
         house_id = request.data.get("house_id")
@@ -537,6 +556,7 @@ class StartRentView(APIView):
 
 # Step 2: Confirm agreement
 class ConfirmAgreementView(APIView):
+    permission_classes = [IsAuthenticated]
     # review those statuses.
     def post(self, request, *args, **kwargs):
         agreement_id = request.data.get("agreement_id")
@@ -547,6 +567,7 @@ class ConfirmAgreementView(APIView):
 
 # Step 3: Initiate payment
 class RentPaymentView(APIView):
+    permission_classes = [IsAuthenticated]
     #factor in deposits and initial payments vs monthly payments
     def post(self, request, *args, **kwargs):
         agreement_id = request.data.get("agreement_id")
@@ -569,6 +590,7 @@ class RentPaymentView(APIView):
         return Response({"payment_id": payment.id, "mpesa_response": res_data})
 
 class PaymentStatusView(APIView):
+    permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
         payment_id = request.data.get("payment_id")
         payment = get_object_or_404(Payment, id=payment_id, tenant=request.user)
@@ -576,6 +598,7 @@ class PaymentStatusView(APIView):
             return Response({"status": "confirmed", "agreement_id": payment.agreement.id})
         return Response({"status": payment.status})
 class AssignCaretakerView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request):
         user_id = request.data.get('user_id')
         house_id = request.data.get('house_id')
@@ -593,6 +616,7 @@ class AssignCaretakerView(APIView):
         )
 
 class RemoveCaretakerView(APIView):
+    permission_classes = [IsAuthenticated]
     def delete(self, request):
         caretaker_id = request.data.get('caretaker_id')
         house_id = request.data.get('house_id')
@@ -605,6 +629,7 @@ class RemoveCaretakerView(APIView):
             return Response({"error": "Caretaker not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class GetCaretakersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get (self, request, *args , **kwargs):
         """
@@ -616,6 +641,7 @@ class GetCaretakersAPIView(APIView):
 
 
 class RequestTerminationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, agreement_id):
         try:
             agreement = TenancyAgreement.objects.get(id=agreement_id, tenant=request.user)
@@ -632,6 +658,7 @@ class RequestTerminationAPIView(APIView):
 
 
 class ApproveTerminationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, agreement_id):
         # Only system/admins should hit this endpoint
         try:

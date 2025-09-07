@@ -1,20 +1,19 @@
 import 'dart:convert';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/chat.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
 Future<List<ChatRoom>> fetchChatRooms() async {
-  String? authToken;
-  authToken = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   final url = Uri.parse('$devUrl/chat/my-chat-rooms/');
 
   final response = await http.get(
     url,
     headers: {
-      'Authorization': 'Token $authToken',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     },
   );

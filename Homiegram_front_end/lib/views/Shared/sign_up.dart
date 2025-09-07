@@ -73,6 +73,7 @@ class _SignUpState extends State<SignUp> {
             type: SnackBarType.warning);
       }
     } catch (e) {
+      print('Error: ${e.toString()}');
       showCustomSnackBar(context, 'Error: ${e.toString()}');
     } finally {
       setState(() {

@@ -1,5 +1,5 @@
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/services/user_data.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
@@ -24,7 +24,7 @@ class AgreementService {
   }
 
   Future<bool> terminateAgreement(int agreementId) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final url =
         Uri.parse("$devUrl/houses/request-contract-termination/$agreementId/");
     final response = await http.post(

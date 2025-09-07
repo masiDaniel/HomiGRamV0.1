@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
@@ -8,12 +9,12 @@ const devUrl = AppConstants.baseUrl;
 
 class CommentService {
   static Future<int> deleteComment(int commentId) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final url = Uri.parse('$devUrl/comments/deleteComments/$commentId/');
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
 
     final response = await http.delete(url, headers: headers);
@@ -27,7 +28,7 @@ class CommentService {
     required int? userId,
     required String replyText,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final url = Uri.parse("$devUrl/comments/post/");
 
     final response = await http.post(
@@ -54,7 +55,7 @@ class CommentService {
     final userId = await UserPreferences.getUserId();
     if (userId == null) return 401;
 
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final url = Uri.parse("$devUrl/comments/post/");
 
     final response = await http.put(

@@ -8,6 +8,14 @@ from rest_framework.decorators import permission_classes
 from rest_framework import status
 from rest_framework.response import Response
 from .models import CustomUser
+from rest_framework_simplejwt.tokens import RefreshToken
+
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 # Create your views here.
 class LoginApIView(APIView):
@@ -20,18 +28,17 @@ class LoginApIView(APIView):
         """
         Handles log in of the user
         """
-        
         email = request.data.get("email")
         password = request.data.get("password")
-        print(email, password)
         user = authenticate(username=email, password=password)
 
         # if user exists
         if user:
             serializer = AccountSerializer(user)
-            login(request, user)
+            tokens = get_tokens_for_user(user)
+
             data = serializer.data
-            data['token'] = AuthToken.objects.create(user=user)[1]
+            data.update(tokens)
             return Response(data, status=status.HTTP_200_OK)
         # user doesn't exist
         else:
@@ -89,7 +96,7 @@ class UserSearchAPIView(APIView):
     """
     Handles searching for a user or retrieving all users
     """
-    # permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """
@@ -146,6 +153,7 @@ class UpdateUserAPIView(APIView):
 
 
 class GetUsersAPIView(APIView):
+    permission_classes = [IsAuthenticated]
 
     def get (self, request, *args , **kwargs):
         """

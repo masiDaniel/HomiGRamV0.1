@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/room.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
@@ -11,11 +11,11 @@ class HouseService {
     required int houseId,
     required int? userId,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
 
     final response = await http.post(
@@ -38,11 +38,11 @@ class HouseService {
     required int houseId,
     required int caretakerId,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
 
     final response = await http.delete(
@@ -71,7 +71,7 @@ class HouseService {
     required int apartmentId,
     String? imagePath,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final uri = Uri.parse("$devUrl/houses/updateRoom/$roomId/");
 
     var request = http.MultipartRequest("PATCH", uri);
@@ -88,7 +88,7 @@ class HouseService {
       );
     }
 
-    request.headers['Authorization'] = 'Token $token';
+    request.headers['Authorization'] = 'Bearer $token';
 
     final response = await request.send();
 

@@ -55,14 +55,6 @@ class _MarketPlaceState extends State<MarketPlace> {
     _loadProducts();
     fetchUsers();
     fetchCategories();
-    _loadAuthToken();
-  }
-
-  Future<void> _loadAuthToken() async {
-    authToken = await UserPreferences.getAuthToken();
-    currentUserEmail = (await UserPreferences.getUserEmail())!;
-
-    setState(() {});
   }
 
   Future<void> fetchCategories() async {

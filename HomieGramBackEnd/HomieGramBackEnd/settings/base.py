@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import environ
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -94,12 +95,27 @@ STATIC_ROOT = BASE_DIR / "static"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# DRF + Knox
+# # DRF + Knox
+# REST_FRAMEWORK = {
+#     "DEFAULT_AUTHENTICATION_CLASSES": ("knox.auth.TokenAuthentication",),
+#     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+# }
+# REST_KNOX = {"TOKEN_TTL": None}
+
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("knox.auth.TokenAuthentication",),
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
-REST_KNOX = {"TOKEN_TTL": None}
+
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),   # short-lived
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),      # longer-lived
+    'ROTATE_REFRESH_TOKENS': True,                    # issue new refresh token when used
+    'BLACKLIST_AFTER_ROTATION': True,                 # blacklist old refresh tokens
+    'AUTH_HEADER_TYPES': ('Bearer',),                 # use Authorization: Bearer <token>
+}
 
 # Channels
 REDIS_URL = env("REDIS_URL", default="redis://127.0.0.1:6379/0")

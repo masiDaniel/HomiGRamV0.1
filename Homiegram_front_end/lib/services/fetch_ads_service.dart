@@ -2,27 +2,50 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/ads.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
-Future<List<Ad>> fetchAds() async {
-  print(">>> Fetching ads from DB/API...");
-  String? token = await UserPreferences.getAuthToken();
 
-  final response = await http.get(
-    Uri.parse('$devUrl/houses/getAdverstisments/?status=active'),
+Future<http.Response> authorizedGet(String url) async {
+  String? token = await getAccessToken();
+
+  var response = await http.get(
+    Uri.parse(url),
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     },
+  );
+  if (response.statusCode == 401) {
+    final newAccess = await refreshAccessToken();
+    if (newAccess != null) {
+      response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $newAccess',
+        },
+      );
+    } else {
+      throw Exception("Session expired. Please log in again.");
+    }
+  }
+
+  return response;
+}
+
+Future<List<Ad>> fetchAds() async {
+  print(">>> Fetching ads from DB/API...");
+
+  final response = await authorizedGet(
+    '$devUrl/houses/getAdverstisments/?status=active',
   );
 
   if (response.statusCode == 200) {
     List jsonResponse = json.decode(response.body);
-    log("ad feting was succesful");
-
+    log("✅ ad fetching was successful");
     return jsonResponse.map((ad) => Ad.fromJson(ad)).toList();
   } else {
     throw Exception('Failed to load advertisements');
@@ -30,11 +53,11 @@ Future<List<Ad>> fetchAds() async {
 }
 
 Future<String> postAds(Ad adRequest, File? imageFile) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
 
   final uri = Uri.parse('$devUrl/houses/submitAdvertisment/');
   final request = http.MultipartRequest('POST', uri);
-  request.headers['Authorization'] = 'Token $token';
+  request.headers['Authorization'] = 'Bearer $token';
 
   request.fields['title'] = adRequest.title;
   request.fields['description'] = adRequest.description;

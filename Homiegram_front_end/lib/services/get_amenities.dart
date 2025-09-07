@@ -1,17 +1,17 @@
 import 'dart:convert';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/amenities.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
 Future<List<Amenities>> fetchAmenities() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response =
         await http.get(Uri.parse('$devUrl/houses/amenities'), headers: {
       "Content-Type": "application/json",
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {
@@ -30,12 +30,12 @@ Future<List<Amenities>> fetchAmenities() async {
 }
 
 Future<List<Amenities>> fetchAllAmenities() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response =
         await http.get(Uri.parse('$devUrl/houses/amenities'), headers: {
       "Content-Type": "application/json",
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {

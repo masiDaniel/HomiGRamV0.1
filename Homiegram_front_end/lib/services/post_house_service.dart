@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/get_house.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 
@@ -12,13 +12,13 @@ class PostHouseService {
   final String apiUrl = '${devUrl}houses/gethouses/';
 
   Future<bool> addHouse(GetHouse house) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final response = await http.post(
       Uri.parse(apiUrl),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Authorization': 'Token $token',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode(house.tojson()),
     );
@@ -63,7 +63,7 @@ class PostHouseService {
         ));
       }
     }
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     try {
       // print("=== FORM DATA DEBUG START ===");
       // for (var field in formData.fields) {
@@ -79,7 +79,7 @@ class PostHouseService {
         data: formData,
         options: Options(
           headers: {
-            'Authorization': 'Token $token',
+            'Authorization': 'Bearer $token',
           },
         ),
       );

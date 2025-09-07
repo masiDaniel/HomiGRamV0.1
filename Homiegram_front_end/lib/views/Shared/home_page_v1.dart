@@ -43,8 +43,8 @@ class _HomePageState extends State<HomePage> {
   Timer? _timer;
   bool _isPaused = false;
   bool isLoading = false;
+  String? token;
 
-  String? authToken;
   String? currentUserEmail;
   final DatabaseHelper dbHelper = DatabaseHelper();
 
@@ -52,7 +52,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
-    _loadAuthToken();
+    _loadUserEmail();
     futureAds = fetchAds();
     fetchUsers();
 
@@ -78,8 +78,7 @@ class _HomePageState extends State<HomePage> {
     return chats;
   }
 
-  Future<void> _loadAuthToken() async {
-    authToken = await UserPreferences.getAuthToken();
+  Future<void> _loadUserEmail() async {
     currentUserEmail = (await UserPreferences.getUserEmail())!;
   }
 
@@ -303,7 +302,7 @@ class _HomePageState extends State<HomePage> {
                               MaterialPageRoute(
                                 builder: (_) => ChatPage(
                                   chat: chat,
-                                  token: authToken!,
+                                  token: token!,
                                   userEmail: currentUserEmail!,
                                 ),
                               ),
@@ -553,7 +552,7 @@ class _HomePageState extends State<HomePage> {
                                             MaterialPageRoute(
                                               builder: (context) => ChatPage(
                                                 chat: chatRoom,
-                                                token: authToken!,
+                                                token: token!,
                                                 userEmail: currentUserEmail!,
                                               ),
                                             ),

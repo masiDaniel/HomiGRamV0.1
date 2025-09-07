@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/user_signin.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +23,7 @@ const devUrlTest = AppConstants.baseUrl;
 Future fetchUserSignIn(
     BuildContext context, String username, String password) async {
   try {
+    print("$devUrlTest/accounts/login/");
     final response = await http.post(
       Uri.parse("$devUrlTest/accounts/login/"),
       headers: headers,
@@ -35,7 +36,8 @@ Future fetchUserSignIn(
     if (response.statusCode == 200) {
       final userData = json.decode(response.body);
 
-      await UserPreferences.saveUserData(userData);
+      // await UserPreferences.saveUserData(userData);
+      saveTokens(userData['access'], userData['refresh']);
 
       return UserRegistration.fromJSon(userData);
     }
@@ -47,12 +49,12 @@ Future fetchUserSignIn(
 }
 
 Future updateUserInfo(Map<String, dynamic> updateData) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     log("this is the data $updateData");
     final headersWithToken = {
       ...headers,
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
     final response = await http
         .patch(
@@ -73,7 +75,7 @@ Future updateUserInfo(Map<String, dynamic> updateData) async {
 
 // TODO : have this to take images data also
 Future updateHouseInfo(Map<String, dynamic> updateData, int houseId) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     var uri = Uri.parse("$devUrlTest/houses/updateHouse/$houseId/");
     var request = http.MultipartRequest('PATCH', uri);
@@ -99,7 +101,7 @@ Future updateHouseInfo(Map<String, dynamic> updateData, int houseId) async {
 
     request.headers.addAll({
       ...headers,
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     var streamedResponse = await request.send();
@@ -118,14 +120,14 @@ Future updateHouseInfo(Map<String, dynamic> updateData, int houseId) async {
 }
 
 Future<bool> updateProfilePicture(String imagePath) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
 
   try {
     final uri = Uri.parse("$devUrlTest/accounts/user/update/");
 
     var request = http.MultipartRequest('PATCH', uri);
     request.headers.addAll({
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
       'Content-Type': 'multipart/form-data',
     });
 
