@@ -1,4 +1,6 @@
 from rest_framework import serializers
+
+from accounts.models import CustomUser
 from .models import ChatRoom, Message
 
 class MessageSerializer(serializers.ModelSerializer):
@@ -11,13 +13,20 @@ class MessageSerializer(serializers.ModelSerializer):
     def get_sender(self, obj):
         return obj.sender.email
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'email']
+
 class ChatRoomSerializer(serializers.ModelSerializer):
     messages = MessageSerializer(many=True, read_only=True)
     label = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+    participants = UserSerializer(many=True, read_only=True)
 
     class Meta:
         model = ChatRoom
-        fields = ['id', 'name', 'label','participants', 'messages', 'is_group']
+        fields = ['id', 'name', 'label','participants', 'messages', 'is_group',  'last_message', 'updated_at']
 
     def get_label(self, obj):
         request = self.context.get('request')
@@ -32,3 +41,11 @@ class ChatRoomSerializer(serializers.ModelSerializer):
                 return others.first().username
 
         return None 
+    def get_last_message(self, obj):
+        msg = obj.messages.order_by("-timestamp").first()
+        return MessageSerializer(msg).data if msg else None
+
+
+
+
+    

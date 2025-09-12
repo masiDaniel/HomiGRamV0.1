@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseRating,  Houses,  Location, Room,  Teenants, PendingAdvertisement
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating,  Houses,  Location, Room,  Teenants, PendingAdvertisement, TenancyAgreement
+from collections import defaultdict
 
 
 class CareTakersSerializer(serializers.ModelSerializer):
@@ -17,10 +18,78 @@ class TeenantsSerializer(serializers.ModelSerializer):
         model = Teenants
         fields = ['user_id', 'house_id']
 
+class HouseImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = HouseImage
+        fields = ['image']
+        
 class HousesSerializers(serializers.ModelSerializer):
+    latitude = serializers.FloatField(required=False)
+    longitude = serializers.FloatField(required=False)
+    rooms = serializers.SerializerMethodField()
+    images = HouseImageSerializer(many=True, read_only=True) 
+
     class Meta:
         model = Houses
         fields = "__all__"
+
+    def get_rooms(self, obj):
+        grouped = defaultdict(list)
+        for room in obj.rooms.all():
+            grouped[str(room.number_of_bedrooms)].append(RoomSerializer(room).data)
+        return dict(grouped)
+
+class RoomSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Room
+        fields = "__all__"
+
+class TenancyAgreementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TenancyAgreement
+        fields = "__all__"
+        
+class RoomAndTenancySerializer(serializers.ModelSerializer):
+    agreement = serializers.SerializerMethodField()
+    class Meta:
+        model = Room
+        fields = "__all__"
+
+    def get_agreement(self, obj):
+        agreement = TenancyAgreement.objects.filter(room=obj, tenant=obj.tenant).first()
+        if agreement:
+            return TenancyAgreementSerializer(agreement).data
+        return None
+
+
+class HouseWithRoomsSerializer(serializers.ModelSerializer):
+    rooms = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Houses
+        fields = "__all__"
+
+    def get_rooms(self, obj):
+        grouped = defaultdict(list)
+        for room in obj.rooms.all():
+            grouped[str(room.number_of_bedrooms)].append(RoomSerializer(room).data)
+        return dict(grouped)
+    def create(self, validated_data):
+        images_data = validated_data.pop('images', [])
+        house = Houses.objects.create(**validated_data)
+        for image_data in images_data:
+            HouseImage.objects.create(house=house, **image_data)
+        return house
+
+    def update(self, instance, validated_data):
+        images_data = validated_data.pop('images', None)
+        instance = super().update(instance, validated_data)
+        if images_data is not None:
+            # # Optionally, remove old images first
+            # instance.images.all().delete()
+            for image_data in images_data:
+                HouseImage.objects.create(house=instance, **image_data)
+        return instance
 
 class HouseRatingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -33,10 +102,6 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class RoomSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Room
-        fields = "__all__"
 
 class AmenitiesSerializer(serializers.ModelSerializer):
     class Meta:

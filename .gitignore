@@ -1,0 +1,21 @@
+.vscode/
+# Flutter
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+
+# Android/iOS artifacts
+*.apk
+*.aab
+*.so
+
+# Xcode / iOS
+ios/Pods/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Misc
+pubspec.lock
+

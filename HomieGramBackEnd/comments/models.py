@@ -30,4 +30,4 @@ class HouseComments(models.Model):
         return self.dislikes.count()
     
     def __str__(self):
-        return f"Comment by {self.user} on {self.house_id}"
+        return f"Comment by {self.user_id.username} on {self.house_id}"
