@@ -1,38 +1,18 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:flutter/material.dart';
-import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/components/secure_tokens.dart';
-import 'package:homi_2/models/business.dart';
-import 'package:http/http.dart' as http;
 import 'dart:io';
-import 'package:path/path.dart';
-
-const devUrl = AppConstants.baseUrl;
+import 'package:flutter/material.dart';
+import 'package:homi_2/components/api_client.dart';
+import 'package:homi_2/models/business.dart';
 
 Future<List<BusinessModel>> fetchBusinesses() async {
-  String? token = await getAccessToken();
-  try {
-    final response = await http.get(
-      Uri.parse('$devUrl/business/getBusiness/'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+  final response = await apiGet("/business/getBusiness/");
 
-    if (response.statusCode == 200) {
-      final List<dynamic> businessData = json.decode(response.body);
-
-      final List<BusinessModel> businesses =
-          businessData.map((json) => BusinessModel.fromJSon(json)).toList();
-
-      return businesses;
-    } else {
-      throw Exception('failed to fetch arguments');
-    }
-  } catch (e) {
-    rethrow;
+  if (response.statusCode == 200) {
+    final List<dynamic> businessData = json.decode(response.body);
+    return businessData.map((json) => BusinessModel.fromJSon(json)).toList();
+  } else {
+    throw Exception('failed to fetch businesses: ${response.body}');
   }
 }
 
@@ -40,150 +20,103 @@ Future<bool> postBusiness(
   Map<String, Object?> businessData,
   BuildContext context,
 ) async {
-  String? token = await getAccessToken();
-
   try {
-    final uri = Uri.parse("$devUrl/business/getBusiness/");
-    var request = http.MultipartRequest('POST', uri);
-
-    request.headers.addAll({
-      'Authorization': 'Bearer $token',
-      'Content-Type': 'application/json',
-    });
-
-    businessData.forEach((key, value) {
-      if (key != 'image') {
-        request.fields[key] = value.toString();
-      }
-    });
-
+    // ✅ Case 1: multipart (with image upload)
     if (businessData['image'] is File) {
       File imageFile = businessData['image'] as File;
 
-      request.files.add(
-        await http.MultipartFile.fromPath(
-          'image',
-          imageFile.path,
-          filename: basename(imageFile.path),
-        ),
+      // Convert other fields to Map<String, String>
+      final fields = Map.fromEntries(
+        businessData.entries
+            .where((entry) => entry.key != "image")
+            .map((entry) => MapEntry(entry.key, entry.value.toString())),
       );
+
+      // Upload file + fields
+      final request = await apiUploadFile(
+        "/business/getBusiness/",
+        fields,
+        imageFile.path,
+      );
+
+      if (request.statusCode == 200 || request.statusCode == 201) {
+        final responseBody = await request.stream.bytesToString();
+        log("✅ Post business response: $responseBody");
+        return true;
+      } else {
+        final error = await request.stream.bytesToString();
+        log("❌ Post business error: $error");
+        return false;
+      }
     }
 
-    final response = await request.send();
+    // ✅ Case 2: plain JSON (no image)
+    final response = await apiPost(
+      "/business/getBusiness/",
+      headers: {"Content-Type": "application/json"},
+      body: json.encode(businessData),
+    );
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseBody = await response.stream.bytesToString();
-      log("Post business response $responseBody");
+      log("✅ Post business success: ${response.body}");
       return true;
     } else {
-      final error = await response.stream.bytesToString();
-      log("Post business error $error");
+      log("❌ Post business error: ${response.body}");
       return false;
     }
   } catch (e) {
+    log("⚠️ Post business exception: $e");
     return false;
   }
 }
 
 Future<List<Category>> fetchCategorys() async {
-  String? token = await getAccessToken();
-  try {
-    final response = await http.get(
-      Uri.parse('$devUrl/business/getCategorys/'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+  final response = await apiGet("/business/getCategorys/");
 
-    if (response.statusCode == 200) {
-      final List<dynamic> categoryData = json.decode(response.body);
-
-      final List<Category> categories =
-          categoryData.map((json) => Category.fromJSon(json)).toList();
-
-      return categories;
-    } else {
-      throw Exception('failed to fetch arguments');
-    }
-  } catch (e) {
-    rethrow;
+  if (response.statusCode == 200) {
+    final List<dynamic> categoryData = json.decode(response.body);
+    return categoryData.map((json) => Category.fromJSon(json)).toList();
+  } else {
+    throw Exception('failed to fetch categories: ${response.body}');
   }
 }
 
 Future<List<Products>> fetchProducts() async {
-  String? token = await getAccessToken();
-  try {
-    final response = await http.get(
-      Uri.parse('$devUrl/business/getProducts/'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+  final response = await apiGet("/business/getProducts/");
 
-    if (response.statusCode == 200) {
-      final List<dynamic> productsData = json.decode(response.body);
-
-      final List<Products> products =
-          productsData.map((json) => Products.fromJSon(json)).toList();
-
-      return products;
-    } else {
-      throw Exception('failed to fetch arguments');
-    }
-  } catch (e) {
-    rethrow;
+  if (response.statusCode == 200) {
+    final List<dynamic> productsData = json.decode(response.body);
+    return productsData.map((json) => Products.fromJSon(json)).toList();
+  } else {
+    throw Exception('failed to fetch products: ${response.body}');
   }
 }
 
 Future<List<Products>> fetchProductsSeller() async {
-  String? token = await getAccessToken();
-  try {
-    final response = await http.get(
-      Uri.parse('$devUrl/business/getProducts/?business=null'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer $token",
-      },
-    );
+  final response = await apiGet("/business/getProducts/?business=null");
 
-    if (response.statusCode == 200) {
-      final List<dynamic> productsData = json.decode(response.body);
-
-      final List<Products> products =
-          productsData.map((json) => Products.fromJSon(json)).toList();
-
-      return products;
-    } else {
-      throw Exception('failed to fetch arguments');
-    }
-  } catch (e) {
-    rethrow;
+  if (response.statusCode == 200) {
+    final List<dynamic> productsData = json.decode(response.body);
+    return productsData.map((json) => Products.fromJSon(json)).toList();
+  } else {
+    throw Exception('failed to fetch seller products: ${response.body}');
   }
 }
 
 Future<bool> postProducts(
   Map<String, Object?> productData,
 ) async {
-  String? token = await getAccessToken();
-  try {
-    final response = await http.post(
-      Uri.parse('$devUrl/business/postProducts/'),
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Token $token",
-      },
-      body: json.encode(productData),
-    );
+  final response = await apiPost(
+    "/business/postProducts/",
+    headers: {"Content-Type": "application/json"},
+    body: json.encode(productData),
+  );
 
-    if (response.statusCode == 200) {
-      return true;
-    } else {
-      log('Failed to post product: ${response.body}');
-      return false;
-    }
-  } catch (e) {
-    rethrow;
+  if (response.statusCode == 200 || response.statusCode == 201) {
+    log("Product posted successfully: ${response.body}");
+    return true;
+  } else {
+    log("Failed to post product: ${response.body}");
+    return false;
   }
 }

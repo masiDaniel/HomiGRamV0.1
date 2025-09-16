@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/user_signin.dart';
+import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -36,7 +37,7 @@ Future fetchUserSignIn(
     if (response.statusCode == 200) {
       final userData = json.decode(response.body);
 
-      // await UserPreferences.saveUserData(userData);
+      await UserPreferences.saveUserData(userData);
       saveTokens(userData['access'], userData['refresh']);
 
       return UserRegistration.fromJSon(userData);
