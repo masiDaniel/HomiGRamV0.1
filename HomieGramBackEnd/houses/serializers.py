@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating,  Houses,  Location, Room,  Teenants, PendingAdvertisement, TenancyAgreement
+from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating,  Houses,  Location, Room, RoomImage,  Teenants, PendingAdvertisement, TenancyAgreement
 from collections import defaultdict
 
 
@@ -39,15 +39,31 @@ class HousesSerializers(serializers.ModelSerializer):
             grouped[str(room.number_of_bedrooms)].append(RoomSerializer(room).data)
         return dict(grouped)
 
+class RoomImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RoomImage
+        fields = ['image']
+
+
 class RoomSerializer(serializers.ModelSerializer):
+    images = HouseImageSerializer(many=True, read_only=True) 
     class Meta:
         model = Room
         fields = "__all__"
 
 class TenancyAgreementSerializer(serializers.ModelSerializer):
+    tenant = serializers.CharField(source="tenant.username", read_only=True)
+    house = serializers.CharField(source="house.name", read_only=True)
+    room = serializers.CharField(source="room.room_name", read_only=True)
+    house_location = serializers.CharField(source="house.location_detail", read_only=True)
+    rent_amount = serializers.CharField(source="room.rent", read_only=True)
+
     class Meta:
         model = TenancyAgreement
-        fields = "__all__"
+        fields = [
+            "id", "tenant", "house", "room", "house_location",
+            "status", "rent_amount", "start_date", "end_date"
+        ]
         
 class RoomAndTenancySerializer(serializers.ModelSerializer):
     agreement = serializers.SerializerMethodField()

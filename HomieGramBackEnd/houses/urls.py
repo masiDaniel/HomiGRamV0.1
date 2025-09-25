@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, ConfirmAgreementView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, PaymentStatusView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, RentPaymentView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, StartRentView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView
+from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, ConfirmAgreementView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, PaymentStatusView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, RentPaymentPreviewView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, StartRentView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView, RentPaymentInitiateView
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
@@ -30,7 +30,8 @@ urlpatterns = [
 
     #initiate reting process 
     path('initiate-renting-process/', StartRentView.as_view(), name='start_renting_process'),
-    path('create-agremment/', ConfirmAgreementView.as_view(), name='confirm_agreemeng'),
-    path('rent-process/', RentPaymentView.as_view(), name='rent_process'),
+    path('sign-agremment/', ConfirmAgreementView.as_view(), name='confirm_agreemeng'),
+    path('payment-preview/', RentPaymentPreviewView.as_view(), name='payment_preview'),
+    path('payment-initialization/', RentPaymentInitiateView.as_view(), name='payment_initialization'),
     path('payment-status/', PaymentStatusView.as_view(), name='payment_status'),
 ]

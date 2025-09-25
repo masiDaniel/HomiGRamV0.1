@@ -49,17 +49,30 @@ class LoginApIView(APIView):
             return Response(serializer.data, status=status.HTTP_403_FORBIDDEN)
 
 class LogoutAPIView(APIView):
-    """
-    Handles User logout
-    """
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, *args, **kwargs):
-        """
-        Handles log out of the user
-        """
-        logout(request)
-        return Response({"message": "Logged out successfully."}, status=status.HTTP_200_OK)
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh")
+            if not refresh_token:
+                return Response(
+                    {"message": "Refresh token is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            token = RefreshToken(refresh_token)
+            token.blacklist()  # invalidate this refresh token
+
+            return Response(
+                {"message": "Logged out successfully."},
+                status=status.HTTP_205_RESET_CONTENT
+            )
+
+        except Exception:
+            return Response(
+                {"message": "Invalid or expired token."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 

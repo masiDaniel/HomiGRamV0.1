@@ -7,20 +7,33 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.generics import RetrieveAPIView
 from django.utils import timezone
-
-
 from chat.models import ChatRoom
 from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
-
+from django.utils.crypto import get_random_string
 from .utils import check_payment_status, get_safe_group_name
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer, TenancyAgreementSerializer
-from accounts.serializers import MessageSerializer
-from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating, Houses, Location, Payment, Room, PendingAdvertisement, TenancyAgreement
+from .models import Advertisement, Amenity, Bookmark, CareTaker, Charge, HouseImage, HouseRating, Houses, Location, Payment, PaymentItem, Room, PendingAdvertisement, TenancyAgreement, Receipt
 from .utils import get_safe_group_name
-
-from rest_framework.permissions import  IsAuthenticated
+from rest_framework.permissions import  IsAuthenticated, AllowAny
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 # Create your views here.
+
+
+# TODO : test this complete workflow
+def generate_receipt(payment):
+    if hasattr(payment, "receipt"): 
+        return payment.receipt
+    
+    receipt_number = f"RCPT-{get_random_string(8).upper()}"
+    receipt = Receipt.objects.create(
+        payment=payment,
+        tenant=payment.tenant,
+        receipt_number=receipt_number,
+        amount=payment.amount,
+    )
+    return receipt
 
 def create_private_chat_if_not_exists(user1, user2):
         if user1 == user2:
@@ -36,6 +49,64 @@ def create_private_chat_if_not_exists(user1, user2):
         )
         room.participants.add(user1, user2)
 
+def send_receipt_email(receipt):
+    subject = f"Your Payment Receipt - {receipt.receipt_number}"
+    from_email = "no-reply@yourapp.com"
+    recipient_list = [receipt.tenant.email]
+
+    html_content = render_to_string("receipts/receipt.html", {"receipt": receipt})
+    
+    msg = EmailMultiAlternatives(subject, "", from_email, recipient_list)
+    msg.attach_alternative(html_content, "text/html")
+    msg.send()
+
+# def compute_charges(agreement, is_first_payment):
+#     items, total_amount = [], 0
+#     items.append({"name": "Rent", "amount": agreement.room.rent})
+#     total_amount += agreement.room.rent
+
+#     if is_first_payment:
+#         if agreement.house.water_deposit:
+#             items.append({"name": "Water Deposit", "amount": agreement.house.water_deposit})
+#             total_amount += agreement.house.water_deposit
+#     else:
+#         today = timezone.now().date()
+#         charges = agreement.charges.filter(
+#             month__month=today.month, month__year=today.year, is_paid=False
+#         )
+#         for c in charges:
+#             items.append({"name": c.name, "amount": c.amount})
+#             total_amount += c.amount
+
+#     return items, total_amount
+
+def compute_charges(agreement, is_first_payment):
+    items, total_amount = [], 0
+
+    # Always add rent and Deposit
+    items.append({"name": "Monthly Rent", "amount": agreement.room.rent})
+    total_amount += agreement.room.rent
+    items.append({"name": "Deposit Rent", "amount": agreement.room.rent})
+    total_amount += agreement.room.rent
+
+    if is_first_payment:
+        # Example: add deposits dynamically
+        if getattr(agreement.house, "security_deposit", None):
+            items.append({"name": "Security Deposit", "amount": agreement.house.security_deposit})
+            total_amount += agreement.house.security_deposit
+        if getattr(agreement.house, "water_deposit", None):
+            items.append({"name": "Water Deposit", "amount": agreement.house.water_deposit})
+            total_amount += agreement.house.water_deposit
+    else:
+        today = timezone.now().date()
+        charges = agreement.charges.filter(
+            month__month=today.month, month__year=today.year, is_paid=False
+        )
+        for c in charges:
+            items.append({"name": c.name, "amount": c.amount})
+            total_amount += c.amount
+
+    return items, total_amount
 
 class HouseAPIView(APIView):
     """
@@ -51,6 +122,7 @@ class HouseAPIView(APIView):
         """
         houses = Houses.objects.all()
         serializer = HousesSerializers(houses, many=True)
+        print(f"this is the data {serializer.data}")
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request, *args, **kwargs):
@@ -535,9 +607,11 @@ class AssignTenantView(APIView):
         )
 
 # step 1: initiate.
+from django.db import transaction
+
 class StartRentView(APIView):
     permission_classes = [IsAuthenticated]
-    # what happens when i send multiple requests of the same house and room
+
     def post(self, request, *args, **kwargs):
         house_id = request.data.get("house_id")
         room_id = request.data.get("room_id")
@@ -545,14 +619,57 @@ class StartRentView(APIView):
         if not house_id or not room_id:
             return Response({"error": "house_id and room_id are required"}, status=400)
 
-        room = get_object_or_404(Room, id=room_id, apartment_id=house_id, occupied=False)
-        agreement = TenancyAgreement.objects.create(
-            tenant=request.user,
-            house=room.apartment,
-            room=room,
-            status="pending"
-        )
-        return Response({"agreement": TenancyAgreementSerializer(agreement).data})
+        try:
+            with transaction.atomic():
+                # lock the room row to prevent race conditions
+                room = Room.objects.select_for_update().get(
+                    id=room_id, apartment_id=house_id
+                )
+
+                # check if room is already occupied
+                if room.occupied:
+                    return Response({"error": "This room is already occupied"}, status=400)
+
+                # check if user already has an active agreement
+                active = TenancyAgreement.objects.filter(
+                    tenant=request.user, room=room, status__in=["active", "approved"]
+                ).first()
+                if active:
+                    return Response(
+                        {"error": "You already have an active agreement for this room"},
+                        status=400
+                    )
+
+                # check for existing pending agreement
+                pending = TenancyAgreement.objects.filter(
+                    tenant=request.user, room=room, 
+                ).first()
+                print(f"this is the id {TenancyAgreementSerializer(pending).data,}")
+                if pending:
+                    return Response(
+                        {
+                            "error": "You already have a pending request for this room",
+                            "agreement": TenancyAgreementSerializer(pending).data,
+                        },
+                        status=200  
+                    )
+
+                # create new agreement safely inside the lock
+                agreement = TenancyAgreement.objects.create(
+                    tenant=request.user,
+                    house=room.apartment,
+                    room=room,
+                    status="pending"
+                )
+
+                return Response(
+                    {"agreement": TenancyAgreementSerializer(agreement).data},
+                    status=201
+                )
+
+        except Room.DoesNotExist:
+            return Response({"error": "Room not found"}, status=404)
+
 
 # Step 2: Confirm agreement
 class ConfirmAgreementView(APIView):
@@ -561,33 +678,97 @@ class ConfirmAgreementView(APIView):
     def post(self, request, *args, **kwargs):
         agreement_id = request.data.get("agreement_id")
         agreement = get_object_or_404(TenancyAgreement, id=agreement_id, tenant=request.user, status="pending")
-        agreement.status = "confirmed_pending_payment"
+        
+        agreement.signed_at = timezone.now()
+
+        agreement.status = "pending"
         agreement.save()
-        return Response({"message": "Agreement confirmed. Proceed to payment."})
+        return Response({
+            "message": "Agreement confirmed. Proceed to payment.",
+            "agreement": TenancyAgreementSerializer(agreement).data
+        },   status=200  )
 
 # Step 3: Initiate payment
-class RentPaymentView(APIView):
+class RentPaymentPreviewView(APIView):
     permission_classes = [IsAuthenticated]
-    #factor in deposits and initial payments vs monthly payments
+
     def post(self, request, *args, **kwargs):
         agreement_id = request.data.get("agreement_id")
-        agreement = get_object_or_404(TenancyAgreement, id=agreement_id, tenant=request.user, status="confirmed_pending_payment")
+        agreement = get_object_or_404(
+            TenancyAgreement,
+            id=agreement_id,
+            tenant=request.user,
+            status__in=["pending", "failed"]
+        )
+
+        is_first_payment = not Payment.objects.filter(
+            agreement=agreement, status="Confirmed"
+        ).exists()
+
+        items, total_amount = compute_charges(agreement, is_first_payment)
+
+        return Response({
+            "agreement_id": agreement.id,
+            "is_first_payment": is_first_payment,
+            "items": items,
+            "total": total_amount,
+        })
+
+class RentPaymentInitiateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        agreement_id = request.data.get("agreement_id")
+        agreement = get_object_or_404(
+            TenancyAgreement,
+            id=agreement_id,
+            tenant=request.user,
+            status__in=["pending", "active"]
+        )
+
+        is_first_payment = not Payment.objects.filter(
+            agreement=agreement, status="confirmed"
+        ).exists()
+
+        # Compute charges
+        items, total_amount = compute_charges(agreement, is_first_payment)
+
+        # Create pending payment
         payment = Payment.objects.create(
+            agreement=agreement,
             tenant=request.user,
             house=agreement.house,
             room=agreement.room,
-            amount=agreement.room.rent,
-            status="pending"
+            amount=total_amount,
+            status="pending",
+         
         )
-        # Trigger M-Pesa
+
+        for item in items:
+            PaymentItem.objects.create(payment=payment, name=item["name"], amount=item["amount"])
+
+        # Initiate M-Pesa
         mpesa = MpesaHandler()
         res_status, res_data = mpesa.make_stk_push({
-            "amount": agreement.room.rent,
+            "amount": total_amount,
             "phone_number": request.user.phone_number
         })
 
-        # so how is the payment status supossed to change ? 
-        return Response({"payment_id": payment.id, "mpesa_response": res_data})
+        if not res_status:
+            payment.mark_failed(reason=res_data.get("errorMessage", "STK Push failed"))
+            return Response({"error": "Failed to initiate payment", "details": res_data}, status=400)
+
+        # Save CheckoutRequestID for callback matching
+        payment.checkout_request_id = res_data.get("CheckoutRequestID")
+        payment.save()
+
+        return Response({
+            "payment_id": payment.id,
+            "amount": total_amount,
+            "items": items,
+            "mpesa_response": res_data
+        })
+
 
 class PaymentStatusView(APIView):
     permission_classes = [IsAuthenticated]
@@ -595,8 +776,76 @@ class PaymentStatusView(APIView):
         payment_id = request.data.get("payment_id")
         payment = get_object_or_404(Payment, id=payment_id, tenant=request.user)
         if payment.status == "confirmed":
-            return Response({"status": "confirmed", "agreement_id": payment.agreement.id})
+            receipt = generate_receipt(payment)
+            return Response({
+                "status": "confirmed",
+                "agreement_id": payment.agreement.id,
+                "receipt_number": receipt.receipt_number,
+                "amount": str(receipt.amount),
+                "date_issued": receipt.date_issued,
+            })
+        
+        send_receipt_email(receipt)
+
         return Response({"status": payment.status})
+    
+class MpesaCallbackView(APIView):
+    def post(self, request, *args, **kwargs):
+        body = request.data.get("Body", {})
+        stk_callback = body.get("stkCallback", {})
+
+        result_code = stk_callback.get("ResultCode")
+        result_desc = stk_callback.get("ResultDesc")
+        checkout_request_id = stk_callback.get("CheckoutRequestID")
+
+        # 1. Find the payment
+        payment = Payment.objects.filter(checkout_request_id=checkout_request_id).first()
+        if not payment:
+            return Response({"error": "Payment not found"}, status=404)
+
+        # 2. If success
+        if result_code == 0:
+            metadata = {item["Name"]: item.get("Value") for item in stk_callback.get("CallbackMetadata", {}).get("Item", [])}
+            amount = metadata.get("Amount")
+            receipt_number = metadata.get("MpesaReceiptNumber")
+
+            payment.status = "confirmed"
+            payment.amount = amount
+            payment.mpesa_receipt = receipt_number
+            payment.paid_at = timezone.now()
+            payment.save()
+
+            # Mark charges as paid
+            for item in payment.items.all():
+                if item.name in ["Water", "Electricity", "Garbage"]:
+                    Charge.objects.filter(
+                        agreement=payment.agreement,
+                        name=item.name,
+                        month__month=payment.paid_at.month,
+                        month__year=payment.paid_at.year
+                    ).update(is_paid=True)
+
+            # Create receipt
+            receipt = Receipt.objects.create(
+                payment=payment,
+                tenant=payment.tenant,
+                receipt_number=f"RCT-{payment.id}-{int(timezone.now().timestamp())}",
+                amount=payment.amount
+            )
+
+            return Response({
+                "status": "success",
+                "receipt_number": receipt.receipt_number
+            })
+
+        # 3. If failed
+        else:
+            payment.status = "failed"
+            payment.failure_reason = result_desc
+            payment.save()
+            return Response({"status": "failed", "reason": result_desc})
+
+
 class AssignCaretakerView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):

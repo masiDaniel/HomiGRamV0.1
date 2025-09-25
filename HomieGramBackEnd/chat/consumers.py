@@ -5,24 +5,30 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.db import close_old_connections
 from urllib.parse import parse_qs
-from knox.auth import TokenAuthentication
 from .models import Message, ChatRoom
 from datetime import datetime
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.backends import TokenBackend
+import os
+from django.conf import settings
 
 User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
-        # error handling for timeout
         query_string = self.scope["query_string"].decode()
         token = parse_qs(query_string).get("token", [None])[0]
 
         if not token:
+            await self.accept()
+            await self.send(text_data=json.dumps({"error": "Missing token"}))
             await self.close()
             return
 
         user = await self.get_user_for_token(token)
         if not user or user.is_anonymous:
+            await self.accept()
+            await self.send(text_data=json.dumps({"error": "Invalid token"}))
             await self.close()
             return
 
@@ -35,6 +41,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         room_exists = await self.room_exists_and_user_allowed(self.room_name, self.user)
         if not room_exists:
+            await self.accept()
+            await self.send(text_data=json.dumps({"error": "Room not found or access denied"}))
             await self.close()
             return
 
@@ -42,14 +50,18 @@ class ChatConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-
         await self.accept()
 
     async def disconnect(self, close_code):
-        await self.channel_layer.group_discard(
-            self.room_group_name,
-            self.channel_name
-        )
+        if hasattr(self, "room_group_name"):
+            await self.channel_layer.group_discard(
+                self.room_group_name,
+                self.channel_name
+            )
+            print(f"User {getattr(self, 'user', 'Unknown')} left room {self.room_group_name}")
+        else:
+            print(f"Disconnect called before joining any room. Close code: {close_code}")
+
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -108,11 +120,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def get_user_for_token(self, token):
-        auth = TokenAuthentication()
         try:
-            user, _ = auth.authenticate_credentials(token.encode())
-            return user
-        except Exception:
+            
+            signing_key = os.environ.get("SECRET_KEY", settings.SECRET_KEY)
+
+            token_backend = TokenBackend(
+                algorithm='HS256',
+                signing_key=signing_key
+            )
+            valid_data = token_backend.decode(token, verify=True)
+
+            user_id = valid_data.get("user_id")
+            if not user_id:
+                return AnonymousUser()
+
+            return User.objects.get(id=user_id)
+
+        except (TokenError, InvalidToken, User.DoesNotExist) as e:
+            print(f"JWT auth failed: {e}")
             return AnonymousUser()
 
     @database_sync_to_async
