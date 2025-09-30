@@ -17,17 +17,16 @@ class AdDetailPage extends StatelessWidget {
         elevation: 0,
         title: const Text("Ad Details"),
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(20.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: ad.imageUrl != null
                   ? Image.network(
                       '$devUrl${ad.imageUrl!}',
-                      height: 450,
+                      height: 200,
                       width: double.infinity,
                       fit: BoxFit.cover,
                     )
@@ -51,7 +50,7 @@ class AdDetailPage extends StatelessWidget {
             Divider(
               color: Colors.grey.shade500,
               thickness: 1,
-              endIndent: 40,
+              endIndent: 1,
             ),
             const SizedBox(height: 16),
             Text(
@@ -66,7 +65,7 @@ class AdDetailPage extends StatelessWidget {
             Divider(
               color: Colors.grey.shade500,
               thickness: 1,
-              endIndent: 40,
+              endIndent: 1,
             ),
             const SizedBox(height: 16),
             Row(
@@ -99,6 +98,28 @@ class AdDetailPage extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const Spacer(),
+            SizedBox(
+              height: 55,
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x95154D07),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  "View House",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
             ),
           ],
         ),

@@ -58,7 +58,6 @@ class DatabaseHelper {
   }
 
   Future<List<ChatRoom>> getChatRoomsWithMessages() async {
-    print(">>> Fetching chat rooms from DB...");
     final db = await database;
 
     final List<Map<String, dynamic>> maps = await db.query(

@@ -1,15 +1,16 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
+import 'package:homi_2/components/star_ratings.dart';
 import 'package:homi_2/models/amenities.dart';
 import 'package:homi_2/models/bookmark.dart';
 import 'package:homi_2/models/comments.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/comments_service_refined.dart';
+import 'package:homi_2/services/get_rooms_service.dart';
 import 'package:homi_2/services/post_comments_service.dart';
 import 'package:homi_2/services/comments_service.dart';
 import 'package:homi_2/services/fetch_bookmarks.dart';
@@ -196,19 +197,6 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
         child: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF062E00), Color(0xFF4CAF50)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(16),
-              ),
-            ),
-          ),
           title: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -217,10 +205,8 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 4),
               const Text(
                 "Homigram verified",
                 style: TextStyle(
@@ -231,12 +217,16 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
           ),
           centerTitle: false,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+            icon: const Icon(
+              Icons.arrow_back_ios,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.share, color: Colors.white),
+              icon: const Icon(
+                Icons.share,
+              ),
               onPressed: () {
                 // Share house link or details
               },
@@ -245,388 +235,417 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            SizedBox(
-                height: 500,
-                child: PageView.builder(
-                  controller: _pageController,
-                  itemCount: widget.house.images!.length,
-                  onPageChanged: (index) {
-                    setState(() {
-                      _currentPage = index;
-                    });
-                  },
-                  itemBuilder: (context, index) {
-                    final imageUrl = widget.house.images![index];
-                    return SizedBox(
-                        width: double.infinity,
-                        child: BlurCachedImage(
-                          imageUrl: '$devUrl$imageUrl',
-                          height: 600,
+        child: Padding(
+          padding: const EdgeInsetsGeometry.symmetric(horizontal: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                  height: 500,
+                  child: PageView.builder(
+                    controller: _pageController,
+                    itemCount: widget.house.images!.length,
+                    onPageChanged: (index) {
+                      setState(() {
+                        _currentPage = index;
+                      });
+                    },
+                    itemBuilder: (context, index) {
+                      final imageUrl = widget.house.images![index];
+                      return SizedBox(
                           width: double.infinity,
-                          fit: BoxFit.cover,
-                        ));
-                  },
-                )),
-            const SizedBox(
-              height: 10,
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                widget.house.images!.length,
-                (index) => Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  width: _currentPage == index ? 12 : 8,
-                  height: _currentPage == index ? 12 : 8,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _currentPage == index ? Colors.green : Colors.grey,
+                          child: BlurCachedImage(
+                            imageUrl: '$devUrl$imageUrl',
+                            height: 600,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ));
+                    },
+                  )),
+              const SizedBox(
+                height: 5,
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List.generate(
+                  widget.house.images!.length,
+                  (index) => Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    width: _currentPage == index ? 12 : 8,
+                    height: _currentPage == index ? 12 : 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _currentPage == index ? Colors.green : Colors.grey,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(
-              height: 10,
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1F02F502),
-                    offset: Offset(0, 3),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'House Details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF126E06),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(Icons.description, color: Color(0xFF126E06)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Description: ${widget.house.description}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'House Details',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF126E06),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.monetization_on,
-                          color: Color(0xFF126E06)),
-                      const SizedBox(width: 8),
-                      Text('Rent: KES ${widget.house.rentAmount}',
-                          style: const TextStyle(fontSize: 16)),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.star, color: Colors.orange),
-                      const SizedBox(width: 8),
-                      const Text('Rating:', style: TextStyle(fontSize: 16)),
-                      buildSimpleStars(widget.house.rating.toDouble())
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      const Icon(Icons.location_on, color: Color(0xFF126E06)),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                            'Location ${getLocationName(widget.house.locationDetail!)}',
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(Icons.description, color: Color(0xFF126E06)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Description: ${widget.house.description}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.monetization_on,
+                            color: Color(0xFF126E06)),
+                        const SizedBox(width: 8),
+                        Text('Rent: KES ${widget.house.rentAmount}',
                             style: const TextStyle(fontSize: 16)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (context) => MapPage(
-                        //       destLat: widget.house.latitude!,
-                        //       destLng: widget.house.longitude!,
-                        //     ),
-                        //   ),
-                        // );
-                      },
-                      label: const Text(
-                        "Check Map Location",
-                        style: TextStyle(
-                          color: Color(0xFF126E06),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                            color: Color(0xFF126E06), width: 1.2),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 10),
-                        textStyle: const TextStyle(fontSize: 14),
-                      ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Browse by Room Type",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: roomCategories.map((category) {
-                final String bedroomCount = (category);
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => RoomsByTypePage(
-                          houseId: widget.house.houseId,
-                          bedroomCount: bedroomCount,
-                          rooms: widget.house.rooms?[bedroomCount] ?? [],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.orange),
+                        const SizedBox(width: 8),
+                        const Text('Rating:', style: TextStyle(fontSize: 16)),
+                        RatingStars(rating: widget.house.rating.toDouble())
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.location_on, color: Color(0xFF126E06)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                              'Location ${getLocationName(widget.house.locationDetail!)}',
+                              style: const TextStyle(fontSize: 16)),
                         ),
-                      ),
-                    );
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    ),
+                    // OutlinedButton.icon(
+                    //   onPressed: () {
+                    //     // Navigator.push(
+                    //     //   context,
+                    //     //   MaterialPageRoute(
+                    //     //     builder: (context) => MapPage(
+                    //     //       destLat: widget.house.latitude!,
+                    //     //       destLng: widget.house.longitude!,
+                    //     //     ),
+                    //     //   ),
+                    //     // );
+                    //   },
+                    //   label: const Text(
+                    //     "Check Map Location",
+                    //     style: TextStyle(
+                    //       color: Color(0xFF126E06),
+                    //       fontWeight: FontWeight.w600,
+                    //     ),
+                    //   ),
+                    //   style: OutlinedButton.styleFrom(
+                    //     side: const BorderSide(
+                    //         color: Color(0xFF126E06), width: 1.2),
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(10),
+                    //     ),
+                    //     padding: const EdgeInsets.symmetric(
+                    //         horizontal: 14, vertical: 10),
+                    //     textStyle: const TextStyle(fontSize: 14),
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Amenities",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: amenities.map((amenity) {
+                  return Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       color: const Color(0x95154D07),
                     ),
-                    child: Text(
-                      "$bedroomCount Bedroom${bedroomCount != 1 ? 's' : ''}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              "Amenities",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: amenities.map((amenity) {
-                return Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: const Color(0x95154D07),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.check_circle_outline,
-                        color: Colors.white,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        amenity.name![0].toUpperCase() +
-                            amenity.name!.substring(1),
-                        style: const TextStyle(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
                           color: Colors.white,
-                          fontWeight: FontWeight.w500,
+                          size: 18,
                         ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 10),
-          ],
-        ),
-      ),
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: ClipRRect(
-          borderRadius: BorderRadiusGeometry.circular(12),
-          child: BottomAppBar(
-            child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // TODO: have this in a different file/function
-                      int houseId = widget.house.houseId;
-
-                      if (isBookmarked) {
-                        PostBookmark.removeBookmark(houseId: houseId).then((_) {
-                          setState(() {
-                            isBookmarked = false;
-                          });
-
-                          if (!mounted) return;
-
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Bookmark Removed'),
-                                content: const Text(
-                                    'This house has been removed from your bookmarks.'),
-                                actions: [
-                                  TextButton(
-                                    style: const ButtonStyle(
-                                      backgroundColor: WidgetStatePropertyAll(
-                                          Color(0x95154D07)),
-                                    ),
-                                    onPressed: Navigator.of(context).pop,
-                                    child: const Text('OK',
-                                        style: TextStyle(color: Colors.white)),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }).catchError((error) {
-                          log("Error occurred while removing bookmark: $error");
-                        });
-                      } else {
-                        PostBookmark.postBookmark(houseId: houseId).then((_) {
-                          setState(() {
-                            isBookmarked = true;
-                          });
-
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Bookmarked'),
-                                content: Text(
-                                    '${widget.house.name} has been added to your bookmarks.'),
-                                actions: [
-                                  TextButton(
-                                    style: const ButtonStyle(
-                                      backgroundColor: WidgetStatePropertyAll(
-                                          Color(0x95154D07)),
-                                    ),
-                                    onPressed: () =>
-                                        Navigator.of(context).pop(),
-                                    child: const Text('OK',
-                                        style: TextStyle(color: Colors.white)),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }).catchError((error) {
-                          log("Error occurred while bookmarking: $error");
-                        });
-                      }
-                    },
-                    icon: Icon(
-                      isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                      color: Colors.white,
+                        const SizedBox(width: 6),
+                        Text(
+                          amenity.name![0].toUpperCase() +
+                              amenity.name!.substring(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
                     ),
-                    label: Container(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0x95154D07),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                    ),
-                  ),
-                  ElevatedButton.icon(
-                    onPressed: () {
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                "Browse by Room Type",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: roomCategories.map((category) {
+                  final String bedroomCount = (category);
+                  return GestureDetector(
+                    onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              CommentsScreen(house: widget.house),
+                          builder: (context) => RoomsByTypePage(
+                            houseId: widget.house.houseId,
+                            bedroomCount: bedroomCount,
+                            rooms: widget.house.rooms?[bedroomCount] ?? [],
+                          ),
                         ),
                       );
                     },
-                    icon: const Icon(Icons.comment, color: Colors.white),
-                    label: const Text("Comments",
-                        style: TextStyle(color: Colors.white)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0x95154D07),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
+                          horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0x95154D07),
+                      ),
+                      child: Text(
+                        "$bedroomCount Bedroom",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: BottomAppBar(
+          child: Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  // TODO: have this in a different file/function
+                  int houseId = widget.house.houseId;
+
+                  if (isBookmarked) {
+                    PostBookmark.removeBookmark(houseId: houseId).then((_) {
+                      setState(() {
+                        isBookmarked = false;
+                      });
+
+                      if (!mounted) return;
+
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Bookmark Removed'),
+                            content: const Text(
+                                'This house has been removed from your bookmarks.'),
+                            actions: [
+                              TextButton(
+                                style: const ButtonStyle(
+                                  backgroundColor:
+                                      WidgetStatePropertyAll(Color(0x95154D07)),
+                                ),
+                                onPressed: Navigator.of(context).pop,
+                                child: const Text('OK',
+                                    style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }).catchError((error) {
+                      log("Error occurred while removing bookmark: $error");
+                    });
+                  } else {
+                    PostBookmark.postBookmark(houseId: houseId).then((_) {
+                      setState(() {
+                        isBookmarked = true;
+                      });
+
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text('Bookmarked'),
+                            content: Text(
+                                '${widget.house.name} has been added to your bookmarks.'),
+                            actions: [
+                              TextButton(
+                                style: const ButtonStyle(
+                                  backgroundColor:
+                                      WidgetStatePropertyAll(Color(0x95154D07)),
+                                ),
+                                onPressed: () => Navigator.of(context).pop(),
+                                child: const Text('OK',
+                                    style: TextStyle(color: Colors.white)),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }).catchError((error) {
+                      log("Error occurred while bookmarking: $error");
+                    });
+                  }
+                },
+                icon: Icon(
+                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  color: Colors.white,
+                ),
+                label: const Text("Bookmark",
+                    style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x95154D07),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+              const SizedBox(
+                width: 12,
+              ),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            CommentsScreen(house: widget.house),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0x95154D07),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 4,
+                    textStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
                     ),
                   ),
-                ],
+                  child: const Text("Comments"),
+                ),
               ),
-            ),
+              const SizedBox(
+                width: 12,
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  fetchRooms().then((_) {
+                    setState(() {});
+
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Bookmarked'),
+                          content: Text(
+                              '${widget.house.name} has been added to your bookmarks.'),
+                          actions: [
+                            TextButton(
+                              style: const ButtonStyle(
+                                backgroundColor:
+                                    WidgetStatePropertyAll(Color(0x95154D07)),
+                              ),
+                              onPressed: () => Navigator.of(context).pop(),
+                              child: const Text('OK',
+                                  style: TextStyle(color: Colors.white)),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  });
+                },
+                icon: Icon(
+                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  color: Colors.white,
+                ),
+                label:
+                    const Text("rooms", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0x95154D07),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
-
-  // TODO : this is duplicated, how do i have it defined once and used across
-  // multiple files?
-
-  Widget buildSimpleStars(double rating) {
-    return RatingBarIndicator(
-      rating: rating,
-      itemBuilder: (context, index) => const Icon(
-        Icons.star,
-        color: Color(0xFF126E06),
-      ),
-      itemCount: 5,
-      itemSize: 20.0,
-      direction: Axis.horizontal,
-    );
-  }
+  // Widget buildSimpleStars(double rating) {
+  //   return RatingBarIndicator(
+  //     rating: rating,
+  //     itemBuilder: (context, index) => const Icon(
+  //       Icons.star,
+  //       color: Color(0xFF126E06),
+  //     ),
+  //     itemCount: 5,
+  //     itemSize: 20.0,
+  //     direction: Axis.horizontal,
+  //   );
+  // }
 }

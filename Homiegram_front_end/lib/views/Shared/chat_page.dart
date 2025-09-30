@@ -35,6 +35,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
+// TODO what is the problem here?
     final wsUrl = Uri.parse(
         '$chatUrl/ws/chat/${widget.chat.name}/?token=${widget.token}');
 

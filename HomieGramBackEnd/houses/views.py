@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 import time
 import uuid
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -11,13 +11,15 @@ from chat.models import ChatRoom
 from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 from django.utils.crypto import get_random_string
-from .utils import check_payment_status, get_safe_group_name
+from .utils import get_safe_group_name
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer, TenancyAgreementSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, Charge, HouseImage, HouseRating, Houses, Location, Payment, PaymentItem, Room, PendingAdvertisement, TenancyAgreement, Receipt
 from .utils import get_safe_group_name
-from rest_framework.permissions import  IsAuthenticated, AllowAny
+from rest_framework.permissions import  IsAuthenticated
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.db import transaction
+
 # Create your views here.
 
 
@@ -59,26 +61,6 @@ def send_receipt_email(receipt):
     msg = EmailMultiAlternatives(subject, "", from_email, recipient_list)
     msg.attach_alternative(html_content, "text/html")
     msg.send()
-
-# def compute_charges(agreement, is_first_payment):
-#     items, total_amount = [], 0
-#     items.append({"name": "Rent", "amount": agreement.room.rent})
-#     total_amount += agreement.room.rent
-
-#     if is_first_payment:
-#         if agreement.house.water_deposit:
-#             items.append({"name": "Water Deposit", "amount": agreement.house.water_deposit})
-#             total_amount += agreement.house.water_deposit
-#     else:
-#         today = timezone.now().date()
-#         charges = agreement.charges.filter(
-#             month__month=today.month, month__year=today.year, is_paid=False
-#         )
-#         for c in charges:
-#             items.append({"name": c.name, "amount": c.amount})
-#             total_amount += c.amount
-
-#     return items, total_amount
 
 def compute_charges(agreement, is_first_payment):
     items, total_amount = [], 0
@@ -180,6 +162,7 @@ class HouseWithRoomsAPIView(APIView):
     def get(self, request, *args, **kwargs):
         houses = Houses.objects.prefetch_related('rooms').all()
         serializer = HouseWithRoomsSerializer(houses, many=True)
+        print(f"this is the data {serializer.data}")
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SearchApiView(RetrieveAPIView):
@@ -607,7 +590,6 @@ class AssignTenantView(APIView):
         )
 
 # step 1: initiate.
-from django.db import transaction
 
 class StartRentView(APIView):
     permission_classes = [IsAuthenticated]

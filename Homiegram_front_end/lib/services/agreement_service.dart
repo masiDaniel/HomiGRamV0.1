@@ -10,7 +10,6 @@ class AgreementService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      print("Renew failed: ${response.body}");
       return false;
     }
   }
@@ -24,7 +23,6 @@ class AgreementService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      print("Termination failed: ${response.body}");
       return false;
     }
   }

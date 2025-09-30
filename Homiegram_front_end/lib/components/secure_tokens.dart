@@ -30,6 +30,7 @@ Future<void> clearTokens() async {
 
 Future<String?> refreshAccessToken() async {
   final refreshToken = await getRefreshToken();
+
   if (refreshToken == null) return null;
 
   final response = await http.post(

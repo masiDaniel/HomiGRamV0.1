@@ -20,6 +20,7 @@ Future<http.Response> authorizedGet(String url) async {
   );
   if (response.statusCode == 401) {
     final newAccess = await refreshAccessToken();
+
     if (newAccess != null) {
       response = await http.get(
         Uri.parse(url),
@@ -37,8 +38,6 @@ Future<http.Response> authorizedGet(String url) async {
 }
 
 Future<List<Ad>> fetchAds() async {
-  print(">>> Fetching ads from DB/API...");
-
   final response = await authorizedGet(
     '$devUrl/houses/getAdverstisments/?status=active',
   );

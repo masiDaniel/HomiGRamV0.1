@@ -78,13 +78,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _logout() async {
     try {
+      print("we get here");
       await logoutUser();
+      print("we get here 1");
 
       await clearTokens();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
       await prefs.remove('userType');
 
+      print("we get here 3");
       if (!mounted) return;
 
       Navigator.pushReplacementNamed(context, '/');

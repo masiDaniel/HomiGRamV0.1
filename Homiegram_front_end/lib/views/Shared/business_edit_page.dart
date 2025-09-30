@@ -129,6 +129,7 @@ class _BusinessEditPageState extends State<BusinessEditPage> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO : style this page
     return Scaffold(
       appBar: AppBar(title: const Text("Edit Business")),
       body: Padding(

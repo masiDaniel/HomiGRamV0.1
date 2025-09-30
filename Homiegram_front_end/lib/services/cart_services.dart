@@ -61,7 +61,6 @@ class CartService {
     }
   }
 
-// TODO : Im having a problem with the data being sent
   Future<bool> addToCart(int cartId, int productIds) async {
     String? token = await getAccessToken();
 
@@ -72,8 +71,8 @@ class CartService {
           "Content-Type": "application/json",
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(
-            {"cart_id": cartId, "product": productIds, "quantity": 2}),
+        body:
+            jsonEncode({"cart": cartId, "product": productIds, "quantity": 1}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -81,7 +80,6 @@ class CartService {
       }
       return false;
     } catch (e) {
-      print(e);
       return false;
     }
   }

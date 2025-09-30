@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/views/Tenants/rent_specific_room.dart';
@@ -45,7 +46,7 @@ class RoomsByTypePageState extends State<RoomsByTypePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.bedroomCount} Bedroom Rooms'),
+        title: Text('${widget.bedroomCount} Rooms'),
       ),
       body: Column(
         children: [
@@ -96,10 +97,19 @@ class RoomsByTypePageState extends State<RoomsByTypePage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Expanded(
-                                  child: Image.network(
-                                '$devUrl${room.roomImages}',
-                                fit: BoxFit.cover,
-                              )),
+                                child: room.images!.isNotEmpty
+                                    ? BlurCachedImage(
+                                        imageUrl:
+                                            '$devUrl${room.images?.first}',
+                                        height: 180,
+                                        width: double.infinity,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.asset(
+                                        'assets/images/splash.jpeg',
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: Column(

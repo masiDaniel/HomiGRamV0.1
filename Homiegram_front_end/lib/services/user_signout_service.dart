@@ -17,9 +17,9 @@ Future logoutUser() async {
     final response = await http.post(
       Uri.parse("$devUrl/accounts/logout/"),
       headers: headersWithToken,
-      body: {
-        "refresh": refreshToken,
-      },
+      // body: {
+      //   "refresh": refreshToken,
+      // },
     );
 
     if (response.statusCode == 205) {

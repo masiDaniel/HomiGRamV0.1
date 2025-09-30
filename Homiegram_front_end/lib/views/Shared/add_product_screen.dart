@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
 
 const devUrl = AppConstants.baseUrl;
+
 class AddProductPage extends StatefulWidget {
   final int businessId;
 

@@ -156,7 +156,7 @@ class _MarketPlaceState extends State<MarketPlace> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF065F09)),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -164,6 +164,8 @@ class _MarketPlaceState extends State<MarketPlace> {
                               businessId: 0,
                             )),
                   );
+
+                  _loadProducts();
                 },
                 child: const Text(
                   'Product',

@@ -58,26 +58,47 @@ class RoomInputPageState extends State<RoomInputPage> {
 
   @override
   Widget build(BuildContext context) {
+    double deviceHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(title: const Text('Room Input Page')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              _buildTextField(_roomNameController, 'Room Name'),
-              _buildTextField(_numberOfBedroomsController, 'Number of Bedrooms',
-                  isNumeric: true),
-              _buildTextField(_sizeController, 'Size (in sq meters)'),
-              _buildTextField(_rentController, 'Rent Amount', isNumeric: true),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _postRoomData,
-                child: const Text('Submit Room Details'),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            _buildTextField(_roomNameController, 'Room Name'),
+            SizedBox(
+              height: deviceHeight * 0.01,
+            ),
+            _buildTextField(_numberOfBedroomsController, 'Number of Bedrooms',
+                isNumeric: true),
+            SizedBox(
+              height: deviceHeight * 0.01,
+            ),
+            _buildTextField(_sizeController, 'Size (in sq meters)'),
+            SizedBox(
+              height: deviceHeight * 0.01,
+            ),
+            _buildTextField(_rentController, 'Rent Amount', isNumeric: true),
+            const Spacer(),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF105A01),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-            ],
-          ),
+              onPressed: _postRoomData,
+              child: const Text(
+                'Submit Room Details',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+            SizedBox(
+              height: deviceHeight * 0.02,
+            ),
+          ],
         ),
       ),
     );
@@ -88,9 +109,13 @@ class RoomInputPageState extends State<RoomInputPage> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: TextFormField(
+        cursorColor: const Color(0xFF105A01),
         controller: controller,
         decoration: InputDecoration(
-            labelText: label, border: const OutlineInputBorder()),
+            labelText: label,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            )),
         keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
         validator: (value) {
           if (value == null || value.trim().isEmpty) {

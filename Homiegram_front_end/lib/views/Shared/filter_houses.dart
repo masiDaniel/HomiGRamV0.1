@@ -21,30 +21,30 @@ class FilterSheetHouses extends StatefulWidget {
 class _FilterSheetState extends State<FilterSheetHouses> {
   Locations? selectedLocation;
   List<Amenities> selectedAmenities = [];
-  RangeValues rentRange = const RangeValues(0, 500000);
+  RangeValues rentRange = const RangeValues(2000, 50000);
 
   void resetFilters() {
     setState(() {
       selectedLocation = null;
       selectedAmenities.clear();
-      rentRange = const RangeValues(0, 500000);
+      rentRange = const RangeValues(2000, 50000);
     });
   }
 
   @override
+  // TODO :  map everything in alphabetical order, amenities and locations
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(10),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Top handle for modal
           Center(
             child: Container(
               width: 40,
               height: 5,
-              margin: const EdgeInsets.symmetric(vertical: 12),
+              margin: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.grey[300],
                 borderRadius: BorderRadius.circular(10),
@@ -77,35 +77,62 @@ class _FilterSheetState extends State<FilterSheetHouses> {
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF126E06),
+                  width: 2,
+                ),
+              ),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
           ),
+          const SizedBox(height: 24),
           // Rent range slider
           Text("Rent Range", style: Theme.of(context).textTheme.titleMedium),
-          RangeSlider(
-            values: rentRange,
-            min: 0,
-            max: 500000,
-            divisions: 50,
-            labels: RangeLabels(
-              "${rentRange.start.toInt()}",
-              "${rentRange.end.toInt()}",
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: const Color(0xFF126E06),
+              inactiveTrackColor: Colors.grey[300],
+              thumbColor: const Color.fromARGB(255, 97, 117, 93),
+              overlayColor: const Color.fromARGB(51, 222, 231, 219),
+              valueIndicatorColor: const Color(0xFF154D07),
+              trackHeight: 15,
+              valueIndicatorTextStyle: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
-            onChanged: (values) {
-              setState(() => rentRange = values);
-            },
+
+            // TODO :  have the slider divided for 500 not on 1
+            child: RangeSlider(
+              values: rentRange,
+              min: 2000,
+              max: 50000,
+              divisions: 1000,
+              labels: RangeLabels(
+                "${rentRange.start.toInt()}",
+                "${rentRange.end.toInt()}",
+              ),
+              onChanged: (values) {
+                setState(() => rentRange = values);
+              },
+            ),
           ),
-          // // Amenities chips
+          const SizedBox(height: 24),
           Text("Amenities", style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 8,
+            spacing: 6,
+            runSpacing: 6,
             children: widget.amenities.map((amenity) {
               final isSelected = selectedAmenities.contains(amenity);
               return FilterChip(
                 label: Text(amenity.name!),
                 selected: isSelected,
+                selectedColor: const Color.fromARGB(255, 84, 167, 69),
                 onSelected: (selected) {
                   setState(() {
                     if (selected) {
@@ -148,7 +175,7 @@ class _FilterSheetState extends State<FilterSheetHouses> {
                 child: ElevatedButton(
                   onPressed: () {
                     final safeLocation = selectedLocation;
-                    print("amenities $selectedAmenities");
+
                     widget.onApply({
                       "location": safeLocation,
                       "rent": rentRange,

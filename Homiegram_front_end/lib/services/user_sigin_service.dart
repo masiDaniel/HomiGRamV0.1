@@ -24,7 +24,6 @@ const devUrlTest = AppConstants.baseUrl;
 Future fetchUserSignIn(
     BuildContext context, String username, String password) async {
   try {
-    print("$devUrlTest/accounts/login/");
     final response = await http.post(
       Uri.parse("$devUrlTest/accounts/login/"),
       headers: headers,
@@ -36,6 +35,7 @@ Future fetchUserSignIn(
 
     if (response.statusCode == 200) {
       final userData = json.decode(response.body);
+      print("this is the user data $userData");
 
       await UserPreferences.saveUserData(userData);
       saveTokens(userData['access'], userData['refresh']);
@@ -74,21 +74,18 @@ Future updateUserInfo(Map<String, dynamic> updateData) async {
   return null;
 }
 
-// TODO : have this to take images data also
 Future updateHouseInfo(Map<String, dynamic> updateData, int houseId) async {
   String? token = await getAccessToken();
   try {
     var uri = Uri.parse("$devUrlTest/houses/updateHouse/$houseId/");
     var request = http.MultipartRequest('PATCH', uri);
 
-    // Add text fields
     updateData.forEach((key, value) {
       if (key != 'images') {
         request.fields[key] = value.toString();
       }
     });
 
-    // Add images as files
     if (updateData['images'] != null) {
       for (var imagePath in updateData['images']) {
         request.files.add(

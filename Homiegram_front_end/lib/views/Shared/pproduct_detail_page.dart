@@ -41,28 +41,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     if (cart == null) return;
 
     bool success = await cartService.addToCart(cart.id, productIds);
-    if (success) {
-      AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Lottie.asset(
-              'assets/animations/moneySuccess.json',
-              width: 150,
-              height: 100,
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              "Product added to cart successfully!",
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+
+    if (success) {}
   }
 
   @override
@@ -182,8 +162,34 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                                 backgroundColor: const Color(0xFF065F09),
                               ),
                               onPressed: () {
-                                Navigator.of(context).pop();
+                                // Navigator.of(context).pop();
                                 _addItemToCart(widget.product.productId);
+                                Navigator.of(context).pop();
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Lottie.asset(
+                                            'assets/animations/moneySuccess.json',
+                                            width: 100,
+                                            height: 100,
+                                          ),
+                                          const SizedBox(height: 10),
+                                          const Text(
+                                            "Product added to cart!",
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                );
                               },
                               child: const Text(
                                 'Add to cart',

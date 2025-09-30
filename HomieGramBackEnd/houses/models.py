@@ -288,6 +288,7 @@ class PendingAdvertisement(models.Model):
         return f"{self.title} - {'Paid' if self.payment_status else 'Pending'}"
 
 
+# TODO : Link this to the user who has posted, house, business, or individual
 class Advertisement(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()

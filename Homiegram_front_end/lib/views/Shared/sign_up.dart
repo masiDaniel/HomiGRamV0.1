@@ -7,73 +7,74 @@ import 'package:homi_2/models/user_signup.dart';
 import 'package:homi_2/services/user_signup_service.dart';
 
 class SignUp extends StatefulWidget {
-  const SignUp({super.key});
+  const SignUp({Key? key}) : super(key: key);
 
   @override
-  State<SignUp> createState() => _SignUpState();
+  State<SignUp> createState() => _SignUpPageState();
 }
 
-class _SignUpState extends State<SignUp> {
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+class _SignUpPageState extends State<SignUp> {
+  final firstNameController = TextEditingController();
+  final lastNameController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   bool isLoading = false;
 
+  String? passwordError;
+  String? confirmPasswordError;
+
+  void _validatePassword(String password) {
+    if (password.length < 6) {
+      passwordError = "Password must be at least 6 characters";
+    } else if (!RegExp(r'[0-9]').hasMatch(password)) {
+      passwordError = "Password must contain a number";
+    } else if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>]').hasMatch(password)) {
+      passwordError = "Password must contain a special character";
+    } else if (!RegExp(r'[A-Z]').hasMatch(password)) {
+      passwordError = "Password must contain an uppercase letter";
+    } else {
+      passwordError = null;
+    }
+    setState(() {});
+  }
+
+  // ✅ Confirm password validation (live)
+  void _validateConfirmPassword(String confirmPassword) {
+    if (confirmPassword != passwordController.text) {
+      confirmPasswordError = "Passwords do not match";
+    } else {
+      confirmPasswordError = null;
+    }
+    setState(() {});
+  }
+
   void _signUserUp() async {
-    String firstName = firstNameController.text.trim();
-    String lastName = lastNameController.text.trim();
-    String email = emailController.text.trim();
-    String password = passwordController.text.trim();
-    String confirmPassword = confirmPasswordController.text.trim();
-
-    if (firstName.isEmpty ||
-        lastName.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirmPassword.isEmpty) {
-      showCustomSnackBar(context, 'Please fill in all fields',
-          type: SnackBarType.warning);
+    if (passwordError != null || confirmPasswordError != null) {
       return;
     }
-    bool isValidMandatoryEmail(String email) {
-      final RegExp regex = RegExp(r"^[\w\.-]+@gmail\.com$");
-      return regex.hasMatch(email);
-    }
-
-    if (!isValidMandatoryEmail(email)) {
-      showCustomSnackBar(context, 'Invalid. (Valid) Email format gmail.com',
-          type: SnackBarType.warning);
-      return;
-    }
-
-    if (password != confirmPassword) {
-      showCustomSnackBar(context, 'Passwords do not match',
-          type: SnackBarType.warning);
-      return;
-    }
-
     setState(() {
       isLoading = true;
     });
 
     try {
-      UserSignUp? userSignUp =
-          await fetchUserSignUp(firstName, lastName, email, password);
+      UserSignUp? userSignUp = await fetchUserSignUp(
+        firstNameController.text.trim(),
+        lastNameController.text.trim(),
+        emailController.text.trim(),
+        passwordController.text.trim(),
+      );
       if (!mounted) return;
       if (userSignUp != null) {
         showCustomSnackBar(
-            context, 'Sign Up Sucessful - Login to your account.');
+            context, 'Sign Up Successful - Login to your account.');
         Navigator.pushNamed(context, '/signin');
       } else {
         showCustomSnackBar(context, 'Sign-up failed. Please try again later.',
             type: SnackBarType.warning);
       }
     } catch (e) {
-      print('Error: ${e.toString()}');
       showCustomSnackBar(context, 'Error: ${e.toString()}');
     } finally {
       setState(() {
@@ -82,95 +83,174 @@ class _SignUpState extends State<SignUp> {
     }
   }
 
+  bool get isFormValid {
+    return firstNameController.text.isNotEmpty &&
+        lastNameController.text.isNotEmpty &&
+        emailController.text.isNotEmpty &&
+        passwordController.text.isNotEmpty &&
+        confirmPasswordController.text.isNotEmpty &&
+        passwordError == null &&
+        confirmPasswordError == null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    firstNameController.addListener(() => setState(() {}));
+    lastNameController.addListener(() => setState(() {}));
+    emailController.addListener(() => setState(() {}));
+    passwordController.addListener(() => setState(() {}));
+    confirmPasswordController.addListener(() => setState(() {}));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final deviceHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "Sign Up",
-              style: GoogleFonts.carterOne(
-                  color: const Color(0xFF126E06),
-                  fontSize: 50,
-                  fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 15),
-            MyTextField(
-              controller: firstNameController,
-              hintText: "First name",
-              obscureText: false,
-              onChanged: (value) {},
-            ),
-            const SizedBox(height: 15),
-            MyTextField(
-              controller: lastNameController,
-              hintText: "Last name",
-              obscureText: false,
-              onChanged: (value) {},
-            ),
-            const SizedBox(height: 15),
-            MyTextField(
-              controller: emailController,
-              hintText: "Email",
-              obscureText: false,
-              suffixIcon: Icons.email,
-              onChanged: (value) {},
-            ),
-            const SizedBox(height: 15),
-            MyTextField(
-              controller: passwordController,
-              hintText: "Password",
-              obscureText: true,
-              suffixIcon: Icons.password,
-              onChanged: (value) {},
-            ),
-            const SizedBox(height: 15),
-            MyTextField(
-              controller: confirmPasswordController,
-              hintText: "Confirm Password",
-              obscureText: true,
-              suffixIcon: Icons.password,
-              onChanged: (value) {},
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 35),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: deviceHeight),
+            child: IntrinsicHeight(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
-                    "Already have an account?",
-                    style: TextStyle(
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.w700),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.pushNamed(context, '/signin');
-                    },
-                    child: const Text(
-                      "Sign In",
-                      style: TextStyle(
-                          color: Color(0xFF126E06),
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700),
+                  Text(
+                    "Sign Up",
+                    style: GoogleFonts.carterOne(
+                      color: const Color(0xFF126E06),
+                      fontSize: 50,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+                  SizedBox(height: deviceHeight * 0.02),
+
+                  // First Name
+                  MyTextField(
+                    controller: firstNameController,
+                    hintText: "First name",
+                    obscureText: false,
+                    onChanged: (value) {},
+                  ),
+                  SizedBox(height: deviceHeight * 0.02),
+
+                  // Last Name
+                  MyTextField(
+                    controller: lastNameController,
+                    hintText: "Last name",
+                    obscureText: false,
+                    onChanged: (value) {},
+                  ),
+                  SizedBox(height: deviceHeight * 0.02),
+
+                  // Email
+                  MyTextField(
+                    controller: emailController,
+                    hintText: "Email",
+                    obscureText: false,
+                    suffixIcon: Icons.email,
+                    onChanged: (value) {},
+                  ),
+                  SizedBox(height: deviceHeight * 0.02),
+
+                  // Password
+                  MyTextField(
+                    controller: passwordController,
+                    hintText: "Password",
+                    obscureText: true,
+                    suffixIcon: Icons.lock,
+                    onChanged: (value) => _validatePassword(value),
+                  ),
+                  if (passwordError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 35, top: 5),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          passwordError!,
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  SizedBox(height: deviceHeight * 0.02),
+
+                  // Confirm Password
+                  MyTextField(
+                    controller: confirmPasswordController,
+                    hintText: "Confirm Password",
+                    obscureText: true,
+                    suffixIcon: Icons.lock,
+                    onChanged: (value) => _validateConfirmPassword(value),
+                  ),
+                  if (confirmPasswordError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 35, top: 5),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          confirmPasswordError!,
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  SizedBox(height: deviceHeight * 0.03),
+
+                  // Already have account
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 35),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Already have an account?",
+                          style: TextStyle(
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(context, '/signin');
+                          },
+                          child: const Text(
+                            "Sign In",
+                            style: TextStyle(
+                              color: Color(0xFF126E06),
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: deviceHeight * 0.04),
+
+                  isLoading
+                      ? const CircularProgressIndicator(
+                          color: Color(0xFF126E06))
+                      : Opacity(
+                          opacity: isFormValid ? 1.0 : 0.5, // dim when invalid
+                          child: MyButton(
+                            buttonText: "Sign Up",
+                            onPressed:
+                                isFormValid ? _signUserUp : null, // disable tap
+                            width: 150,
+                            height: 40,
+                            color: const Color(0xFF126E06),
+                          ),
+                        ),
                 ],
               ),
             ),
-            const SizedBox(height: 30),
-            isLoading
-                ? const CircularProgressIndicator(color: Color(0xFF126E06))
-                : MyButton(
-                    buttonText: "Sign Up",
-                    onPressed: _signUserUp,
-                    width: 150,
-                    height: 40,
-                    color: const Color(0xFF126E06)),
-          ],
+          ),
         ),
       ),
     );

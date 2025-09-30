@@ -8,11 +8,6 @@ class CareTakersSerializer(serializers.ModelSerializer):
         model = CareTaker
         fields = ['user_id', 'house_id']
 
-# class LandLordsSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = LandLords
-#         fields = ['user_id', 'num_houses']
-
 class TeenantsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Teenants
@@ -101,8 +96,6 @@ class HouseWithRoomsSerializer(serializers.ModelSerializer):
         images_data = validated_data.pop('images', None)
         instance = super().update(instance, validated_data)
         if images_data is not None:
-            # # Optionally, remove old images first
-            # instance.images.all().delete()
             for image_data in images_data:
                 HouseImage.objects.create(house=instance, **image_data)
         return instance

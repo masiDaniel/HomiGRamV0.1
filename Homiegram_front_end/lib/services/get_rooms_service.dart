@@ -22,6 +22,7 @@ Future<List<GetRooms>> fetchRooms() async {
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
+      print("this is the room data $roomData");
 
       try {
         final List<GetRooms> rooms = roomData.map((json) {
