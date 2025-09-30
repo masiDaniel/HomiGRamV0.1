@@ -187,9 +187,6 @@ class BookmarkedHousesPageState extends State<BookmarkedHousesPage> {
       setState(() {
         _bookmarkedHousesFuture = fetchBookmarkedHouses();
       });
-
-      /// TODO: why is this not working for the context below?
-      /// and what is the importance of the one above?
       if (!mounted) return;
       _showBookmarkRemovedDialog(context);
     } catch (error, stackTrace) {

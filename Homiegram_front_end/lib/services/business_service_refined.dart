@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/services/user_data.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
@@ -15,13 +15,13 @@ class BusinessService {
     }
 
     final url = Uri.parse('$devUrl/business/updateBusiness/$businessId/');
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
 
     final response = await http.patch(
       url,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': 'Token $token',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode(updates),
     );

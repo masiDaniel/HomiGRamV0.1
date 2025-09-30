@@ -1,5 +1,5 @@
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/services/user_data.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:http/http.dart' as http;
 
 const Map<String, String> headers = {
@@ -7,19 +7,22 @@ const Map<String, String> headers = {
 };
 const devUrl = AppConstants.baseUrl;
 Future logoutUser() async {
-  String? authToken;
-  authToken = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
+  String? refreshToken = await getRefreshToken();
   try {
     final headersWithToken = {
       ...headers,
-      'Authorization': 'Token $authToken',
+      'Authorization': 'Bearer $token',
     };
     final response = await http.post(
       Uri.parse("$devUrl/accounts/logout/"),
       headers: headersWithToken,
+      // body: {
+      //   "refresh": refreshToken,
+      // },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 205) {
       return true;
     }
   } catch (e) {

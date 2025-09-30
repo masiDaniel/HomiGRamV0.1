@@ -53,6 +53,7 @@ class _CartScreenState extends State<CartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO :  style this page better, meaningful information
     return Scaffold(
       appBar: AppBar(title: const Text("Shopping Cart")),
       body: FutureBuilder<Cart?>(

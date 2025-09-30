@@ -1,12 +1,15 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/business.dart';
 import 'package:homi_2/services/business_services.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class AddProductPage extends StatefulWidget {
   final int businessId;
@@ -63,14 +66,14 @@ class AddProductPageState extends State<AddProductPage> {
 
   Future<void> submitProduct() async {
     if (_formKey.currentState!.validate()) {
-      String? token = await UserPreferences.getAuthToken(); // Fetch auth token
+      String? token = await getAccessToken();
 
       var request = http.MultipartRequest(
         'POST',
         Uri.parse('$devUrl/business/postProducts/'),
       );
 
-      request.headers['Authorization'] = 'Token $token';
+      request.headers['Authorization'] = 'Bearer $token';
       request.fields['name'] = productNameController.text;
       request.fields['description'] = productDescriptionController.text;
       request.fields['price'] = productPriceController.text;

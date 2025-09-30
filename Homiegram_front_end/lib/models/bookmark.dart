@@ -1,6 +1,6 @@
 import 'dart:developer';
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/services/user_data.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
@@ -9,10 +9,10 @@ class PostBookmark {
   static Future<void> postBookmark({
     required int houseId,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
     try {
       final response = await http.post(
@@ -33,10 +33,10 @@ class PostBookmark {
   static Future<void> removeBookmark({
     required int houseId,
   }) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
     try {
       final response = await http.post(

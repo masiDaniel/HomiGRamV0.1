@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/models/room_with_agrrement_model.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
@@ -12,16 +12,17 @@ List<RoomWithAgreement> allRoomsAndAgreements = [];
 String? houseId;
 
 Future<List<GetRooms>> fetchRooms() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response =
         await http.get(Uri.parse('$devUrl/houses/getRooms/'), headers: {
       "Content-Type": "application/json",
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
+      print("this is the room data $roomData");
 
       try {
         final List<GetRooms> rooms = roomData.map((json) {
@@ -43,12 +44,12 @@ Future<List<GetRooms>> fetchRooms() async {
 }
 
 Future<List<RoomWithAgreement>> fetchRoomsWithAgreements() async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response =
         await http.get(Uri.parse('$devUrl/houses/getMyRooms/'), headers: {
       "Content-Type": "application/json",
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {
@@ -74,12 +75,12 @@ Future<List<RoomWithAgreement>> fetchRoomsWithAgreements() async {
 }
 
 Future<List<GetRooms>> fetchRoomsByHouse(int houseId) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response =
         await http.get(Uri.parse('$devUrl/houses/getRooms/'), headers: {
       "Content-Type": "application/json",
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {
@@ -103,13 +104,13 @@ Future<List<GetRooms>> fetchRoomsByHouse(int houseId) async {
 }
 
 Future<String> postRoomsByHouse(int houseId, GetRooms newRoom) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http.post(
       Uri.parse('$devUrl/houses/getRooms/'),
       headers: {
         "Content-Type": "application/json",
-        'Authorization': 'Token $token',
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode([newRoom.tojson()]),
     );

@@ -5,6 +5,7 @@ class MyTextField extends StatefulWidget {
   final bool obscureText;
   final IconData? suffixIcon;
   final TextEditingController controller;
+  final ValueChanged<String>? onChanged;
 
   const MyTextField({
     Key? key,
@@ -12,7 +13,7 @@ class MyTextField extends StatefulWidget {
     required this.obscureText,
     required this.controller,
     this.suffixIcon,
-    required Null Function(dynamic value) onChanged,
+    this.onChanged,
   }) : super(key: key);
 
   @override
@@ -42,6 +43,7 @@ class MyTextFieldState extends State<MyTextField> {
         controller: widget.controller,
         obscureText: _obscureText,
         cursorColor: const Color(0xFF149204),
+        onChanged: widget.onChanged,
         decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
             borderSide:
@@ -53,12 +55,14 @@ class MyTextFieldState extends State<MyTextField> {
             borderRadius: BorderRadius.circular(12.0),
           ),
           hintText: widget.hintText,
-          suffixIcon: widget.suffixIcon != null
+          suffixIcon: widget.obscureText
               ? IconButton(
                   onPressed: _toggleObscureText,
-                  icon: Icon(widget.suffixIcon),
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                  ),
                 )
-              : null,
+              : (widget.suffixIcon != null ? Icon(widget.suffixIcon) : null),
         ),
       ),
     );

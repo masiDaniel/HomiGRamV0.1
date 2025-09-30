@@ -13,10 +13,11 @@ class RoomDetailsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(room.roomName)),
+      appBar: AppBar(title: Text("ROOM : ${room.roomName}")),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
+          // TODO : have this in a better style
           children: [
             // Room Image
 
@@ -43,6 +44,14 @@ class RoomDetailsPage extends StatelessWidget {
             const SizedBox(height: 20),
 
             ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF105A01),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -51,7 +60,10 @@ class RoomDetailsPage extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text("Edit Room"),
+              child: const Text(
+                "Edit Room",
+                style: TextStyle(color: Colors.white),
+              ),
             )
           ],
         ),

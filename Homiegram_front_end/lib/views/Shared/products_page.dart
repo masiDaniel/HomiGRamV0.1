@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/business.dart';
 import 'package:homi_2/services/business_services.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/views/Shared/add_product_screen.dart';
 import 'package:homi_2/views/Shared/business_edit_page.dart';
 import 'package:homi_2/views/Shared/pproduct_detail_page.dart';
+import 'package:lottie/lottie.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class ProductsPage extends StatefulWidget {
   final BusinessModel businessObject;
@@ -31,7 +35,10 @@ class ProductsPage extends StatefulWidget {
 class _ProductsPageState extends State<ProductsPage>
     with TickerProviderStateMixin {
   late Future<List<Products>> futureProducts;
+  List<Products> allProducts = [];
+  List<Products> displayedProducts = [];
   int? userId;
+  bool isLoadingProducts = true;
 
   @override
   void initState() {
@@ -39,6 +46,23 @@ class _ProductsPageState extends State<ProductsPage>
 
     futureProducts = fetchProducts();
     _loadUserId();
+    _loadAllProducts();
+  }
+
+  Future<void> _loadAllProducts() async {
+    try {
+      List<Products> fetchedProducts = await fetchProducts();
+      setState(() {
+        allProducts = fetchedProducts;
+        displayedProducts = fetchedProducts;
+        isLoadingProducts = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoadingProducts = false;
+      });
+    }
   }
 
   Future<void> _loadUserId() async {
@@ -61,49 +85,43 @@ class _ProductsPageState extends State<ProductsPage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Products for ${widget.businessName}'),
+        title: TextField(
+          decoration: const InputDecoration(
+            hintText: 'Search products...',
+            border: InputBorder.none,
+          ),
+          onChanged: (query) {
+            setState(() {
+              displayedProducts = allProducts
+                  .where((product) => product.productName
+                      .toLowerCase()
+                      .contains(query.toLowerCase()))
+                  .toList();
+            });
+          },
+        ),
+        scrolledUnderElevation: 0,
       ),
-      body: FutureBuilder<List<Products>>(
-        future: futureProducts,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: Center(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: Colors.green,
-                    strokeWidth: 6.0,
-                  ),
-                  SizedBox(height: 10),
-                  Text("Loading, please wait...",
-                      style: TextStyle(fontSize: 16, color: Colors.white)),
-                ],
-              )),
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            List<Products> filteredProducts = snapshot.data!
-                .where((product) => product.businessId == widget.businessId)
-                .toList();
-
-            if (filteredProducts.isEmpty) {
-              return const Center(child: Text('No products available.'));
-            }
-
-            return GridView.builder(
-              itemCount: filteredProducts.length,
+      body: displayedProducts.isEmpty
+          ? Center(
+              child: Lottie.asset(
+                'assets/animations/notFound.json',
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            )
+          : GridView.builder(
+              itemCount: displayedProducts.length,
               padding: const EdgeInsets.all(8.0),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2, // 2 items per row
                 crossAxisSpacing: 8.0, // space between columns
                 mainAxisSpacing: 8.0, // space between rows
-                childAspectRatio: 0.8, // adjust height/width ratio for cards
+                childAspectRatio: 0.9, // adjust height/width ratio for cards
               ),
               itemBuilder: (context, index) {
-                final product = filteredProducts[index];
+                final product = displayedProducts[index];
 
                 return Card(
                   margin: EdgeInsets.zero,
@@ -197,12 +215,7 @@ class _ProductsPageState extends State<ProductsPage>
                   ),
                 );
               },
-            );
-          } else {
-            return const Center(child: Text('No products available.'));
-          }
-        },
-      ),
+            ),
       floatingActionButton: SpeedDial(
           animatedIcon: AnimatedIcons.menu_close,
           backgroundColor: const Color(0xFF065F09),
@@ -265,6 +278,13 @@ class _ProductsPageState extends State<ProductsPage>
                   SpeedDialChild(
                     child: const Icon(Icons.call),
                     label: 'Call business',
+                    onTap: () {
+                      makePhoneCall(widget.businessPhoneNumber);
+                    },
+                  ),
+                  SpeedDialChild(
+                    child: const Icon(Icons.info),
+                    label: 'Business Details',
                     onTap: () {
                       makePhoneCall(widget.businessPhoneNumber);
                     },

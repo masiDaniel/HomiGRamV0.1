@@ -125,7 +125,7 @@ class _SearchPageState extends State<SearchPage> {
             : selectedAmenities.every((a) => house.amenities.contains(a.id));
 
         final rentValue = double.tryParse(house.rentAmount) ?? 0;
-        final matchesRent = (minRent == 0 && maxRent == 1000000)
+        final matchesRent = (minRent == 2000 && maxRent == 50000)
             ? true
             : (rentValue >= minRent! && rentValue <= maxRent!);
 
@@ -148,16 +148,16 @@ class _SearchPageState extends State<SearchPage> {
       if (filters["rent"] is RangeValues) {
         final range = filters["rent"] as RangeValues;
 
-        if (range.start > 0 || range.end < 500000) {
+        if (range.start > 2000 || range.end < 50000) {
           minRent = range.start.toInt();
           maxRent = range.end.toInt();
         } else {
-          minRent = 0;
-          maxRent = 500000;
+          minRent = 2000;
+          maxRent = 50000;
         }
       } else {
-        minRent = 0;
-        maxRent = 500000;
+        minRent = 2000;
+        maxRent = 50000;
       }
     });
 
@@ -194,9 +194,8 @@ class _SearchPageState extends State<SearchPage> {
                   context: context,
                   isScrollControlled: true,
                   shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(48),
-                    ),
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(12)),
                   ),
                   builder: (_) => FilterSheetHouses(
                     locations: locations,
@@ -303,7 +302,11 @@ class _SearchPageState extends State<SearchPage> {
                                                 color: Color(0xFF126E06)),
                                           ),
                                           const SizedBox(height: 4),
-                                          Text("Rent: ${house.rentAmount}"),
+                                          Text(
+                                              "Average Rent: ${house.rentAmount}"),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                              "location: ${getLocationName(house.locationDetail!)}"),
                                           const SizedBox(height: 4),
                                           Row(
                                             children: [
@@ -313,9 +316,6 @@ class _SearchPageState extends State<SearchPage> {
                                                       house.rating.toDouble())
                                             ],
                                           ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                              "location: ${getLocationName(house.locationDetail!)}"),
                                         ],
                                       ),
                                     ),

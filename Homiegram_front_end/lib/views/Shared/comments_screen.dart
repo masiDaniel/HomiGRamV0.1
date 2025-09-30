@@ -140,12 +140,21 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 child: TextField(
                   controller: commentController,
                   decoration: InputDecoration(
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF105A01),
+                    ),
                     hintText: 'Add a comment...',
                     contentPadding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 10),
-                    filled: true,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(
+                        color: Color(0xFF105A01),
+                        width: 2.0,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(20),
@@ -412,6 +421,7 @@ class CommentTile extends StatelessWidget {
                           size: 16, color: Colors.grey),
                       onPressed: () => onReact(comment.commentId, "like"),
                     ),
+                    const SizedBox(width: 5),
                     Text(
                       "${likesMap[comment.commentId] ?? comment.likes}",
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -424,6 +434,7 @@ class CommentTile extends StatelessWidget {
                           size: 16, color: Colors.grey),
                       onPressed: () => onReact(comment.commentId, "dislike"),
                     ),
+                    const SizedBox(width: 5),
                     Text(
                       "${dislikesMap[comment.commentId] ?? comment.dislikes}",
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -444,7 +455,7 @@ class CommentTile extends StatelessWidget {
                       GestureDetector(
                         onTap: () => onDelete(comment.commentId),
                         child: const Icon(Icons.delete,
-                            size: 16, color: Colors.redAccent),
+                            size: 20, color: Color.fromARGB(255, 143, 14, 14)),
                       ),
                     ],
                   ],

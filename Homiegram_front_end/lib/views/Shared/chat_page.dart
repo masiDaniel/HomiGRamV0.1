@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/chat.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
-// import 'package:intl/intl.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
 
@@ -36,6 +35,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
+// TODO what is the problem here?
     final wsUrl = Uri.parse(
         '$chatUrl/ws/chat/${widget.chat.name}/?token=${widget.token}');
 
@@ -65,11 +65,10 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> fetchInitialMessages() async {
-    String? authToken;
-    authToken = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     final url = "$devUrl/chat/messages/${widget.chat.name}";
     final response = await http.get(Uri.parse(url), headers: {
-      "Authorization": "Token $authToken",
+      "Authorization": "Bearer $token",
     });
 
     if (response.statusCode == 200) {
@@ -87,8 +86,7 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Future<void> fetchNewMessages() async {
-    String? authToken;
-    authToken = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
     if (messages.isEmpty) {
       return fetchInitialMessages();
     }
@@ -97,7 +95,7 @@ class _ChatPageState extends State<ChatPage> {
     final url = "$devUrl/chat/messages/${widget.chat.name}?after_id=$lastId";
 
     final response = await http.get(Uri.parse(url), headers: {
-      "Authorization": "Token $authToken",
+      "Authorization": "Bearer $token",
     });
 
     if (response.statusCode == 200) {

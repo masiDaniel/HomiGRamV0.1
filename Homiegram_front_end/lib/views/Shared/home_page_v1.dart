@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/chat.dart';
 import 'package:homi_2/models/get_users.dart';
@@ -41,10 +42,10 @@ class _HomePageState extends State<HomePage> {
   late PageController _pageController;
   int _currentPage = 0;
   Timer? _timer;
-  bool _isPaused = false;
+  final bool _isPaused = false;
   bool isLoading = false;
+  String? token;
 
-  String? authToken;
   String? currentUserEmail;
   final DatabaseHelper dbHelper = DatabaseHelper();
 
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
 
-    _loadAuthToken();
+    _loadUserEmail();
     futureAds = fetchAds();
     fetchUsers();
 
@@ -64,7 +65,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> syncChatRooms() async {
-    print(">>> syncChatRooms called");
     final remoteChats = await fetchChatRooms();
     for (var chat in remoteChats) {
       await DatabaseHelper().insertOrUpdateChatroom(chat);
@@ -78,9 +78,9 @@ class _HomePageState extends State<HomePage> {
     return chats;
   }
 
-  Future<void> _loadAuthToken() async {
-    authToken = await UserPreferences.getAuthToken();
+  Future<void> _loadUserEmail() async {
     currentUserEmail = (await UserPreferences.getUserEmail())!;
+    token = await getAccessToken();
   }
 
   Future<void> fetchUsers() async {
@@ -98,7 +98,6 @@ class _HomePageState extends State<HomePage> {
       if (!mounted) return;
       showCustomSnackBar(context, 'Error fetching users!');
     } finally {
-      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -235,7 +234,7 @@ class _HomePageState extends State<HomePage> {
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
-                                            Colors.black.withOpacity(0.6),
+                                            Colors.black.withValues(alpha: 0.6),
                                             Colors.transparent,
                                           ],
                                           begin: Alignment.bottomCenter,
@@ -303,7 +302,7 @@ class _HomePageState extends State<HomePage> {
                               MaterialPageRoute(
                                 builder: (_) => ChatPage(
                                   chat: chat,
-                                  token: authToken!,
+                                  token: token!,
                                   userEmail: currentUserEmail!,
                                 ),
                               ),
@@ -343,7 +342,7 @@ class _HomePageState extends State<HomePage> {
               ),
               IconButton(
                 onPressed: () async {
-                  await showUserDialog(context, await users);
+                  await showUserDialog(context, users);
                 },
                 icon: const Icon(Icons.add_circle, color: Color(0xFF105A01)),
               ),
@@ -553,7 +552,7 @@ class _HomePageState extends State<HomePage> {
                                             MaterialPageRoute(
                                               builder: (context) => ChatPage(
                                                 chat: chatRoom,
-                                                token: authToken!,
+                                                token: token!,
                                                 userEmail: currentUserEmail!,
                                               ),
                                             ),

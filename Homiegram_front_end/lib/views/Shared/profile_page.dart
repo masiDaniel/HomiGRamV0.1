@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/services/theme_provider.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
@@ -77,12 +78,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _logout() async {
     try {
+      print("we get here");
       await logoutUser();
+      print("we get here 1");
 
+      await clearTokens();
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
       await prefs.remove('userType');
 
+      print("we get here 3");
       if (!mounted) return;
 
       Navigator.pushReplacementNamed(context, '/');

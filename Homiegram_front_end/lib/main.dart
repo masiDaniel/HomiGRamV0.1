@@ -25,11 +25,6 @@ void main() async {
   ], child: MyApp(initialRoute: initialRoute)));
 }
 
-///
-/// TODO: Have an internet test on launch, and how to keep it accurate
-/// How does whatsapp do this?
-///
-
 Future<String> getInitialRoute() async {
   final prefs = await SharedPreferences.getInstance();
   bool isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
@@ -52,16 +47,16 @@ class MyApp extends StatelessWidget {
       darkTheme: ThemeData.dark(),
       themeMode: themeProvider.themeMode,
       initialRoute: initialRoute,
-      // home: const WelcomePage(),
+      home: const WelcomePage(),
 
-      home: const VideoSplashScreen(),
+      // home: const VideoSplashScreen(),
       // should refactor on this to user flutters way
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/welcome': (context) => const WelcomePage(),
         '/signin': (context) => const SignIn(),
         '/signup': (context) => const SignUp(),
-        '/about': (context) => AboutHomiegram(),
+        '/about': (context) => const AboutHomiegram(),
         '/homescreen': (context) => const CustomBottomNavigartion(),
         '/searchPage': (context) => const SearchPage(),
         '/landlordManagement': (context) => const LandlordManagement(),

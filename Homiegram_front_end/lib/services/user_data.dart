@@ -1,7 +1,6 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserPreferences {
-  static const String _keyAuthToken = 'authToken';
   static const String _keyUserId = 'userId';
   static const String _keyUserName = 'nickName';
   static const String _keyFirstName = 'firstName';
@@ -15,7 +14,7 @@ class UserPreferences {
 
   static Future<void> saveUserData(Map<String, dynamic> userData) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyAuthToken, userData['token']);
+
     await prefs.setInt(_keyUserId, userData['id']);
     await prefs.setString(_keyUserName, userData['nick_name'] ?? 'Homie');
     await prefs.setString(_keyFirstName, userData['first_name']);
@@ -55,7 +54,6 @@ class UserPreferences {
   static Future<Map<String, dynamic>> getUserData() async {
     final prefs = await SharedPreferences.getInstance();
     return {
-      'token': prefs.getString(_keyAuthToken),
       'userId': prefs.getInt(_keyUserId),
       'nick_name': prefs.getString(_keyUserName),
       'first_name': prefs.getString(_keyFirstName),
@@ -68,11 +66,6 @@ class UserPreferences {
       'is_logged_in': prefs.getBool(_keyIsLoggedIn) ?? false,
       'login_time': prefs.getInt('login_time'),
     };
-  }
-
-  static Future<String?> getAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAuthToken);
   }
 
   static Future<int?> getUserId() async {

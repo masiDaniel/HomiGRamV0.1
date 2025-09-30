@@ -3,6 +3,7 @@ from accounts.models import CustomUser
 from houses.models import Houses
 
 # Create your models here.
+# TODO : add a way to identify if that comment is from a tenant in the house or not
 class HouseComments(models.Model):
     """
     This Table Will Hold Info on Comments on Houses

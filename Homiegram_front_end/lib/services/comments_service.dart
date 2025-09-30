@@ -1,19 +1,19 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/comments.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
 
 Future<List<GetComments>> fetchComments(int houseId) async {
-  String? token = await UserPreferences.getAuthToken();
+  String? token = await getAccessToken();
   try {
     final response = await http
         .get(Uri.parse('$devUrl/comments/post/?house_id=$houseId'), headers: {
       "Content-Type": "application/json",
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     });
 
     if (response.statusCode == 200) {

@@ -75,7 +75,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
   String getUserName(int? cartakerId) {
     // TODO : Loading caretakers id instead of user id, two different models
     // refactor it to work
-    print("his is the caretaker id $cartakerId");
+
     final caretaker = users.firstWhere(
       (loc) => loc.userId == cartakerId,
       orElse: () => GerUsers(firstName: "select a user"),
@@ -98,7 +98,6 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
       if (!mounted) return;
       showCustomSnackBar(context, 'Error fetching users!');
     } finally {
-      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -361,6 +360,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
+    double deviceHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.house.name),
@@ -371,21 +371,10 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Center(
-              child: Text(
-                'House Details',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-              ),
-            ),
-            const SizedBox(height: 20),
             _buildHouseDetailsCard(),
-            const SizedBox(
-              height: 30,
-            ),
+            SizedBox(height: deviceHeight * 0.01),
             const Text('Rooms'),
-            const SizedBox(height: 16),
+            SizedBox(height: deviceHeight * 0.01),
             FutureBuilder(
               future: fetchRoomsByHouse(widget.house.houseId),
               builder: (context, snapshot) {
@@ -680,17 +669,17 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
   }
 
   Widget _buildHouseDetailsCard() {
+    double deviceHeight = MediaQuery.of(context).size.height;
     return Card(
-      elevation: 6,
+      elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      color: const Color(0xFF013803),
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF013803), width: 2)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            height: 200,
+            height: deviceHeight * 0.4,
             width: double.infinity,
             child: PageView.builder(
               itemCount: widget.house.images!.length,
@@ -702,11 +691,10 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                     "$devUrl${widget.house.images![index]}",
                     height: 200,
                     width: double.infinity,
-                    fit: BoxFit.cover,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => Container(
                       height: 200,
                       width: double.infinity,
-                      color: Colors.grey[300],
                       alignment: Alignment.center,
                       child: const Icon(Icons.image_not_supported,
                           size: 50, color: Colors.grey),
@@ -723,9 +711,9 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
               children: [
                 Text(widget.house.name,
                     style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    )),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -733,8 +721,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                         color: Colors.redAccent, size: 18),
                     const SizedBox(width: 5),
                     Text(getLocationName(widget.house.locationDetail!),
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.white)),
+                        style: const TextStyle(fontSize: 16)),
                   ],
                 ),
                 const SizedBox(height: 8),
@@ -745,9 +732,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                     const SizedBox(width: 5),
                     Text('ksh ${widget.house.rentAmount}',
                         style: const TextStyle(
-                          color: Colors.white,
                           fontSize: 16,
-                          fontWeight: FontWeight.w600,
                         )),
                   ],
                 ),
@@ -757,8 +742,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                     const Icon(Icons.person, color: Colors.blue, size: 18),
                     const SizedBox(width: 5),
                     Text('Caretaker: ${getUserName(widget.house.caretakerId)}',
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.white)),
+                        style: const TextStyle(fontSize: 16)),
                   ],
                 ),
               ],

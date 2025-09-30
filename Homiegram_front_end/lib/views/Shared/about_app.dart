@@ -1,117 +1,111 @@
 import 'package:flutter/material.dart';
 
-/// TODO - figure out a better style for this page and the information also
-
-class Node {
-  final String title;
-  final String description;
-  final IconData icon;
-  final Color gradientColors;
-
-  Node({
-    required this.title,
-    required this.description,
-    this.icon = Icons.info,
-    this.gradientColors = const Color(0xFF0D6B05),
-  });
-}
-
 class AboutHomiegram extends StatelessWidget {
-  final List<Node> nodes = [
-    Node(
-      title: "Landlords",
-      description:
-          "Homigram provides landlords with a streamlined property management experience. Through a single platform, landlords can manage rental agreements, handle maintenance requests, and communicate with tenants efficiently. With HomieGram's intuitive tools, managing property details, tenant information, and maintenance schedules becomes effortless, reducing administrative time and enhancing focus on business growth.",
-    ),
-    Node(
-      title: "Tenants",
-      description:
-          "Homigram simplifies the rental search process for students, offering a user-friendly platform with filters for budget, location, and preferences. Students can browse listings, apply easily, and even read reviews. Personalized recommendations make it easier to find the perfect property, making the transition to a new living space smoother and more enjoyable.",
-    ),
-    Node(
-      title: "Market",
-      description:
-          "Homigram extends its platform to businesses and individuals looking to sell items within the rental ecosystem. The Market node allows users to list and browse items relevant to student life and rental needs, from furniture to appliances, making it a one-stop shop for both property management and essential items. By integrating sales opportunities directly into the platform, HomieGram creates a seamless environment for students, landlords, and sellers alike, enhancing the overall rental experience.",
-    ),
-  ];
+  const AboutHomiegram({super.key});
 
-  AboutHomiegram({super.key});
+  final List<Map<String, dynamic>> sections = const [
+    {
+      "title": "Landlords",
+      "description":
+          "Easily manage rental agreements, tenants, and maintenance requests in one place. Save time and focus on growth with streamlined property tools.",
+      "image": "assets/images/landlord1.jpeg",
+      "align": "left",
+    },
+    {
+      "title": "Tenants",
+      "description":
+          "Students can find their ideal rentals using budget, location, and preference filters. Browse listings, apply, and settle in with ease.",
+      "image": "assets/images/tenant1.jpeg",
+      "align": "right",
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0D6B05),
+        elevation: 0,
         title: const Text(
           "What is Homigram?",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.w600),
         ),
+        centerTitle: true,
       ),
-      body: CustomPaint(
-        child: ListView.builder(
-          itemCount: nodes.length,
-          itemBuilder: (context, index) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-              child: NodeWidget(node: nodes[index]),
-            );
-          },
-        ),
+      body: ListView.builder(
+        itemCount: sections.length,
+        itemBuilder: (context, index) {
+          final item = sections[index];
+          return Padding(
+            padding: const EdgeInsets.all(10),
+            child: _buildCard(item),
+          );
+        },
       ),
     );
   }
-}
 
-class NodeWidget extends StatelessWidget {
-  final Node node;
+  Widget _buildCard(Map<String, dynamic> item) {
+    final String align = item["align"];
 
-  const NodeWidget({Key? key, required this.node}) : super(key: key);
+    Alignment imageAlignment;
+    switch (align) {
+      case "left":
+        imageAlignment = Alignment.topLeft;
+        break;
+      case "right":
+        imageAlignment = Alignment.topRight;
+        break;
+      default:
+        imageAlignment = Alignment.topCenter;
+    }
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: node.gradientColors,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF000000).withAlpha((0.5 * 255).toInt()),
-            blurRadius: 12,
-            spreadRadius: 2,
-            offset: const Offset(4, 4),
-          ),
-        ],
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
       ),
+      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                const SizedBox(width: 8),
-                Text(
-                  node.title,
-                  style: const TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+            Align(
+              alignment: imageAlignment,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                ),
+                padding: const EdgeInsets.all(8),
+                child: ClipOval(
+                  child: Image.asset(
+                    item["image"],
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
                   ),
                 ),
-              ],
-            ),
-            const Divider(
-              color: Colors.white,
-            ),
-            Text(
-              node.description,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.white,
               ),
             ),
-            const Divider(
-              color: Colors.white,
+            const SizedBox(height: 20),
+            Text(
+              item["title"],
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF126E06),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              item["description"],
+              style: TextStyle(
+                fontSize: 16,
+                height: 1.5,
+                color: Colors.grey.shade700,
+              ),
             ),
           ],
         ),

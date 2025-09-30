@@ -55,14 +55,6 @@ class _MarketPlaceState extends State<MarketPlace> {
     _loadProducts();
     fetchUsers();
     fetchCategories();
-    _loadAuthToken();
-  }
-
-  Future<void> _loadAuthToken() async {
-    authToken = await UserPreferences.getAuthToken();
-    currentUserEmail = (await UserPreferences.getUserEmail())!;
-
-    setState(() {});
   }
 
   Future<void> fetchCategories() async {
@@ -164,7 +156,7 @@ class _MarketPlaceState extends State<MarketPlace> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF065F09)),
-                onPressed: () {
+                onPressed: () async {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -172,6 +164,8 @@ class _MarketPlaceState extends State<MarketPlace> {
                               businessId: 0,
                             )),
                   );
+
+                  _loadProducts();
                 },
                 child: const Text(
                   'Product',

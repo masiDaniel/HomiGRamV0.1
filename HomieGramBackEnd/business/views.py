@@ -7,6 +7,7 @@ from rest_framework import status
 from .models import MyBusiness, Category,Product, Order, Cart, CartItem
 from .serializers import MyBusinessSerializer, CategorySerializer, ProductSerializer, CartItemSerializer, CartSerializer, OrderSerializer
 from rest_framework.parsers import MultiPartParser, FormParser , JSONParser
+from rest_framework.permissions import  IsAuthenticated
 
 # Create your views here.
 
@@ -14,7 +15,7 @@ class MyBusinessAPIView(APIView):
     """
     handles the business operations
     """
-    
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """
@@ -58,6 +59,7 @@ class CategoryAPIView(APIView):
     """
     handles the category operations
     """
+    permission_classes = [IsAuthenticated]
     
 
     def get(self, request, *args, **kwargs):
@@ -83,6 +85,7 @@ class ProductAPIView(APIView):
     """
     handles the Product operations
     """
+    permission_classes = [IsAuthenticated]
     
     parser_classes = (JSONParser, MultiPartParser, FormParser)  # Ensure file uploads are handled properly
 
@@ -156,7 +159,7 @@ class CartAPIView(APIView):
     """
     handles the cart operations
     """
-    
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """
@@ -193,7 +196,7 @@ class CartItemAPIView(APIView):
     """
     handles the cart item operations
     """
-
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """
@@ -218,7 +221,7 @@ class OrderAPIView(APIView):
     """
     handles the order operations
     """
-    
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         """

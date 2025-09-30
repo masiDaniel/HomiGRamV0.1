@@ -3,12 +3,18 @@ from django.conf import settings
 from django.db import models
 from dynaconf import ValidationError
 from accounts.models import CustomUser
-from datetime import timedelta
+from datetime import date, time, datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
 
-
+def validate_file_extension(value):
+    valid_extensions = ['pdf', 'docx', 'doc']
+    extension = value.name.split('.')[-1].lower()
+    if extension not in valid_extensions:
+        raise ValidationError(('Unsupported file extension. Only PDF, DOC, DOCX files are allowed.'))
+    
 
 class Amenity(models.Model):
     """
@@ -30,12 +36,6 @@ class Location(models.Model):
     def __str__(self):
         return f'{self.county}, {self.town}, {self.area}'
 
-def validate_file_extension(value):
-    valid_extensions = ['pdf', 'docx', 'doc']
-    extension = value.name.split('.')[-1].lower()
-    if extension not in valid_extensions:
-        raise ValidationError(('Unsupported file extension. Only PDF, DOC, DOCX files are allowed.'))
-
 
 class Houses(models.Model):
     """
@@ -48,7 +48,6 @@ class Houses(models.Model):
                                      null=True, blank=False)
     rating = models.PositiveSmallIntegerField(default=0, null=False, blank=False, )
     description = models.TextField()
-    
     location_detail = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
     latitude = models.DecimalField(
         max_digits=9, decimal_places=6, null=True, blank=True
@@ -64,6 +63,7 @@ class Houses(models.Model):
         "CareTaker", null=True, blank=True, on_delete=models.SET_NULL,
         related_name='assigned_house'
     )
+    water_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     contract_file = models.FileField(upload_to='house_contacts/', validators=[validate_file_extension], null=True, blank=True)
     
     
@@ -140,7 +140,6 @@ class Room(models.Model):
     occupied = models.BooleanField(default=False)
     tenant =  models.ForeignKey(CustomUser, related_name='tenant_occupying', on_delete=models.SET_NULL, null=True, blank=True)
     # entry_date = models.DateField(default=timezone.now())
-    room_images = models.ImageField(upload_to='room_images/', default="Homi rooms")
     rent_status = models.BooleanField(default=False)
     last_payment_date = models.DateTimeField(null=True, blank=True)
     
@@ -156,13 +155,21 @@ class Room(models.Model):
     def __str__(self):
         return f"{self.apartment.name} {self.room_name}"
 
+class RoomImage(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='room_image')
+    image = models.ImageField(upload_to='Room_images/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.room.room_name}"
 
 class TenancyAgreement(models.Model):
-    AGREEMENT_STATUS = (
-        ('pending', 'Pending'),   
-        ('active', 'Active'),     
-        ('terminated', 'Terminated'), 
-    )
+    AGREEMENT_STATUS = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("active", "Active"),
+        ("terminated", "Terminated"),
+    ]
 
     tenant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     house = models.ForeignKey(Houses, on_delete=models.CASCADE)
@@ -170,54 +177,87 @@ class TenancyAgreement(models.Model):
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=50, choices=AGREEMENT_STATUS, default='pending')
+    signed_at = models.DateTimeField(null=True, blank=True)
     termination_requested = models.BooleanField(default=False)
+    previous_agreement = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status})"
+        return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status}) id {self.id    }"
 
 
     
 
 
 class Payment(models.Model):
-    # how should i handle the valid until?
+    # Who made the payment
     tenant = models.ForeignKey(CustomUser, related_name="payments", on_delete=models.CASCADE)
     room = models.ForeignKey(Room, related_name="payments", on_delete=models.CASCADE)
     house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name="payments")
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-    payment_reference = models.CharField(max_length=100, unique=True)
-    
-    paid_at = models.DateTimeField(default=timezone.now)
-    valid_until = models.DateTimeField(null=True, blank=True)
+    agreement = models.ForeignKey("TenancyAgreement", on_delete=models.CASCADE, related_name="payments")
 
+    # Core details
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(
         max_length=20,
         choices=(("pending", "Pending"), ("confirmed", "Confirmed"), ("failed", "Failed")),
         default="pending",
     )
 
-    #refactor this to be untill next payment date
-    def mark_confirmed(self):
-        """Mark payment as confirmed and valid for 30 days."""
+    # Tracking identifiers
+    checkout_request_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
+    mpesa_receipt = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    failure_reason = models.TextField(blank=True, null=True)
+
+    # Dates
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    valid_until = models.DateTimeField(null=True, blank=True)
+
+    def mark_confirmed(self, amount=None, receipt_number=None):
+        """Mark payment as confirmed and update validity."""
         self.status = "confirmed"
+        if amount:
+            self.amount = amount
+        if receipt_number:
+            self.mpesa_receipt = receipt_number
+        self.paid_at = timezone.now()
+        # Example: valid for one month
         self.valid_until = timezone.now() + timedelta(days=30)
         self.save()
-    
-    def save(self, *args, **kwargs):
-        """Automatically update rent status when payment is saved."""
-        super().save(*args, **kwargs)  # Save payment record
-        self.room.rent_status = True
-        self.room.last_payment_date = self.paid_at
-        self.room.save()
 
-
-
-class RoomImage(models.Model):
-    room =  models.ForeignKey(Room, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='room_images/')
+    def mark_failed(self, reason=None):
+        """Mark payment as failed and store reason."""
+        self.status = "failed"
+        if reason:
+            self.failure_reason = reason
+        self.save()
 
     def __str__(self):
-        return  f"image {self.room}"
+        return f"Payment {self.id} - {self.tenant.username} - {self.status}"
+
+
+
+class PaymentItem(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name="items")
+    name = models.CharField(max_length=100)  # e.g. "Rent", "Water", "Electricity", "Security Deposit"
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+class Charge(models.Model):
+    agreement = models.ForeignKey(TenancyAgreement, on_delete=models.CASCADE, related_name="charges")
+    name = models.CharField(max_length=100)  # "Water", "Electricity", "Garbage", etc.
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    month = models.DateField()  # which month it applies
+    is_paid = models.BooleanField(default=False)
+
+class Receipt(models.Model):
+    payment = models.OneToOneField(Payment, on_delete=models.CASCADE, related_name="receipt")
+    tenant = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    receipt_number = models.CharField(max_length=20, unique=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    date_issued = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Receipt {self.receipt_number} for {self.payment}"
 
 
 class Bookmark(models.Model):
@@ -248,6 +288,7 @@ class PendingAdvertisement(models.Model):
         return f"{self.title} - {'Paid' if self.payment_status else 'Pending'}"
 
 
+# TODO : Link this to the user who has posted, house, business, or individual
 class Advertisement(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()

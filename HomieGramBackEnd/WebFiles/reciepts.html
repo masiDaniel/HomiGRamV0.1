@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .header { text-align: center; }
+    .receipt-box {
+      border: 1px solid #eee;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    .footer { margin-top: 20px; font-size: 12px; text-align: center; color: #666; }
+  </style>
+</head>
+<body>
+  <div class="receipt-box">
+    <div class="header">
+      <h2>Payment Receipt</h2>
+    </div>
+    <p><strong>Receipt Number:</strong> {{ receipt.receipt_number }}</p>
+    <p><strong>Date Issued:</strong> {{ receipt.date_issued|date:"Y-m-d H:i" }}</p>
+    <p><strong>Tenant:</strong> {{ receipt.tenant.username }}</p>
+    <p><strong>Agreement ID:</strong> {{ receipt.payment.agreement.id }}</p>
+    <p><strong>Amount Paid:</strong> {{ receipt.amount }}</p>
+
+    <div class="footer">
+      <p>Thank you for your payment!</p>
+    </div>
+  </div>
+</body>
+</html>

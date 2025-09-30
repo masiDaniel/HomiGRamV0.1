@@ -1,19 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:homi_2/components/constants.dart';
+import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/cart.dart';
-import 'package:homi_2/services/user_data.dart';
 import 'package:http/http.dart' as http;
 
 const devUrl = AppConstants.baseUrl;
 
 class CartService {
   Future<Cart?> getCart(int? userId) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
 
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
 
     try {
@@ -38,11 +38,11 @@ class CartService {
   }
 
   Future<Cart?> createCart(int? userId) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
 
     final Map<String, String> headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Token $token',
+      'Authorization': 'Bearer $token',
     };
     var data = {"user": userId};
     try {
@@ -61,19 +61,18 @@ class CartService {
     }
   }
 
-// TODO : Im having a problem with the data being sent
   Future<bool> addToCart(int cartId, int productIds) async {
-    String? token = await UserPreferences.getAuthToken();
+    String? token = await getAccessToken();
 
     try {
       final response = await http.post(
         Uri.parse("$devUrl/business/postCartItems/"),
         headers: {
           "Content-Type": "application/json",
-          'Authorization': 'Token $token',
+          'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(
-            {"cart_id": cartId, "product": productIds, "quantity": 2}),
+        body:
+            jsonEncode({"cart": cartId, "product": productIds, "quantity": 1}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -81,7 +80,6 @@ class CartService {
       }
       return false;
     } catch (e) {
-      print(e);
       return false;
     }
   }

@@ -12,6 +12,7 @@ import os
 class MpesaHandler:
     now = None
     shortcode = None
+    store_number = None
     consumer_key = None
     consumer_secret = None
     access_token_url = None
@@ -27,6 +28,7 @@ class MpesaHandler:
         self.now = datetime.now()
         
         self.shortcode = os.getenv("MPESA_SHORTCODE")
+        self.store_number  = os.getenv("BUSINESS_STORE_NUMBER")
         self.consumer_key = os.getenv("MPESA_CONSUMER_KEY")
         self.consumer_secret = os.getenv("MPESA_CONSUMER_SECRET")
         self.passkey = os.getenv("MPESA_PASSKEY")
@@ -55,14 +57,13 @@ class MpesaHandler:
                 self.access_token_url,
                 auth=HTTPBasicAuth(self.consumer_key, self.consumer_secret),
             )
-            
+            print(f"the secret {self.consumer_secret}, the public {self.consumer_key}")
             token = res.json()['access_token']
 
-            print(token)
+            print(f"this is the token {token}")
 
             self.headers = {
                 "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json"
             }
         except Exception as e:
             print(str(e), "error getting access token")
@@ -86,15 +87,19 @@ class MpesaHandler:
             "BusinessShortCode": self.shortcode,
             "Password": self.password,
             "Timestamp": self.timestamp,
-            "TransactionType": "CustomerPayBillOnline",
+            "TransactionType": "CustomerBuyGoodsOnline",
             "Amount": math.ceil(float(amount)),
             "PartyA": phone_number,
-            "PartyB": self.shortcode,
+            "PartyB": self.store_number,
             "PhoneNumber": phone_number,
             "CallBackURL": self.my_callback_url,
             "AccountReference": "HOMIGRAM",
             "TransactionDesc": "Client Deposit",
         }
+
+        print(f" push data {push_data}")
+
+        print(f" headers {self.headers}")
 
         response = requests.post(
             self.stk_push_url,
@@ -102,7 +107,10 @@ class MpesaHandler:
             headers=self.headers
         )
         print("i am here")
-        
+        print(self.stk_push_url)
+                
+        print("Status Code:", response.status_code)
+        print("Response Text:", response.text)
 
         response_data = response.json()
         print(response_data)

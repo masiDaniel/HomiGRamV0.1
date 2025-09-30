@@ -53,7 +53,7 @@ class SignInState extends State<SignIn> {
                 .timeout(const Duration(seconds: 10), onTimeout: () {
           throw TimeoutException("Connection timed out. Please try again.");
         });
-
+        print("user registration $userRegistration");
         if (userRegistration != null) {
           if (!mounted) return;
 
