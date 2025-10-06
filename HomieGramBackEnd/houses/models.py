@@ -156,8 +156,8 @@ class Room(models.Model):
         return f"{self.apartment.name} {self.room_name}"
 
 class RoomImage(models.Model):
-    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='room_image')
-    image = models.ImageField(upload_to='Room_images/')
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='room_images/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -182,7 +182,7 @@ class TenancyAgreement(models.Model):
     previous_agreement = models.ForeignKey("self", null=True, blank=True, on_delete=models.SET_NULL)
 
     def __str__(self):
-        return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status}) id {self.id    }"
+        return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status}) id {self.id}"
 
 
     

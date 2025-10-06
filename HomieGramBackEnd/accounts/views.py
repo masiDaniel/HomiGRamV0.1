@@ -39,6 +39,7 @@ class LoginApIView(APIView):
 
             data = serializer.data
             data.update(tokens)
+            print("Login refresh token:", tokens)
             return Response(data, status=status.HTTP_200_OK)
         # user doesn't exist
         else:
@@ -61,7 +62,7 @@ class LogoutAPIView(APIView):
                 )
 
             token = RefreshToken(refresh_token)
-            token.blacklist()  # invalidate this refresh token
+            token.blacklist() 
 
             return Response(
                 {"message": "Logged out successfully."},

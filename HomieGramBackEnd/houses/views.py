@@ -590,7 +590,6 @@ class AssignTenantView(APIView):
         )
 
 # step 1: initiate.
-
 class StartRentView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -612,31 +611,23 @@ class StartRentView(APIView):
                 if room.occupied:
                     return Response({"error": "This room is already occupied"}, status=400)
 
-                # check if user already has an active agreement
-                active = TenancyAgreement.objects.filter(
-                    tenant=request.user, room=room, status__in=["active", "approved"]
+                # check if user already has any ongoing agreement for this room
+                existing_agreement = TenancyAgreement.objects.filter(
+                    tenant=request.user,
+                    room=room,
+                    status__in=["pending", "approved", "active"]
                 ).first()
-                if active:
-                    return Response(
-                        {"error": "You already have an active agreement for this room"},
-                        status=400
-                    )
 
-                # check for existing pending agreement
-                pending = TenancyAgreement.objects.filter(
-                    tenant=request.user, room=room, 
-                ).first()
-                print(f"this is the id {TenancyAgreementSerializer(pending).data,}")
-                if pending:
+                if existing_agreement:
                     return Response(
                         {
-                            "error": "You already have a pending request for this room",
-                            "agreement": TenancyAgreementSerializer(pending).data,
+                            "error": "You already have an existing agreement for this room.",
+                            "agreement": TenancyAgreementSerializer(existing_agreement).data,
                         },
-                        status=200  
+                        status=200
                     )
 
-                # create new agreement safely inside the lock
+                # create new pending agreement safely inside the lock
                 agreement = TenancyAgreement.objects.create(
                     tenant=request.user,
                     house=room.apartment,
@@ -653,22 +644,37 @@ class StartRentView(APIView):
             return Response({"error": "Room not found"}, status=404)
 
 
+
 # Step 2: Confirm agreement
 class ConfirmAgreementView(APIView):
     permission_classes = [IsAuthenticated]
-    # review those statuses.
+
     def post(self, request, *args, **kwargs):
         agreement_id = request.data.get("agreement_id")
-        agreement = get_object_or_404(TenancyAgreement, id=agreement_id, tenant=request.user, status="pending")
-        
-        agreement.signed_at = timezone.now()
+        if not agreement_id:
+            return Response({"error": "agreement_id is required"}, status=400)
 
-        agreement.status = "pending"
-        agreement.save()
+        agreement = get_object_or_404(
+            TenancyAgreement,
+            id=agreement_id,
+            tenant=request.user,
+            status__in=["pending", "approved"]
+        )
+
+        if agreement.status == "pending":
+            agreement.status = "approved"
+            agreement.signed_at = timezone.now()
+            agreement.save(update_fields=["status", "signed_at"])
+
+            message = "Agreement confirmed successfully. Proceed to payment."
+        else:
+   
+            message = "Agreement already confirmed. Proceed to payment."
+
         return Response({
-            "message": "Agreement confirmed. Proceed to payment.",
+            "message": message,
             "agreement": TenancyAgreementSerializer(agreement).data
-        },   status=200  )
+        }, status=200)
 
 # Step 3: Initiate payment
 class RentPaymentPreviewView(APIView):
@@ -680,7 +686,7 @@ class RentPaymentPreviewView(APIView):
             TenancyAgreement,
             id=agreement_id,
             tenant=request.user,
-            status__in=["pending", "failed"]
+            status__in=["approved"]
         )
 
         is_first_payment = not Payment.objects.filter(
@@ -701,21 +707,47 @@ class RentPaymentInitiateView(APIView):
 
     def post(self, request, *args, **kwargs):
         agreement_id = request.data.get("agreement_id")
+        if not agreement_id:
+            return Response({"error": "agreement_id is required"}, status=400)
+
         agreement = get_object_or_404(
             TenancyAgreement,
             id=agreement_id,
             tenant=request.user,
-            status__in=["pending", "active"]
+            status__in=["approved", "active"]
         )
 
+        # 1️⃣ Check for an existing pending payment
+        existing_payment = Payment.objects.filter(
+            agreement=agreement,
+            tenant=request.user,
+            status="pending"
+        ).first()
+
+        if existing_payment:
+            # Check if it has been pending for too long (e.g., 2 minutes)
+            time_diff = timezone.now() - existing_payment.created_at
+            if time_diff.total_seconds() < 120:
+                # 2 mins have not passed — return the same payment
+                return Response({
+                    "message": "You already have a pending payment. Please complete it on your phone. if canncleed please wait for 2 minutes then try again",
+                    "payment_id": existing_payment.id,
+                    "checkout_request_id": existing_payment.checkout_request_id,
+                    "status": existing_payment.status,
+                }, status=200)
+            else:
+                existing_payment.status = "failed"
+                existing_payment.failure_reason = "Timed out - user did not complete payment"
+                existing_payment.save()
+
+        #Compute charges again
         is_first_payment = not Payment.objects.filter(
             agreement=agreement, status="confirmed"
         ).exists()
 
-        # Compute charges
         items, total_amount = compute_charges(agreement, is_first_payment)
 
-        # Create pending payment
+        # Create new pending payment
         payment = Payment.objects.create(
             agreement=agreement,
             tenant=request.user,
@@ -723,13 +755,12 @@ class RentPaymentInitiateView(APIView):
             room=agreement.room,
             amount=total_amount,
             status="pending",
-         
         )
 
         for item in items:
             PaymentItem.objects.create(payment=payment, name=item["name"], amount=item["amount"])
 
-        # Initiate M-Pesa
+        # Initiate STK push
         mpesa = MpesaHandler()
         res_status, res_data = mpesa.make_stk_push({
             "amount": total_amount,
@@ -737,19 +768,23 @@ class RentPaymentInitiateView(APIView):
         })
 
         if not res_status:
-            payment.mark_failed(reason=res_data.get("errorMessage", "STK Push failed"))
+            payment.status = "failed"
+            payment.failure_reason = res_data.get("errorMessage", "STK Push failed")
+            payment.save()
             return Response({"error": "Failed to initiate payment", "details": res_data}, status=400)
 
-        # Save CheckoutRequestID for callback matching
+  
         payment.checkout_request_id = res_data.get("CheckoutRequestID")
         payment.save()
 
         return Response({
+            "message": "STK push sent. Please complete payment on your phone.",
             "payment_id": payment.id,
             "amount": total_amount,
             "items": items,
             "mpesa_response": res_data
-        })
+        }, status=200)
+
 
 
 class PaymentStatusView(APIView):
@@ -814,6 +849,16 @@ class MpesaCallbackView(APIView):
                 receipt_number=f"RCT-{payment.id}-{int(timezone.now().timestamp())}",
                 amount=payment.amount
             )
+
+            agreement = payment.agreement
+            if agreement.status == "approved":
+                agreement.status = "active"
+                agreement.start_date = timezone.now()
+                agreement.save()
+
+                # Optionally mark room as occupied
+                agreement.room.occupied = True
+                agreement.room.save()
 
             return Response({
                 "status": "success",
