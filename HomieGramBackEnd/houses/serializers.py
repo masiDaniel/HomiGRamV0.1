@@ -41,7 +41,7 @@ class RoomImageSerializer(serializers.ModelSerializer):
 
 
 class RoomSerializer(serializers.ModelSerializer):
-    images = HouseImageSerializer(many=True, read_only=True) 
+    images = RoomImageSerializer(many=True, read_only=True) 
     class Meta:
         model = Room
         fields = "__all__"

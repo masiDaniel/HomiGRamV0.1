@@ -35,7 +35,6 @@ Future fetchUserSignIn(
 
     if (response.statusCode == 200) {
       final userData = json.decode(response.body);
-      print("this is the user data $userData");
 
       await UserPreferences.saveUserData(userData);
       saveTokens(userData['access'], userData['refresh']);
