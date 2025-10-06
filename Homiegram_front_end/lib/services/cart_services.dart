@@ -50,6 +50,7 @@ class CartService {
           headers: headers, body: jsonEncode(data));
 
       if (response.statusCode == 201) {
+        print("cart response ${jsonDecode(response.body)}");
         List<dynamic> data = jsonDecode(response.body);
         if (data.isNotEmpty) {
           return Cart.fromJson(data.first);

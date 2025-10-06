@@ -93,7 +93,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
                     : Image.network(widget.room.roomImages, height: 200)
                 : const Placeholder(fallbackHeight: 200),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 10) ,
             ElevatedButton.icon(
               onPressed: pickImage,
               icon: const Icon(Icons.image),

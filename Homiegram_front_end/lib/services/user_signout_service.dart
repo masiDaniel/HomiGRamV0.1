@@ -1,26 +1,28 @@
+import 'dart:convert';
+
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/secure_tokens.dart';
 import 'package:http/http.dart' as http;
 
-const Map<String, String> headers = {
-  "Content-Type": "application/json",
-};
 const devUrl = AppConstants.baseUrl;
 Future logoutUser() async {
   String? token = await getAccessToken();
   String? refreshToken = await getRefreshToken();
+  print("these are the  tokens access $token \n  refrexh $refreshToken");
   try {
     final headersWithToken = {
-      ...headers,
+      'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
     final response = await http.post(
       Uri.parse("$devUrl/accounts/logout/"),
       headers: headersWithToken,
-      // body: {
-      //   "refresh": refreshToken,
-      // },
+      body: jsonEncode({
+        "refresh": refreshToken,
+      }),
     );
+    print("Response status: ${response.statusCode}");
+    print("Response body: ${response.body}");
 
     if (response.statusCode == 205) {
       return true;

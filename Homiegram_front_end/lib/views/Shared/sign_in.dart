@@ -118,6 +118,8 @@ class SignInState extends State<SignIn> {
 
   @override
   Widget build(BuildContext context) {
+    final deviceHeight = MediaQuery.of(context).size.height;
+    final deviceWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       resizeToAvoidBottomInset: true,
       body: SafeArea(
@@ -209,21 +211,29 @@ class SignInState extends State<SignIn> {
             ),
           ),
           if (_isLoading)
-            Container(
-              color: const Color.fromARGB(255, 9, 63, 2),
-              child: const Center(
-                  child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(
-                    color: Colors.green,
-                    strokeWidth: 6.0,
-                  ),
-                  SizedBox(height: 10),
-                  Text("Loading, please wait...",
-                      style: TextStyle(fontSize: 16, color: Colors.white)),
-                ],
-              )),
+            Align(
+              alignment: Alignment.center,
+              child: Container(
+                height: deviceHeight * 0.5,
+                width: deviceWidth * 0.9,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  color: const Color.fromARGB(255, 9, 63, 2),
+                ),
+                child: const Center(
+                    child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(
+                      color: Colors.green,
+                      strokeWidth: 6.0,
+                    ),
+                    SizedBox(height: 10),
+                    Text("Loading, please wait...",
+                        style: TextStyle(fontSize: 16, color: Colors.white)),
+                  ],
+                )),
+              ),
             ),
         ],
       )),

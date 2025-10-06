@@ -58,7 +58,10 @@ class _RentingPageState extends State<RentingPage> {
         future: futureRooms,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                  color: Colors.green, strokeWidth: 6.0),
+            );
           } else if (snapshot.hasError) {
             return Center(
               child: Lottie.asset(

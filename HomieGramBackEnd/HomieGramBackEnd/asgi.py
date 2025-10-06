@@ -12,7 +12,7 @@ from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "chat_project.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "HomieGramBackEnd.settings.base")
 
 # Set up Django before importing anything dependent on it
 django.setup()

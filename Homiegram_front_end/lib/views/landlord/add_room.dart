@@ -14,6 +14,7 @@ class RoomInputPage extends StatefulWidget {
 
 class RoomInputPageState extends State<RoomInputPage> {
   final _formKey = GlobalKey<FormState>();
+  bool isLoading = false;
 
   final TextEditingController _roomNameController = TextEditingController();
   final TextEditingController _numberOfBedroomsController =
@@ -21,13 +22,15 @@ class RoomInputPageState extends State<RoomInputPage> {
   final TextEditingController _sizeController = TextEditingController();
   final TextEditingController _rentController = TextEditingController();
 
-  Future<void> _postRoomData() async {
+  Future<void> _submitRoom() async {
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
 
     final newRoom = GetRooms(
       roomId: 0,
       roomName: _roomNameController.text.trim(),
-      noOfBedrooms: int.parse(_numberOfBedroomsController.text),
+      noOfBedrooms: int.parse(_numberOfBedroomsController.text.trim()),
       sizeInSqMeters: _sizeController.text.trim(),
       rentAmount: _rentController.text.trim(),
       occuiedStatus: false,
@@ -36,16 +39,22 @@ class RoomInputPageState extends State<RoomInputPage> {
       tenantId: 0,
       rentStatus: false,
     );
-
     try {
-      await postRoomsByHouse(widget.apartmentId, newRoom);
+      final response = await postRoomsByHouse(widget.apartmentId, newRoom);
 
       if (!mounted) return;
+      setState(() => isLoading = false);
 
-      showCustomSnackBar(context, 'Room posted successfully!');
-      _clearForm();
+      if (response.isNotEmpty) {
+        showCustomSnackBar(context, 'Room posted successfully!');
+        _clearForm();
+      } else {
+        showCustomSnackBar(context, 'Failed to post room.',
+            type: SnackBarType.error);
+      }
     } catch (e) {
-      showCustomSnackBar(context, 'Error!');
+      setState(() => isLoading = false);
+      showCustomSnackBar(context, 'Error: $e', type: SnackBarType.error);
     }
   }
 
@@ -56,76 +65,120 @@ class RoomInputPageState extends State<RoomInputPage> {
     _rentController.clear();
   }
 
+  InputDecoration _inputDecoration(String label) => InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: Color(0xFF105A01), width: 2),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
-    double deviceHeight = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(title: const Text('Room Input Page')),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            _buildTextField(_roomNameController, 'Room Name'),
-            SizedBox(
-              height: deviceHeight * 0.01,
-            ),
-            _buildTextField(_numberOfBedroomsController, 'Number of Bedrooms',
-                isNumeric: true),
-            SizedBox(
-              height: deviceHeight * 0.01,
-            ),
-            _buildTextField(_sizeController, 'Size (in sq meters)'),
-            SizedBox(
-              height: deviceHeight * 0.01,
-            ),
-            _buildTextField(_rentController, 'Rent Amount', isNumeric: true),
-            const Spacer(),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF105A01),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+      appBar: AppBar(title: const Text('Add Room')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Room Name
+              TextFormField(
+                controller: _roomNameController,
+                decoration: _inputDecoration('Room Name'),
+                validator: (value) => value == null || value.isEmpty
+                    ? 'Please enter a room name'
+                    : null,
               ),
-              onPressed: _postRoomData,
-              child: const Text(
-                'Submit Room Details',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            SizedBox(
-              height: deviceHeight * 0.02,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+              const SizedBox(height: 16),
 
-  Widget _buildTextField(TextEditingController controller, String label,
-      {bool isNumeric = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10.0),
-      child: TextFormField(
-        cursorColor: const Color(0xFF105A01),
-        controller: controller,
-        decoration: InputDecoration(
-            labelText: label,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            )),
-        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return 'This field is required';
-          }
-          if (isNumeric && int.tryParse(value) == null) {
-            return 'Enter a valid number';
-          }
-          return null;
-        },
+              // Number of Bedrooms
+              TextFormField(
+                controller: _numberOfBedroomsController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration('Number of Bedrooms'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter the number of bedrooms';
+                  }
+                  if (int.tryParse(value) == null) {
+                    return 'Please enter a valid number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+
+              // Size
+              TextFormField(
+                controller: _sizeController,
+                decoration: _inputDecoration('Size (in sq meters)'),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Enter room size' : null,
+              ),
+              const SizedBox(height: 16),
+
+              // Rent Amount
+              TextFormField(
+                controller: _rentController,
+                keyboardType: TextInputType.number,
+                decoration: _inputDecoration('Rent Amount (Ksh)'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a rent amount';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Enter a valid number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              // Submit Button
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF105A01),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: isLoading ? null : _submitRoom,
+                child: isLoading
+                    ? const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Submitting...',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      )
+                    : const Text(
+                        'Submit Room Details',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

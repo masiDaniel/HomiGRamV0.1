@@ -46,6 +46,9 @@ class UserPreferences {
     if (userData.containsKey('phone_number')) {
       await prefs.setString(_keyPhoneNumber, userData['phone_number']);
     }
+    if (userData.containsKey('id_number')) {
+      await prefs.setInt(_keyIdNumber, userData['id_number']);
+    }
     if (userData.containsKey('user_type')) {
       await prefs.setString(_keyUserType, userData['user_type']);
     }

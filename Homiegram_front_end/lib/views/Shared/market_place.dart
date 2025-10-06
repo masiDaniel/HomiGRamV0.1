@@ -757,7 +757,7 @@ class _MarketPlaceState extends State<MarketPlace> {
                       );
                     },
                   )
-                : const Center(child: Text('No businesses match your search.'));
+                : const Center(child: Text('No businesses.'));
           } else {
             return const Center(child: Text('No locations available'));
           }
@@ -896,13 +896,6 @@ class _MarketPlaceState extends State<MarketPlace> {
               );
             },
           )
-        : Center(
-            child: Lottie.asset(
-              'assets/animations/notFound.json',
-              width: 200,
-              height: 200,
-              fit: BoxFit.cover,
-            ),
-          );
+        : const Center(child: Text('No Products.'));
   }
 }

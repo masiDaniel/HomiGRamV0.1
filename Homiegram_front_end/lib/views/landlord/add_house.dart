@@ -121,79 +121,88 @@ class AddHousePageState extends State<AddHousePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add House'),
-      ),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: Padding(
+        appBar: AppBar(
+          title: const Text('Add House'),
+        ),
+        body: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // House Name
                 TextFormField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'House Name',
-                    border: OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Color(0xFF105A01), width: 2),
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a house name';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    _houseName = value!;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a house name'
+                      : null,
+                  onSaved: (value) => _houseName = value!,
                 ),
                 const SizedBox(height: 16),
+
+                // Rent Amount
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Rent Amount ie (1B - ks 4000, 2B - ks 5000)',
-                    border: OutlineInputBorder(),
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Average Rent amount(ksh)',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Color(0xFF105A01), width: 2),
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a rent amount';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    _rentAmount = value!;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a rent amount'
+                      : null,
+                  onSaved: (value) => _rentAmount = value!,
                 ),
                 const SizedBox(height: 16),
+
+                // Location
                 TextFormField(
                   controller: houseAddressController,
                   readOnly: true,
                   decoration: InputDecoration(
                     labelText: "Location",
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
+                      icon: const Icon(Icons.search, color: Color(0xFF105A01)),
                       onPressed: () => showLocationDialog(context),
                     ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select a location';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please select a location'
+                      : null,
                 ),
+                const SizedBox(height: 16),
+
+                // Amenities
                 TextFormField(
                   controller: houseAmenitiesController,
                   readOnly: true,
                   decoration: InputDecoration(
                     labelText: "Amenities",
                     suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
+                      icon: const Icon(Icons.add_circle_outline,
+                          color: Color(0xFF105A01)),
                       onPressed: () async {
                         selectedIds = await showAmenitiesDialog(context);
-
                         if (selectedIds.isNotEmpty) {
-                          // Show selected amenity names in the text field
                           houseAmenitiesController.text = amenities
                               .where((a) => selectedIds.contains(a.id))
                               .map((a) => a.name)
@@ -201,85 +210,97 @@ class AddHousePageState extends State<AddHousePage> {
                         }
                       },
                     ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please select at least one amenity';
-                    }
-                    return null;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please select at least one amenity'
+                      : null,
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
+
+                // Image Picker
+                ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF105A01),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   onPressed: _pickImages,
-                  child: const Text(
+                  icon: const Icon(Icons.image, color: Colors.white),
+                  label: const Text(
                     'Select Images',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 16),
+
+                // Show Selected Images
                 _imageUrls.isNotEmpty
                     ? Wrap(
                         spacing: 8.0,
+                        runSpacing: 8.0,
                         children: _imageUrls.take(16).map((url) {
-                          return Stack(
-                            alignment: Alignment.topRight,
-                            children: [
-                              Image.file(
-                                File(url),
-                                width: 100,
-                                height: 100,
-                                fit: BoxFit.cover,
-                              ),
-                              Positioned(
-                                top: 4,
-                                right: 4,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _imageUrls.remove(url);
-                                    });
-                                  },
-                                  child: const CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: Colors.red,
-                                    child: Icon(
-                                      Icons.close,
-                                      size: 16,
-                                      color: Colors.white,
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              alignment: Alignment.topRight,
+                              children: [
+                                Image.file(
+                                  File(url),
+                                  width: 100,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                                Positioned(
+                                  top: 4,
+                                  right: 4,
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _imageUrls.remove(url);
+                                      });
+                                    },
+                                    child: const CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: Colors.red,
+                                      child: Icon(Icons.close,
+                                          size: 16, color: Colors.white),
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           );
                         }).toList(),
                       )
                     : const Center(child: Text('No images selected.')),
                 const SizedBox(height: 16),
+
+                // Description
                 TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'descripion',
-                    border: OutlineInputBorder(),
+                  maxLines: 4,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Color(0xFF105A01), width: 2),
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a descriptiom';
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    _description = value!;
-                  },
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Please enter a description'
+                      : null,
+                  onSaved: (value) => _description = value!,
                 ),
+
                 const SizedBox(height: 10),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -361,9 +382,7 @@ class AddHousePageState extends State<AddHousePage> {
               ],
             ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   void showLocationDialog(BuildContext context) {
