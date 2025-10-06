@@ -26,8 +26,6 @@
 # # DEBUG = True
 
 # # ALLOWED_HOSTS = ['192.168.0.107', '127.0.0.1', 'localhost', '192.168.8.18', '172.20.10.2', '192.168.2.127', "http://hommiegram.azurewebsites.net/", '192.168.21.219', '192.168.100.7', '192.168.100.18', '192.168.0.107', '192.168.100.18', '192.168.100.11']
-
-
 # # # CSRF_TRUSTED_ORIGINS = [
 # # #     "https://hommiegram.azurewebsites.net",
 # # #     "http://localhost:8000",
@@ -60,15 +58,6 @@
    
 # # ]
 
-# # MIDDLEWARE = [
-# #     'django.middleware.security.SecurityMiddleware',
-# #     'django.contrib.sessions.middleware.SessionMiddleware',
-# #     'django.middleware.common.CommonMiddleware',
-# #     'django.middleware.csrf.CsrfViewMiddleware',
-# #     'django.contrib.auth.middleware.AuthenticationMiddleware',
-# #     'django.contrib.messages.middleware.MessageMiddleware',
-# #     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-# # ]
 
 # # ROOT_URLCONF = 'HomieGramBackEnd.urls'
 
@@ -94,16 +83,6 @@
 # # # Database
 # # # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# # DATABASES = {
-# #     'default': {
-# #         'ENGINE': 'django.db.backends.postgresql',
-# #         'NAME': "homigram",
-# #         'USER': 'dan',
-# #         'PASSWORD': 'danielspassword',
-# #         'HOST': 'localhost',
-# #         'PORT': '5432',
-# #     }
-# # }
 
 # # # CUSTOM USER
 # # AUTH_USER_MODEL = "accounts.CustomUser"
