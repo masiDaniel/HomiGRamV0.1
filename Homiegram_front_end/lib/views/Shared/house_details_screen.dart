@@ -587,49 +587,49 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
               const SizedBox(
                 width: 12,
               ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  fetchRooms().then((_) {
-                    setState(() {});
+              // ElevatedButton.icon(
+              //   onPressed: () {
+              //     fetchRooms().then((_) {
+              //       setState(() {});
 
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text('Bookmarked'),
-                          content: Text(
-                              '${widget.house.name} has been added to your bookmarks.'),
-                          actions: [
-                            TextButton(
-                              style: const ButtonStyle(
-                                backgroundColor:
-                                    WidgetStatePropertyAll(Color(0x95154D07)),
-                              ),
-                              onPressed: () => Navigator.of(context).pop(),
-                              child: const Text('OK',
-                                  style: TextStyle(color: Colors.white)),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  });
-                },
-                icon: Icon(
-                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  color: Colors.white,
-                ),
-                label:
-                    const Text("rooms", style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0x95154D07),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
-              ),
+              //       showDialog(
+              //         context: context,
+              //         builder: (BuildContext context) {
+              //           return AlertDialog(
+              //             title: const Text('Bookmarked'),
+              //             content: Text(
+              //                 '${widget.house.name} has been added to your bookmarks.'),
+              //             actions: [
+              //               TextButton(
+              //                 style: const ButtonStyle(
+              //                   backgroundColor:
+              //                       WidgetStatePropertyAll(Color(0x95154D07)),
+              //                 ),
+              //                 onPressed: () => Navigator.of(context).pop(),
+              //                 child: const Text('OK',
+              //                     style: TextStyle(color: Colors.white)),
+              //               ),
+              //             ],
+              //           );
+              //         },
+              //       );
+              //     });
+              //   },
+              //   icon: Icon(
+              //     isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              //     color: Colors.white,
+              //   ),
+              //   label:
+              //       const Text("rooms", style: TextStyle(color: Colors.white)),
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: const Color(0x95154D07),
+              //     shape: RoundedRectangleBorder(
+              //       borderRadius: BorderRadius.circular(12),
+              //     ),
+              //     padding:
+              //         const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              //   ),
+              // ),
             ],
           ),
         ),

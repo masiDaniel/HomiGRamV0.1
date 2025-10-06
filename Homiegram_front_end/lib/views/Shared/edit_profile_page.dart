@@ -14,21 +14,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool isEditing = false;
   bool isLoading = true;
 
-  // Fields to be edited
   String nickName = '';
   String firstName = '';
   String lastName = '';
   String email = '';
   String phoneNumber = '';
-  // int idNumber = 0;
 
-  // Controllers
   late TextEditingController nickNameController;
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
   late TextEditingController emailController;
   late TextEditingController phoneNumberController;
-  // late TextEditingController IDNumberController;
 
   @override
   void initState() {
@@ -45,28 +41,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
       lastName = userData['last_name'] ?? '';
       email = userData['email'] ?? '';
       phoneNumber = userData['phone_number'] ?? '';
-      // idNumber = userData['id_number'] ?? '';
 
-      // Initialize controllers
       nickNameController = TextEditingController(text: nickName);
       firstNameController = TextEditingController(text: firstName);
       lastNameController = TextEditingController(text: lastName);
       emailController = TextEditingController(text: email);
       phoneNumberController = TextEditingController(text: phoneNumber);
-      // IDNumberController = TextEditingController(text: idNumber);
 
       isLoading = false;
     });
   }
 
   Future<void> _saveChanges() async {
-    // Update values from controllers
     nickName = nickNameController.text;
     firstName = firstNameController.text;
     lastName = lastNameController.text;
     email = emailController.text;
     phoneNumber = phoneNumberController.text;
-    // idNumber = IDNumberController.text;
 
     final updatedData = {
       'nick_name': nickName,
@@ -74,8 +65,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
       'last_name': lastName,
       'email': email,
       'phone_number': phoneNumber,
-      // 'id_number': idNumber
     };
+
+    final hasChanged = updatedData['nick_name'] != nickName ||
+        updatedData['first_name'] != firstName ||
+        updatedData['last_name'] != lastName ||
+        updatedData['email'] != email ||
+        updatedData['phone_number'] != phoneNumber;
+
+    if (!hasChanged) {
+      if (!mounted) return;
+      showCustomSnackBar(context, 'No changes to save.');
+      return;
+    }
     await updateUserInfo(updatedData);
     await UserPreferences.savePartialUserData(updatedData);
     if (!mounted) return;
@@ -134,7 +136,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             _buildField('Last Name', lastNameController),
             _buildField('Email', emailController),
             _buildField('Phone Number', phoneNumberController),
-            // _buildField('ID Number', IDNumberController),
           ],
         ),
       ),

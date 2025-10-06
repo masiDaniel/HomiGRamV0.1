@@ -98,6 +98,9 @@ class ChatRoom {
               .map((m) => Message.fromJson(m))
               .toList()
           : [],
+      lastMessage: json['last_message'] != null
+          ? Message.fromJson(json['last_message'])
+          : null,
       isGroup: json['is_group'],
       updatedAt: DateTime.parse(json['updated_at']),
     );
@@ -125,6 +128,8 @@ class ChatRoom {
       'participants': json.encode(participants),
       // Store messages as JSON string
       'messages': json.encode(messages.map((m) => m.toJson()).toList()),
+      'last_message':
+          lastMessage != null ? json.encode(lastMessage!.toJson()) : null,
       'is_group': isGroup ? 1 : 0,
       'updated_at': updatedAt.toIso8601String(),
     };
@@ -144,6 +149,9 @@ class ChatRoom {
               .map((m) => Message.fromJson(m))
               .toList()
           : [],
+      lastMessage: map['last_message'] != null
+          ? Message.fromJson(json.decode(map['last_message']))
+          : null,
       isGroup: map['is_group'] == 1,
       updatedAt: DateTime.parse(map['updated_at']),
     );

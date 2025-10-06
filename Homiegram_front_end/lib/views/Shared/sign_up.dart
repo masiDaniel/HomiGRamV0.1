@@ -40,7 +40,6 @@ class _SignUpPageState extends State<SignUp> {
     setState(() {});
   }
 
-  // ✅ Confirm password validation (live)
   void _validateConfirmPassword(String confirmPassword) {
     if (confirmPassword != passwordController.text) {
       confirmPasswordError = "Passwords do not match";
@@ -96,7 +95,6 @@ class _SignUpPageState extends State<SignUp> {
   @override
   void initState() {
     super.initState();
-
     firstNameController.addListener(() => setState(() {}));
     lastNameController.addListener(() => setState(() {}));
     emailController.addListener(() => setState(() {}));
@@ -109,148 +107,139 @@ class _SignUpPageState extends State<SignUp> {
     final deviceHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: deviceHeight),
-            child: IntrinsicHeight(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Sign Up",
-                    style: GoogleFonts.carterOne(
-                      color: const Color(0xFF126E06),
-                      fontSize: 50,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  SizedBox(height: deviceHeight * 0.02),
-
-                  // First Name
-                  MyTextField(
-                    controller: firstNameController,
-                    hintText: "First name",
-                    obscureText: false,
-                    onChanged: (value) {},
-                  ),
-                  SizedBox(height: deviceHeight * 0.02),
-
-                  // Last Name
-                  MyTextField(
-                    controller: lastNameController,
-                    hintText: "Last name",
-                    obscureText: false,
-                    onChanged: (value) {},
-                  ),
-                  SizedBox(height: deviceHeight * 0.02),
-
-                  // Email
-                  MyTextField(
-                    controller: emailController,
-                    hintText: "Email",
-                    obscureText: false,
-                    suffixIcon: Icons.email,
-                    onChanged: (value) {},
-                  ),
-                  SizedBox(height: deviceHeight * 0.02),
-
-                  // Password
-                  MyTextField(
-                    controller: passwordController,
-                    hintText: "Password",
-                    obscureText: true,
-                    suffixIcon: Icons.lock,
-                    onChanged: (value) => _validatePassword(value),
-                  ),
-                  if (passwordError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 35, top: 5),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          passwordError!,
-                          style:
-                              const TextStyle(color: Colors.red, fontSize: 12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Sign Up",
+                        style: GoogleFonts.carterOne(
+                          color: const Color(0xFF126E06),
+                          fontSize: 50,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                  SizedBox(height: deviceHeight * 0.02),
-
-                  // Confirm Password
-                  MyTextField(
-                    controller: confirmPasswordController,
-                    hintText: "Confirm Password",
-                    obscureText: true,
-                    suffixIcon: Icons.lock,
-                    onChanged: (value) => _validateConfirmPassword(value),
-                  ),
-                  if (confirmPasswordError != null)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 35, top: 5),
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          confirmPasswordError!,
-                          style:
-                              const TextStyle(color: Colors.red, fontSize: 12),
-                        ),
+                      SizedBox(height: deviceHeight * 0.02),
+                      MyTextField(
+                        controller: firstNameController,
+                        hintText: "First name",
+                        obscureText: false,
+                        onChanged: (value) {},
                       ),
-                    ),
-                  SizedBox(height: deviceHeight * 0.03),
-
-                  // Already have account
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 35),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          "Already have an account?",
-                          style: TextStyle(
-                            fontStyle: FontStyle.normal,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushNamed(context, '/signin');
-                          },
-                          child: const Text(
-                            "Sign In",
-                            style: TextStyle(
-                              color: Color(0xFF126E06),
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
+                      SizedBox(height: deviceHeight * 0.02),
+                      MyTextField(
+                        controller: lastNameController,
+                        hintText: "Last name",
+                        obscureText: false,
+                        onChanged: (value) {},
+                      ),
+                      SizedBox(height: deviceHeight * 0.02),
+                      MyTextField(
+                        controller: emailController,
+                        hintText: "Email",
+                        obscureText: false,
+                        suffixIcon: Icons.email,
+                        onChanged: (value) {},
+                      ),
+                      SizedBox(height: deviceHeight * 0.02),
+                      MyTextField(
+                        controller: passwordController,
+                        hintText: "Password",
+                        obscureText: true,
+                        suffixIcon: Icons.lock,
+                        onChanged: (value) => _validatePassword(value),
+                      ),
+                      if (passwordError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10, top: 5),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              passwordError!,
+                              style: const TextStyle(
+                                  color: Colors.red, fontSize: 12),
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: deviceHeight * 0.04),
-
-                  isLoading
-                      ? const CircularProgressIndicator(
-                          color: Color(0xFF126E06))
-                      : Opacity(
-                          opacity: isFormValid ? 1.0 : 0.5, // dim when invalid
-                          child: MyButton(
-                            buttonText: "Sign Up",
-                            onPressed:
-                                isFormValid ? _signUserUp : null, // disable tap
-                            width: 150,
-                            height: 40,
-                            color: const Color(0xFF126E06),
+                      SizedBox(height: deviceHeight * 0.02),
+                      MyTextField(
+                        controller: confirmPasswordController,
+                        hintText: "Confirm Password",
+                        obscureText: true,
+                        suffixIcon: Icons.lock,
+                        onChanged: (value) => _validateConfirmPassword(value),
+                      ),
+                      if (confirmPasswordError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10, top: 5),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              confirmPasswordError!,
+                              style: const TextStyle(
+                                  color: Colors.red, fontSize: 12),
+                            ),
                           ),
                         ),
-                ],
+                      SizedBox(height: deviceHeight * 0.03),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              "Already have an account?",
+                              style: TextStyle(
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pushNamed(context, '/signin');
+                              },
+                              child: const Text(
+                                "Sign In",
+                                style: TextStyle(
+                                  color: Color(0xFF126E06),
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: deviceHeight * 0.03),
+                      isLoading
+                          ? const CircularProgressIndicator(
+                              color: Color(0xFF126E06))
+                          : Opacity(
+                              opacity: isFormValid ? 1.0 : 0.5,
+                              child: MyButton(
+                                buttonText: "Sign Up",
+                                onPressed: isFormValid ? _signUserUp : null,
+                                width: 150,
+                                height: 40,
+                                color: const Color(0xFF126E06),
+                              ),
+                            ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
     );

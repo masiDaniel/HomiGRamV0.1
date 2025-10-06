@@ -31,21 +31,7 @@ class _EditHouseDetailsPageState extends State<EditHouseDetailsPage> {
   late TextEditingController descriptionController;
   late TextEditingController bankNameController;
   late TextEditingController accountNumberController;
-  // List<Amenities> amenities = [];
-  // List<Amenities> selectedAmenities = [];
-  // late Future<List<Amenities>> futureAmenities;
 
-  // Track selected amenities
-  late Set<int> selectedAmenities;
-
-  // Example available amenities
-  final Map<int, String> allAmenities = {
-    1: "Wi-Fi",
-    2: "Parking",
-    3: "Water",
-    4: "Security",
-    5: "Laundry",
-  };
 // images
   final ImagePicker _picker = ImagePicker();
   final List<String> _imageUrls = [];
@@ -62,11 +48,6 @@ class _EditHouseDetailsPageState extends State<EditHouseDetailsPage> {
     bankNameController = TextEditingController(text: widget.house.bankName);
     accountNumberController =
         TextEditingController(text: widget.house.accountNumber);
-
-    // ignore: unnecessary_null_comparison
-    selectedAmenities = widget.house.amenities != null
-        ? Set<int>.from(widget.house.amenities)
-        : <int>{};
 
     isLoading = false;
   }
@@ -137,36 +118,6 @@ class _EditHouseDetailsPageState extends State<EditHouseDetailsPage> {
             subtitle: Text(controller.text),
           );
   }
-
-  // Widget _buildAmenitiesSection() {
-  //   return Padding(
-  //     padding: const EdgeInsets.symmetric(vertical: 8.0),
-  //     child: Column(
-  //       crossAxisAlignment: CrossAxisAlignment.start,
-  //       children: [
-  //         const Text('Amenities',
-  //             style: TextStyle(fontWeight: FontWeight.bold)),
-  //         ...allAmenities.entries.map((entry) {
-  //           return CheckboxListTile(
-  //             title: Text(entry.value),
-  //             value: selectedAmenities.contains(entry.key),
-  //             onChanged: isEditing
-  //                 ? (bool? value) {
-  //                     setState(() {
-  //                       if (value == true) {
-  //                         selectedAmenities.add(entry.key);
-  //                       } else {
-  //                         selectedAmenities.remove(entry.key);
-  //                       }
-  //                     });
-  //                   }
-  //                 : null,
-  //           );
-  //         }).toList(),
-  //       ],
-  //     ),
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {

@@ -93,22 +93,41 @@ class _LandlordManagementState extends State<LandlordManagement> {
             );
           } else if (snapshot.hasError) {
             return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Lottie.asset(
-                    'assets/animations/notFound.json',
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error: ${snapshot.error}',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
-                  ),
-                ],
+              child: Container(
+                padding: const EdgeInsets.all(40),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF005E0C).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Lottie.asset(
+                      'assets/animations/notFound.json',
+                      width: 150,
+                      height: 150,
+                      fit: BoxFit.cover,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      "No Houses Found!",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "We have encountered a problem",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
@@ -222,7 +241,7 @@ class _LandlordManagementState extends State<LandlordManagement> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const AddHouseInfo()),
+                MaterialPageRoute(builder: (context) => const AddHousePage()),
               );
             },
           ),
@@ -232,4 +251,4 @@ class _LandlordManagementState extends State<LandlordManagement> {
   }
 }
 
-// AddHousePage
+//AddHouseInfo

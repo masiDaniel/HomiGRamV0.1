@@ -78,18 +78,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _logout() async {
     try {
-      print("we get here");
       await logoutUser();
-      print("we get here 1");
-
       await clearTokens();
+
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('isLoggedIn');
       await prefs.remove('userType');
 
-      print("we get here 3");
       if (!mounted) return;
-
       Navigator.pushReplacementNamed(context, '/');
     } catch (e) {
       log("Error logging out: $e");
@@ -181,11 +177,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        elevation: 4,
-        backgroundColor: const Color(0xFF126E06),
+        elevation: 2,
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            bottom: Radius.circular(16),
+          borderRadius: BorderRadius.all(
+            Radius.circular(16),
           ),
         ),
         automaticallyImplyLeading: false,
@@ -194,7 +189,6 @@ class _ProfilePageState extends State<ProfilePage> {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
             letterSpacing: 0.5,
           ),
         ),
@@ -214,9 +208,8 @@ class _ProfilePageState extends State<ProfilePage> {
               child: const Padding(
                 padding: EdgeInsets.all(8.0),
                 child: Icon(
-                  Icons.edit_note_rounded,
+                  Icons.edit_document,
                   size: 26,
-                  color: Colors.white,
                 ),
               ),
             ),
@@ -319,9 +312,8 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
 
           Card(
-            elevation: 6,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15.0),
+              borderRadius: BorderRadius.circular(16.0),
             ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -377,7 +369,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               children: [
                                 Icon(Icons.settings,
                                     color: currentTheme == ThemeMode.system
-                                        ? Colors.green
+                                        ? const Color(0xFF126E06)
                                         : Colors.grey),
                                 const SizedBox(width: 8),
                                 Text(
@@ -437,8 +429,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.green[50],
-                          border: Border.all(color: Colors.green, width: 1.5),
+                          border: Border.all(
+                              color: const Color(0xFF126E06), width: 1.5),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -450,18 +442,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                   : themeProvider.themeMode == ThemeMode.light
                                       ? Icons.wb_sunny
                                       : Icons.settings,
-                              color: Colors.green[900],
+                              color: const Color(0xFF126E06),
                             ),
                             const SizedBox(width: 8),
                             Text(
                               _themeModeLabel(themeProvider.themeMode),
-                              style: TextStyle(
-                                color: Colors.green[900],
+                              style: const TextStyle(
+                                color: Color(0xFF126E06),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             const Icon(Icons.arrow_drop_down,
-                                color: Colors.green),
+                                color: Color(0xFF126E06)),
                           ],
                         ),
                       ),
@@ -471,78 +463,80 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          if (currentUserType != "landlord")
-            ElevatedButton.icon(
-              onPressed: () async {
-                Map<String, dynamic> updateData = {};
-                updateData['user_type'] = 'landlord';
-                bool? success = await updateUserInfo(updateData);
-                if (success == true) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Lottie.asset('assets/animations/fix.json',
-                              width: 200, height: 200),
-                          const SizedBox(height: 20),
-                          const Text(
-                            "You are now a landlord with us!",
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
+
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Account',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
                     ),
-                  );
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(),
+                  if (currentUserType != "landlord")
+                    ListTile(
+                      leading: const Icon(Icons.house,
+                          color: Color.fromARGB(255, 30, 100, 200)),
+                      title: const Text('Become a Landlord'),
+                      onTap: () async {
+                        Map<String, dynamic> updateData = {};
+                        updateData['user_type'] = 'landlord';
+                        bool? success = await updateUserInfo(updateData);
 
-                  await Future.delayed(const Duration(seconds: 2));
-                  Navigator.of(context).pop();
-                  _logout();
-                } else {
-                  log('Failed to update profile.');
-                }
-              },
-              icon: const Icon(
-                Icons.house,
-                color: Colors.white,
-              ),
-              label: const Text(
-                'Become a Landlord',
-                style: TextStyle(color: Colors.white),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 30, 100, 200),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
-            ),
-          const SizedBox(height: 20),
+                        if (success == true) {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Lottie.asset('assets/animations/fix.json',
+                                      width: 200, height: 200),
+                                  const SizedBox(height: 20),
+                                  const Text(
+                                    "You are now a landlord with us!",
+                                    style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
 
-          ElevatedButton.icon(
-            onPressed: () {
-              _logout();
-            },
-            icon: const Icon(
-              Icons.logout,
-              color: Colors.white,
-            ),
-            label: const Text(
-              'Logout',
-              style: TextStyle(color: Colors.white),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 160, 2, 2),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                          await Future.delayed(const Duration(seconds: 2));
+                          Navigator.of(context).pop();
+                          _logout();
+                        } else {
+                          log('Failed to update profile.');
+                        }
+                      },
+                    ),
+                  if (currentUserType != "landlord") const Divider(),
+                  ListTile(
+                    leading: const Icon(Icons.logout,
+                        color: Color.fromARGB(255, 160, 2, 2)),
+                    title: const Text('Logout'),
+                    onTap: () {
+                      _logout();
+                    },
+                  ),
+                ],
               ),
-              padding: const EdgeInsets.symmetric(vertical: 16),
             ),
-          ),
+          )
         ],
       ),
     );

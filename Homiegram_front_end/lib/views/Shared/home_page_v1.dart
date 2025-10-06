@@ -15,14 +15,12 @@ import 'package:homi_2/services/user_service.dart';
 import 'package:homi_2/views/Shared/ad_details_page.dart';
 import 'package:homi_2/views/Shared/chart_card.dart.dart';
 import 'package:homi_2/views/Shared/chat_page.dart';
+import 'package:lottie/lottie.dart';
 import 'package:shimmer_animation/shimmer_animation.dart';
 import 'package:video_player/video_player.dart';
 
 const devUrl = AppConstants.baseUrl;
 
-///
-/// TODO: How do i synagize the offline and onlline chats?
-///
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -96,7 +94,6 @@ class _HomePageState extends State<HomePage> {
       });
     } catch (e) {
       if (!mounted) return;
-      showCustomSnackBar(context, 'Error fetching users!');
     } finally {
       setState(() {
         isLoading = false;
@@ -162,14 +159,34 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(
-                      child: Text(
-                        "No advertisements available",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.grey,
-                        ),
+                    return Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Lottie.asset(
+                            'assets/animations/notFound.json',
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
+                          const SizedBox(height: 10),
+                          const Text(
+                            "No advertisements!",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "To advertise on this space, contact homigram support",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   } else {

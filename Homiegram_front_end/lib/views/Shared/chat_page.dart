@@ -35,13 +35,11 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
 
-// TODO what is the problem here?
     final wsUrl = Uri.parse(
         '$chatUrl/ws/chat/${widget.chat.name}/?token=${widget.token}');
 
     channel = WebSocketChannel.connect(wsUrl);
 
-    // Listen for incoming messages
     channel.stream.listen((data) {
       final decoded = jsonDecode(data);
 
@@ -158,30 +156,30 @@ class _ChatPageState extends State<ChatPage> {
         isDark ? const Color(0xFF4F9E4F) : const Color(0xFFDCF8C6);
     final bubbleColorOther =
         isDark ? const Color(0xFF33373D) : const Color(0xFFF0F0F0);
-    final bgColor = isDark
-        ? const Color(0xFF121212)
-        : const Color.fromARGB(255, 255, 255, 255);
 
     return Scaffold(
+      // Don’t resize the whole scaffold
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         elevation: 2,
         backgroundColor: isDark ? Colors.grey[900] : const Color(0xFF105A01),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
-            CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Text(
-                widget.chat.name[0].toUpperCase(),
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.grey[900] : const Color(0xFF105A01),
-                ),
-              ),
-            ),
+            const CircleAvatar(
+                radius: 20,
+                backgroundColor: const Color(0xFFE8F5E9),
+                child: Icon(
+                  Icons.person,
+                  size: 30,
+                  color: Color(0xFF126E06),
+                )),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -205,134 +203,160 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      backgroundColor: bgColor,
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: ListView.builder(
-              reverse: true,
-              itemCount: messages.length,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              itemBuilder: (context, index) {
-                final msg = messages[messages.length - 1 - index];
-                final isMe = msg.sender == widget.userEmail;
-
-                return Align(
-                  alignment:
-                      isMe ? Alignment.centerRight : Alignment.centerLeft,
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.75,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isMe ? bubbleColorMe : bubbleColorOther,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: isMe
-                            ? const Radius.circular(16)
-                            : const Radius.circular(4),
-                        bottomRight: isMe
-                            ? const Radius.circular(4)
-                            : const Radius.circular(16),
-                      ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: isMe
-                          ? CrossAxisAlignment.end
-                          : CrossAxisAlignment.start,
-                      children: [
-                        if (widget.chat.isGroup && !isMe) ...[
-                          Text(
-                            msg.sender, // assuming msg.sender == email
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.bold,
-                              color: getParticipantColor(msg.sender),
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                        ],
-                        Text(
-                          msg.content,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: isDark ? Colors.grey[200] : Colors.grey[900],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          TimeOfDay.fromDateTime(
-                                  formatTimestampToLocalDeviceTime(
-                                      msg.timestamp))
-                              .format(context),
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark ? Colors.grey[300] : Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
+          // Background (stationary, never moves)
+          Positioned.fill(
+            child: Image.asset(
+              isDark
+                  ? "assets/images/chat_dark.jpg"
+                  : "assets/images/chat_light.jpg",
+              fit: BoxFit.cover,
             ),
           ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Material(
-                elevation: 6,
-                borderRadius: BorderRadius.circular(30),
-                color: isDark ? Colors.black : Colors.white,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    color: isDark ? Colors.grey[900] : Colors.grey[100],
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          style: TextStyle(
-                            color: isDark ? Colors.white : Colors.black87,
+
+          // Foreground (moves with keyboard)
+          SafeArea(
+            child: Column(
+              children: [
+                // Messages list
+                Expanded(
+                  child: ListView.builder(
+                    reverse: true,
+                    itemCount: messages.length,
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    itemBuilder: (context, index) {
+                      final msg = messages[messages.length - 1 - index];
+                      final isMe = msg.sender == widget.userEmail;
+
+                      return Align(
+                        alignment:
+                            isMe ? Alignment.centerRight : Alignment.centerLeft,
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 14, vertical: 10),
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.75,
                           ),
-                          decoration: InputDecoration(
-                            hintText: 'Type a message...',
-                            hintStyle: TextStyle(
-                              color:
-                                  isDark ? Colors.grey[500] : Colors.grey[700],
+                          decoration: BoxDecoration(
+                            color: isMe ? bubbleColorMe : bubbleColorOther,
+                            borderRadius: BorderRadius.only(
+                              topLeft: const Radius.circular(16),
+                              topRight: const Radius.circular(16),
+                              bottomLeft: isMe
+                                  ? const Radius.circular(16)
+                                  : const Radius.circular(4),
+                              bottomRight: isMe
+                                  ? const Radius.circular(4)
+                                  : const Radius.circular(16),
                             ),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
-                            border: InputBorder.none,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: isMe
+                                ? CrossAxisAlignment.end
+                                : CrossAxisAlignment.start,
+                            children: [
+                              if (widget.chat.isGroup && !isMe) ...[
+                                Text(
+                                  msg.sender,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: getParticipantColor(msg.sender),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                              ],
+                              Text(
+                                msg.content,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: isDark
+                                      ? Colors.grey[200]
+                                      : Colors.grey[900],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                TimeOfDay.fromDateTime(
+                                  formatTimestampToLocalDeviceTime(
+                                      msg.timestamp),
+                                ).format(context),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? Colors.grey[300]
+                                      : Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: isDark
-                            ? const Color.fromARGB(255, 80, 151, 26)
-                            : const Color(0xFF105A01),
-                        child: IconButton(
-                          icon: const Icon(Icons.send, color: Colors.white),
-                          onPressed: _sendMessage,
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
-              ),
+
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: 12,
+                    right: 12,
+                    bottom: MediaQuery.of(context).viewInsets.bottom + 12,
+                  ),
+                  child: Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(30),
+                    color: isDark ? Colors.black : Colors.white,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(30),
+                        color: isDark ? Colors.grey[900] : Colors.grey[100],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _controller,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black87,
+                              ),
+                              cursorColor: const Color(0xFF105A01),
+                              decoration: InputDecoration(
+                                hintText: 'Type a message...',
+                                hintStyle: TextStyle(
+                                  color: isDark
+                                      ? Colors.grey[500]
+                                      : Colors.grey[700],
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 14),
+                                border: InputBorder.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          CircleAvatar(
+                            radius: 22,
+                            backgroundColor: isDark
+                                ? const Color.fromARGB(255, 80, 151, 26)
+                                : const Color(0xFF105A01),
+                            child: IconButton(
+                              icon: const Icon(Icons.send, color: Colors.white),
+                              onPressed: _sendMessage,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          )
+          ),
         ],
       ),
     );

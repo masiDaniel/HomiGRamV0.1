@@ -7,14 +7,14 @@ class AboutHomiegram extends StatelessWidget {
     {
       "title": "Landlords",
       "description":
-          "Easily manage rental agreements, tenants, and maintenance requests in one place. Save time and focus on growth with streamlined property tools.",
+          "Your property, simplified—more reach, better tenants, and seamless management, all in one place.",
       "image": "assets/images/landlord1.jpeg",
       "align": "left",
     },
     {
       "title": "Tenants",
       "description":
-          "Students can find their ideal rentals using budget, location, and preference filters. Browse listings, apply, and settle in with ease.",
+          "Find vetted, verified homes—hassle-free, accountable, and built for your peace of mind.",
       "image": "assets/images/tenant1.jpeg",
       "align": "right",
     },
@@ -60,13 +60,13 @@ class AboutHomiegram extends StatelessWidget {
     }
 
     return Card(
-      elevation: 4,
+      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
       margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(15),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

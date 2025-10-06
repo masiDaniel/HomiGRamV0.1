@@ -582,7 +582,6 @@ class ReplyInput extends StatelessWidget {
             controller: replyController,
             decoration: InputDecoration(
               hintText: "Write a reply...",
-              filled: true,
               contentPadding: const EdgeInsets.symmetric(horizontal: 12),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
