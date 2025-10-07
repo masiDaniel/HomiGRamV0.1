@@ -88,7 +88,7 @@ class PostHouseService {
       }
       return true;
     } on DioException catch (e) {
-      log('Failed to post house: ${e.response?.data}');
+      print('Failed to post house: ${e.response?.data}');
       return false;
     }
   }

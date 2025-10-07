@@ -53,35 +53,36 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> _saveChanges() async {
-    nickName = nickNameController.text;
-    firstName = firstNameController.text;
-    lastName = lastNameController.text;
-    email = emailController.text;
-    phoneNumber = phoneNumberController.text;
+    final newNickName = nickNameController.text;
+    final newFirstName = firstNameController.text;
+    final newLastName = lastNameController.text;
+    final newEmail = emailController.text;
+    final newPhoneNumber = phoneNumberController.text;
 
     final updatedData = {
-      'nick_name': nickName,
-      'first_name': firstName,
-      'last_name': lastName,
-      'email': email,
-      'phone_number': phoneNumber,
+      'nick_name': newNickName,
+      'first_name': newFirstName,
+      'last_name': newLastName,
+      'email': newEmail,
+      'phone_number': newPhoneNumber,
     };
 
-    final hasChanged = updatedData['nick_name'] != nickName ||
-        updatedData['first_name'] != firstName ||
-        updatedData['last_name'] != lastName ||
-        updatedData['email'] != email ||
-        updatedData['phone_number'] != phoneNumber;
+    final hasChanged = newNickName != nickName ||
+        newFirstName != firstName ||
+        newLastName != lastName ||
+        newEmail != email ||
+        newPhoneNumber != phoneNumber;
 
     if (!hasChanged) {
       if (!mounted) return;
       showCustomSnackBar(context, 'No changes to save.');
       return;
     }
+
     await updateUserInfo(updatedData);
     await UserPreferences.savePartialUserData(updatedData);
-    if (!mounted) return;
 
+    if (!mounted) return;
     showCustomSnackBar(context, 'Profile updated!');
   }
 

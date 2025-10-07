@@ -9,7 +9,7 @@ Future<List<Amenities>> fetchAmenities() async {
   String? token = await getAccessToken();
   try {
     final response =
-        await http.get(Uri.parse('$devUrl/houses/amenities'), headers: {
+        await http.get(Uri.parse('$devUrl/houses/amenities/'), headers: {
       "Content-Type": "application/json",
       'Authorization': 'Bearer $token',
     });
@@ -33,7 +33,7 @@ Future<List<Amenities>> fetchAllAmenities() async {
   String? token = await getAccessToken();
   try {
     final response =
-        await http.get(Uri.parse('$devUrl/houses/amenities'), headers: {
+        await http.get(Uri.parse('$devUrl/houses/amenities/'), headers: {
       "Content-Type": "application/json",
       'Authorization': 'Bearer $token',
     });
