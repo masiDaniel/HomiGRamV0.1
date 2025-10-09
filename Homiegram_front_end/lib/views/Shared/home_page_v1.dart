@@ -165,11 +165,11 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           Lottie.asset(
                             'assets/animations/notFound.json',
-                            width: 100,
-                            height: 100,
+                            width: 60,
+                            height: 60,
                             fit: BoxFit.cover,
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 5),
                           const Text(
                             "No advertisements!",
                             style: TextStyle(
@@ -177,7 +177,7 @@ class _HomePageState extends State<HomePage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 4),
                           Text(
                             "To advertise on this space, contact homigram support",
                             textAlign: TextAlign.center,

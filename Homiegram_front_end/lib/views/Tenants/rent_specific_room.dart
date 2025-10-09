@@ -40,7 +40,6 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           style: const TextStyle(
             fontWeight: FontWeight.w600,
             fontSize: 16,
-            color: Colors.black87,
           ),
         ),
         Text(
@@ -60,15 +59,12 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
     final isSmallScreen = screenWidth < 400;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F9F8),
       appBar: AppBar(
-        backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
         title: const Text(
           "Room Details",
           style: TextStyle(
-            color: Colors.black87,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -77,29 +73,51 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 IMAGE CAROUSEL
             SizedBox(
               height: 360,
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: [
-                  PageView.builder(
-                    controller: _pageController,
-                    itemCount: widget.room.images!.length,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _currentPage = index;
-                      });
-                    },
-                    itemBuilder: (context, index) {
-                      final imageUrl = widget.room.images![index];
-                      return BlurCachedImage(
-                        imageUrl: '$devUrl$imageUrl',
-                        height: 360,
-                        width: double.infinity,
-                        fit: BoxFit.contain,
-                      );
-                    },
+                  SizedBox(
+                    height: 500,
+                    child: (widget.room.images == null ||
+                            widget.room.images!.isEmpty)
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.image_not_supported,
+                                    size: 80, color: Colors.grey),
+                                const SizedBox(height: 10),
+                                Text(
+                                  "No images available",
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          )
+                        : PageView.builder(
+                            controller: _pageController,
+                            itemCount: widget.room.images!.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentPage = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final imageUrl = widget.room.images![index];
+                              return SizedBox(
+                                width: double.infinity,
+                                child: BlurCachedImage(
+                                  imageUrl: '$devUrl$imageUrl',
+                                  height: 600,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
                   ),
                   Positioned(
                     bottom: 15,
@@ -125,10 +143,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
-            // 🔹 ROOM DETAILS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
@@ -139,25 +154,19 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.w700,
-                      color: Colors.black87,
                       letterSpacing: 0.3,
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  // 🔸 ROOM INFO CARD
                   Container(
                     padding: const EdgeInsets.symmetric(
                         vertical: 20, horizontal: 12),
                     decoration: BoxDecoration(
-                      color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.grey.withOpacity(0.15),
-                          blurRadius: 12,
-                          offset: const Offset(0, 6),
+                          color: const Color.fromARGB(255, 7, 180, 15)
+                              .withValues(alpha: 0.15),
                         ),
                       ],
                     ),
@@ -168,7 +177,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                                   "${widget.room.noOfBedrooms}", "Bedroom(s)"),
                               const Divider(),
                               _infoItem(Icons.square_foot_outlined,
-                                  "${widget.room.sizeInSqMeters}", "m²"),
+                                  widget.room.sizeInSqMeters, "m²"),
                               const Divider(),
                               _infoItem(
                                   Icons.attach_money_rounded,
@@ -207,8 +216,6 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
           ],
         ),
       ),
-
-      // 🔹 RENT BUTTON
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16.0),
         child: widget.room.occuiedStatus

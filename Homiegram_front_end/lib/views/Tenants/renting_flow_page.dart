@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/secure_tokens.dart';
 import 'package:http/http.dart' as http;
@@ -130,26 +132,36 @@ class _RentFlowPageState extends State<RentFlowPage> {
 
   Future<void> initiateStkPush() async {
     setState(() => _isLoading = true);
+
     try {
       final token = await getAccessToken();
-      final response = await http.post(
-        Uri.parse("$devUrl/houses/payment-initialization/"),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          "agreement_id": _agreementData!["id"],
-        }),
-      );
+      final url = Uri.parse("$devUrl/houses/payment-initialization/");
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode({"agreement_id": _agreementData?["id"]}),
+          )
+          .timeout(const Duration(seconds: 20)); // prevent hanging requests
 
-      print("response body ${response.body}");
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        final message =
-            responseData['message'] ?? 'Payment initiated. Check your phone.';
+      print("Response (${response.statusCode}): ${response.body}");
 
-        showDialog(
+      Map<String, dynamic> responseData = {};
+      try {
+        responseData = jsonDecode(response.body);
+      } catch (e) {
+        responseData = {};
+      }
+
+      // ---- SUCCESS CASE ----
+      if (response.statusCode == 200 && (responseData['success'] != false)) {
+        final message = responseData['message'] ??
+            'Payment initiated successfully. Please check your phone.';
+
+        await showDialog(
           context: context,
           barrierDismissible: true,
           builder: (context) => Dialog(
@@ -222,39 +234,181 @@ class _RentFlowPageState extends State<RentFlowPage> {
             ),
           ),
         );
-      } else {
-        final responseData = jsonDecode(response.body);
-        final error = responseData['error'] ?? 'Something went wrong.';
 
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: Colors.red.shade700,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            content: Text(
-              error,
-              style: const TextStyle(color: Colors.white),
-              textAlign: TextAlign.center,
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('DISMISS',
-                    style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        );
+        return; // stop execution here
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Something went wrong: $e")),
+
+      // ---- ERROR CASE ----
+      final errorMessage = responseData['message'] ??
+          responseData['error'] ??
+          responseData['errors']?['reason'] ??
+          "Payment could not be initiated. Please try again.";
+
+      await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Colors.red.shade700,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            "Payment Failed",
+            style: TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          content: Text(
+            errorMessage,
+            style: const TextStyle(color: Colors.white),
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child:
+                  const Text('DISMISS', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
       );
+    } on TimeoutException {
+      _showErrorDialog(
+          "Request timed out. Please check your connection and try again.");
+    } on SocketException {
+      _showErrorDialog(
+          "No internet connection. Please reconnect and try again.");
+    } catch (e) {
+      _showErrorDialog("Something went wrong: ${e.toString()}");
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+// Helper method for clean error display
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.red.shade700,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white),
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('DISMISS', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> showRatingDialog(BuildContext context) async {
+    double rating = 0;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 15,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.star_rounded,
+                  size: 60,
+                  color: Colors.amber,
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  "Rate Your Experience",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                StatefulBuilder(
+                  builder: (context, setState) => Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1.0;
+                          });
+                        },
+                        icon: Icon(
+                          Icons.star_rounded,
+                          color:
+                              index < rating ? Colors.amber : Colors.grey[300],
+                          size: 36,
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  rating == 0
+                      ? "Tap a star to rate"
+                      : "You rated $rating star${rating > 1 ? 's' : ''}",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Colors.black54,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green.shade400,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      // You can send the rating to backend here
+                      print("User rated: $rating stars");
+                    },
+                    child: const Text(
+                      "Submit",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> confirmRent() async {
@@ -387,18 +541,16 @@ class _RentFlowPageState extends State<RentFlowPage> {
         controller: _controller,
         physics: const NeverScrollableScrollPhysics(),
         children: [
-          // STEP 1: Start Rent
           Scaffold(
             body: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   children: [
-                    // Top text
                     const Expanded(
                       child: Center(
                         child: Text(
-                          "✨ Thank you for believing in us!\n\nLet’s get you settled into the rental you love. With HomiGram, finding a place that matches your vibe and rental needs has never been easier. 🏡💫",
+                          "Thank you for believing in us!\n\nLet’s get you settled into the rental you love. With Homigram, finding a place that matches your vibe and rental needs has never been easier.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 20,
@@ -419,7 +571,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
                                 startRent();
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0x95154D07),
+                                backgroundColor: const Color(0xFF126E06),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
@@ -544,8 +696,9 @@ class _RentFlowPageState extends State<RentFlowPage> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _agreementChecked
-                              ? () {
-                                  initiateStkPush();
+                              ? () async {
+                                  await initiateStkPush();
+                                  await showRatingDialog(context);
                                 }
                               : null,
                           style: ElevatedButton.styleFrom(

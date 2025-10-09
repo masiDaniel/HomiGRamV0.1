@@ -130,7 +130,10 @@ class _LandlordManagementState extends State<LandlordManagement> {
                 ),
               ),
             );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          } else if (!snapshot.hasData) {
+            return const Center(
+                child: Text('Error: No data received from server.'));
+          } else if (snapshot.data!.isEmpty) {
             return const Center(child: Text('No houses available.'));
           }
 
@@ -238,11 +241,14 @@ class _LandlordManagementState extends State<LandlordManagement> {
           SpeedDialChild(
             child: const Icon(Icons.add_home),
             label: 'Add House',
-            onTap: () {
-              Navigator.push(
+            onTap: () async {
+              await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AddHousePage()),
               );
+              setState(() {
+                futureLandlordHouses = fetchHouses();
+              });
             },
           ),
         ],

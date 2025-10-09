@@ -34,6 +34,56 @@ class _FilterSheetState extends State<FilterSheetHouses> {
   @override
   // TODO :  map everything in alphabetical order, amenities and locations
   Widget build(BuildContext context) {
+    final hasLocations = widget.locations.isNotEmpty;
+    final hasAmenities = widget.amenities.isNotEmpty;
+
+    // 🟡 If both are empty, show a simple message
+    if (!hasLocations && !hasAmenities) {
+      return Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.warning_amber_rounded,
+                size: 60, color: Color(0xFF126E06)),
+            const SizedBox(height: 12),
+            const Text(
+              "You can’t search now",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF126E06),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "No locations or amenities available at the moment. Try again later.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF126E06),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              ),
+              child: const Text("Close"),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(10),
       child: Column(

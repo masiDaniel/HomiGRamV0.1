@@ -81,56 +81,138 @@ class _EditRoomPageState extends State<EditRoomPage> {
     final hasImage = selectedImage != null || widget.room.roomImages.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Edit Room")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Display image preview
-            hasImage
-                ? selectedImage != null
-                    ? Image.file(selectedImage!, height: 200)
-                    : Image.network(widget.room.roomImages, height: 200)
-                : const Placeholder(fallbackHeight: 200),
+        appBar: AppBar(title: const Text("Edit Room")),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 📸 Image Preview Section
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: hasImage
+                    ? selectedImage != null
+                        ? Image.file(
+                            selectedImage!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            widget.room.roomImages,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          )
+                    : Container(
+                        height: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                              color: const Color(0xFF126E06), width: 1),
+                        ),
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_outlined,
+                            size: 60,
+                            color: Color(0xFF126E06),
+                          ),
+                        ),
+                      ),
+              ),
 
-            const SizedBox(height: 10) ,
-            ElevatedButton.icon(
-              onPressed: pickImage,
-              icon: const Icon(Icons.image),
-              label: const Text("Change Image"),
-            ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: pickImage,
+                icon: const Icon(
+                  Icons.image_outlined,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  "Change Image",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF126E06),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  elevation: 0,
+                ),
+              ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-            // Input fields
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(labelText: "Room Name"),
-            ),
-            TextField(
-              controller: bedroomsController,
-              keyboardType: TextInputType.number,
-              decoration:
-                  const InputDecoration(labelText: "Number of Bedrooms"),
-            ),
-            TextField(
-              controller: sizeController,
-              decoration:
-                  const InputDecoration(labelText: "Size in Sq. Meters"),
-            ),
-            TextField(
-              controller: rentController,
-              decoration: const InputDecoration(labelText: "Rent Amount"),
-            ),
+              // 🏠 Input Fields
+              _buildTextField(nameController, "Room Name"),
+              const SizedBox(height: 16),
+              _buildTextField(
+                bedroomsController,
+                "Number of Bedrooms",
+                keyboardType: TextInputType.number,
+              ),
+              const SizedBox(height: 16),
+              _buildTextField(sizeController, "Size in Sq. Meters"),
+              const SizedBox(height: 16),
+              _buildTextField(rentController, "Rent Amount"),
+              const SizedBox(height: 24),
 
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: saveRoomDetails,
-              child: const Text("Save"),
-            ),
-          ],
+              // 💾 Save Button
+              ElevatedButton(
+                onPressed: saveRoomDetails,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF105A01),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  "Save",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ));
+  }
+
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label, {
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: Color(0xFF105A01)),
+        fillColor: Colors.grey[100],
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF126E06)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF105A01), width: 2),
         ),
       ),
+      cursorColor: const Color(0xFF105A01),
     );
   }
 }

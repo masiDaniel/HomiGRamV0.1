@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Shared/home_page_v1.dart';
@@ -139,54 +140,169 @@ class _HomePageState extends State<CustomBottomNavigartion> {
     final idController =
         TextEditingController(text: idNumber?.toString() ?? '');
 
+    bool isPhoneValid = false;
+    bool isIdValid = false;
+
+    String? phoneError;
+    String? idError;
+
+    // Determine which fields are missing
+    final bool needsPhone = phone == null || phone.isEmpty;
+    final bool needsId = idNumber == null || idNumber == 0;
+
+    // Pre-validate fields that already exist
+    if (!needsPhone && RegExp(r'^07\d{8}$').hasMatch(phone!)) {
+      isPhoneValid = true;
+    }
+    if (!needsId && RegExp(r'^\d{8}$').hasMatch(idNumber.toString())) {
+      isIdValid = true;
+    }
+
+    void validateInputs(void Function(void Function()) setState) {
+      String phoneText = phoneController.text.trim();
+      String idText = idController.text.trim();
+
+      setState(() {
+        if (needsPhone) {
+          // Validate phone number (07xxxxxxxx)
+          if (RegExp(r'^07\d{8}$').hasMatch(phoneText)) {
+            isPhoneValid = true;
+            phoneError = null;
+          } else {
+            isPhoneValid = false;
+            phoneError = "Enter a valid phone number (07xxxxxxxx)";
+          }
+        }
+
+        if (needsId) {
+          // Validate ID number (8 digits)
+          if (RegExp(r'^\d{8}$').hasMatch(idText)) {
+            isIdValid = true;
+            idError = null;
+          } else {
+            isIdValid = false;
+            idError = "Enter a valid 8-digit ID number";
+          }
+        }
+      });
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return PopScope(
-          canPop: false,
-          child: AlertDialog(
-            title: const Text("Complete Your Details"),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: phoneController,
-                  decoration: const InputDecoration(
-                      labelText: "Phone Number - (07xxxxxxxx)"),
-                  keyboardType: TextInputType.phone,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return PopScope(
+              canPop: false,
+              child: AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                TextField(
-                  controller: idController,
-                  decoration: const InputDecoration(
-                      labelText: "ID Number - (xxxxxxxx)"),
-                  keyboardType: TextInputType.number,
+                title: const Text(
+                  "Complete Your Details",
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF015505),
+                  ),
                 ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                // TODO : how do i verify this data.
-                onPressed: () async {
-                  if (phoneController.text.isNotEmpty &&
-                      idController.text.isNotEmpty) {
-                    final updatedData = {
-                      'phone_number': phoneController.text,
-                      'id_number': idController.text,
-                    };
-                    await updateUserInfo(updatedData);
-                    await UserPreferences.savePartialUserData({
-                      'phone_number': phoneController.text,
-                      'id_number': int.parse(idController.text),
-                    });
+                content: SizedBox(
+                  width: 400,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (needsPhone) ...[
+                        TextField(
+                          controller: phoneController,
+                          onChanged: (_) => validateInputs(setState),
+                          decoration: InputDecoration(
+                            labelText: "Phone Number - (07xxxxxxxx)",
+                            labelStyle:
+                                const TextStyle(color: Color(0xFF015505)),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Color(0xFF015505), width: 2),
+                            ),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            errorText: phoneError,
+                          ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 20),
+                      ],
+                      if (needsId)
+                        TextField(
+                          controller: idController,
+                          onChanged: (_) => validateInputs(setState),
+                          decoration: InputDecoration(
+                            labelText: "ID Number - (xxxxxxxx)",
+                            labelStyle:
+                                const TextStyle(color: Color(0xFF015505)),
+                            focusedBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Color(0xFF015505), width: 2),
+                            ),
+                            enabledBorder: const UnderlineInputBorder(
+                              borderSide: BorderSide(color: Colors.grey),
+                            ),
+                            errorText: idError,
+                          ),
+                          keyboardType: TextInputType.number,
+                        ),
+                    ],
+                  ),
+                ),
+                actionsPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                actionsAlignment: MainAxisAlignment.end,
+                actions: [
+                  ElevatedButton(
+                    onPressed: (needsPhone ? isPhoneValid : true) &&
+                            (needsId ? isIdValid : true)
+                        ? () async {
+                            final updatedData = <String, dynamic>{};
+                            if (needsPhone) {
+                              updatedData['phone_number'] =
+                                  phoneController.text;
+                            }
+                            if (needsId) {
+                              updatedData['id_number'] =
+                                  int.tryParse(idController.text);
+                            }
 
-                    Navigator.of(context).pop();
-                  }
-                },
-                child: const Text("Save"),
+                            await updateUserInfo(updatedData);
+                            await UserPreferences.savePartialUserData(
+                                updatedData);
+
+                            if (!mounted) return;
+                            showCustomSnackBar(context, 'Profile updated!');
+                            Navigator.of(context).pop();
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF015505),
+                      disabledBackgroundColor: Colors.grey[400],
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 10),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      "Save",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );

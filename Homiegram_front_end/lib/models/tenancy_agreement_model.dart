@@ -4,9 +4,9 @@ class Agreement {
   final String? endDate;
   final String status;
   final bool terminationRequested;
-  final int tenant;
-  final int house;
-  final int room;
+  final String tenant;
+  final String house;
+  final String room;
 
   Agreement({
     required this.id,

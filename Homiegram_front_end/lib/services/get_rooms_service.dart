@@ -54,11 +54,12 @@ Future<List<RoomWithAgreement>> fetchRoomsWithAgreements() async {
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
-
+      print("room data ${json.decode(response.body)}");
       try {
         final List<RoomWithAgreement> rooms = roomData.map((json) {
           return RoomWithAgreement.fromJson(json);
         }).toList();
+        print("tjese are the converted rooms $rooms");
 
         allRoomsAndAgreements = rooms;
       } catch (e) {

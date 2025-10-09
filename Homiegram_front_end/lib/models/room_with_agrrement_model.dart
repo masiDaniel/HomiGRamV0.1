@@ -8,6 +8,7 @@ class RoomWithAgreement {
   final String rentAmount;
   final bool occupiedStatus;
   final String roomImages;
+  final List<String>? images;
   final int apartmentId;
   final int tenantId;
   final bool rentStatus;
@@ -21,6 +22,7 @@ class RoomWithAgreement {
     required this.rentAmount,
     required this.occupiedStatus,
     required this.roomImages,
+    this.images,
     required this.apartmentId,
     required this.tenantId,
     required this.rentStatus,
@@ -28,6 +30,12 @@ class RoomWithAgreement {
   });
 
   factory RoomWithAgreement.fromJson(Map<String, dynamic> json) {
+    List<String> images = [];
+    if (json['images'] != null) {
+      images = (json['images'] as List)
+          .map((imgObj) => imgObj['image'] as String)
+          .toList();
+    }
     return RoomWithAgreement(
       id: json['id'] ?? 0,
       roomName: json['room_name'] ?? '',
@@ -36,6 +44,7 @@ class RoomWithAgreement {
       rentAmount: json['rent'] ?? '',
       occupiedStatus: json['occupied'] ?? false,
       roomImages: json['room_images'] ?? '',
+      images: images,
       apartmentId: json['apartment'] ?? 0,
       tenantId: json['tenant'] ?? 0,
       rentStatus: json['rent_status'] ?? false,

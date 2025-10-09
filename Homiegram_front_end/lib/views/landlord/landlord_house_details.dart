@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/ads.dart';
@@ -369,12 +370,19 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHouseDetailsCard(),
             SizedBox(height: deviceHeight * 0.01),
-            const Text('Rooms'),
-            SizedBox(height: deviceHeight * 0.01),
+            const Text(
+              'Rooms',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+            SizedBox(height: deviceHeight * 0.015),
             FutureBuilder(
               future: fetchRoomsByHouse(widget.house.houseId),
               builder: (context, snapshot) {
@@ -388,8 +396,19 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
 
                   if (rooms.isEmpty) {
                     return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
                         child: Text(
-                            'No rooms found for this house.\nADD A ROOM! '));
+                          'No rooms found for this house.\nADD A ROOM!',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontStyle: FontStyle.italic,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ),
+                    );
                   }
 
                   return GridView.builder(
@@ -398,27 +417,30 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 1.2,
+                      crossAxisSpacing: 14,
+                      mainAxisSpacing: 14,
+                      childAspectRatio: 1.1,
                     ),
                     itemCount: rooms.length,
                     itemBuilder: (context, index) {
                       final room = rooms[index];
                       final isAvailable = room.tenantId == 0;
+
                       final backgroundColor = isAvailable
                           ? Colors.white
                           : room.rentStatus
-                              ? const Color(0xFF158518)
+                              ? const Color(0xFF013803)
                               : const Color(0xFF8C1A1A);
 
-                      final textColor =
-                          isAvailable ? Colors.black : Colors.white;
                       final borderColor = isAvailable
-                          ? const Color(0xFF158518)
+                          ? const Color(0xFF013803)
                           : Colors.transparent;
 
-                      return GestureDetector(
+                      final textColor =
+                          isAvailable ? const Color(0xFF2C3E50) : Colors.white;
+
+                      return InkWell(
+                        borderRadius: BorderRadius.circular(20),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -427,17 +449,19 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                             ),
                           );
                         },
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: backgroundColor,
+                            borderRadius: BorderRadius.circular(20),
                             border: Border.all(color: borderColor, width: 2),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: const [
+                            boxShadow: [
                               BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 8,
-                                offset: Offset(2, 4),
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 10,
+                                offset: const Offset(2, 4),
                               ),
                             ],
                           ),
@@ -447,55 +471,65 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                               Text(
                                 room.roomName,
                                 style: TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: textColor,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(Icons.king_bed,
-                                      size: 16, color: textColor),
-                                  const SizedBox(width: 4),
+                                  Icon(Icons.king_bed_outlined,
+                                      size: 18, color: textColor),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    '${room.noOfBedrooms} bedrooms',
-                                    style: TextStyle(color: textColor),
+                                    '${room.noOfBedrooms} Bedrooms',
+                                    style: TextStyle(
+                                        fontSize: 13, color: textColor),
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(Icons.attach_money,
-                                      size: 16, color: textColor),
-                                  const SizedBox(width: 4),
+                                  Icon(Icons.attach_money_rounded,
+                                      size: 18, color: textColor),
+                                  const SizedBox(width: 6),
                                   Text(
-                                    room.rentAmount,
-                                    style: TextStyle(color: textColor),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(Icons.person,
-                                      size: 16, color: textColor),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      isAvailable
-                                          ? 'Available'
-                                          : getUserName(room.tenantId),
-                                      style: TextStyle(
-                                          fontStyle: isAvailable
-                                              ? FontStyle.italic
-                                              : FontStyle.normal,
-                                          color: textColor,
-                                          fontSize: 10),
+                                    '${room.rentAmount}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: textColor,
                                     ),
                                   ),
                                 ],
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isAvailable
+                                      ? const Color(0xFFE8F5E9)
+                                      : Colors.white.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  isAvailable
+                                      ? 'Available'
+                                      : getUserName(room.tenantId),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontStyle: isAvailable
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                                    color: isAvailable
+                                        ? const Color(0xFF013803)
+                                        : Colors.white,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -507,7 +541,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                   return const Center(child: Text('No rooms available'));
                 }
               },
-            )
+            ),
           ],
         ),
       ),
@@ -687,18 +721,11 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                 return ClipRRect(
                   borderRadius:
                       const BorderRadius.vertical(top: Radius.circular(12)),
-                  child: Image.network(
-                    "$devUrl${widget.house.images![index]}",
-                    height: 200,
+                  child: BlurCachedImage(
+                    imageUrl: "$devUrl${widget.house.images![index]}",
+                    height: 300,
                     width: double.infinity,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 200,
-                      width: double.infinity,
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.image_not_supported,
-                          size: 50, color: Colors.grey),
-                    ),
                   ),
                 );
               },
