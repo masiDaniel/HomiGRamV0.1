@@ -22,6 +22,9 @@ class Amenity(models.Model):
     """
     name = models.CharField(max_length=100)
 
+    class Meta:
+        ordering = ['name']
+
     def __str__(self):
         return self.name
 
@@ -32,6 +35,9 @@ class Location(models.Model):
     county = models.CharField(max_length=50)
     town = models.CharField(max_length=50)
     area = models.CharField(max_length=50)
+
+    class Meta:
+        ordering = ['county', 'town', 'area'] 
 
     def __str__(self):
         return f'{self.county}, {self.town}, {self.area}'
