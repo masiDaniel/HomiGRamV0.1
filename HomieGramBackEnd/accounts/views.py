@@ -1,10 +1,7 @@
-from django.shortcuts import render
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from .serializers import AccountSerializer, MessageSerializer, UserSerializer
-from knox.models import AuthToken
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework.decorators import permission_classes
 from rest_framework import status
 from rest_framework.response import Response
 from .models import CustomUser
@@ -32,16 +29,15 @@ class LoginApIView(APIView):
         password = request.data.get("password")
         user = authenticate(username=email, password=password)
 
-        # if user exists
         if user:
             serializer = AccountSerializer(user)
             tokens = get_tokens_for_user(user)
 
             data = serializer.data
             data.update(tokens)
-            print("Login refresh token:", tokens)
+     
             return Response(data, status=status.HTTP_200_OK)
-        # user doesn't exist
+
         else:
             data = {
                 "message": "Invalid User Credentials",
@@ -93,7 +89,6 @@ class RegisterUsersAPIView(APIView):
             "email": request.data.get("email"),
             "password": request.data.get("password"),
         }
-        # making the username same as the email
         data['username'] = request.data.get("email")
 
         serializer = AccountSerializer(data=data)
@@ -136,10 +131,7 @@ class UpdateUserAPIView(APIView):
         """
         Updates user fields dynamically
         """
-        # Get the authenticated user
         user = request.user
-
-        # Extract fields to update from the request
         update_data = request.data
 
         if not update_data:
@@ -147,21 +139,18 @@ class UpdateUserAPIView(APIView):
                 {"message": "No data provided for update."},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Update the user's fields
+        
         for field, value in update_data.items():
-            if hasattr(user, field):  # Check if the field exists on the user model
+            if hasattr(user, field):  
                 setattr(user, field, value)
             else:
                 return Response(
                     {"message": f"Field '{field}' is not valid."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-
-        # Save changes to the database
+     
         user.save()
 
-        # Serialize the updated user and return the response
         serializer = AccountSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

@@ -1,7 +1,6 @@
 from django.db.models.signals import post_save, post_delete
 from django.dispatch import receiver
 from .models import CareTaker, Houses
-from accounts.models import CustomUser
 
 @receiver(post_save, sender=Houses)
 def update_landlord_info(sender, instance, **kwargs):

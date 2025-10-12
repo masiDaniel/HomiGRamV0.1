@@ -1,7 +1,8 @@
 from rest_framework import serializers
 from .models import Advertisement, Amenity, Bookmark, CareTaker, HouseImage, HouseRating,  Houses,  Location, Room, RoomImage,  Teenants, PendingAdvertisement, TenancyAgreement
 from collections import defaultdict
-
+from .utils import parse_coordinate  
+from django.utils.timezone import now
 
 class CareTakersSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,10 +20,10 @@ class HouseImageSerializer(serializers.ModelSerializer):
         fields = ['image']
         
 class HousesSerializers(serializers.ModelSerializer):
-    latitude = serializers.FloatField(required=False)
-    longitude = serializers.FloatField(required=False)
+    latitude = serializers.FloatField(required=False, allow_null=True)
+    longitude = serializers.FloatField(required=False, allow_null=True)
     rooms = serializers.SerializerMethodField()
-    images = HouseImageSerializer(many=True, read_only=True) 
+    images = HouseImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Houses
@@ -34,11 +35,22 @@ class HousesSerializers(serializers.ModelSerializer):
             grouped[str(room.number_of_bedrooms)].append(RoomSerializer(room).data)
         return dict(grouped)
 
+    def validate_latitude(self, value):
+        try:
+            return float(parse_coordinate(value))
+        except ValueError as e:
+            raise serializers.ValidationError(str(e))
+
+    def validate_longitude(self, value):
+        try:
+            return float(parse_coordinate(value))
+        except ValueError as e:
+            raise serializers.ValidationError(str(e))
+
 class RoomImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = RoomImage
         fields = ['image']
-
 
 class RoomSerializer(serializers.ModelSerializer):
     images = RoomImageSerializer(many=True, read_only=True) 
@@ -73,7 +85,6 @@ class RoomAndTenancySerializer(serializers.ModelSerializer):
             return TenancyAgreementSerializer(agreement).data
         return None
 
-
 class HouseWithRoomsSerializer(serializers.ModelSerializer):
     rooms = serializers.SerializerMethodField()
 
@@ -104,14 +115,38 @@ class HouseWithRoomsSerializer(serializers.ModelSerializer):
 class HouseRatingSerializer(serializers.ModelSerializer):
     class Meta:
         model = HouseRating
-        fields = ['house', 'user', 'rating', 'comment', 'created_at']
+        fields = ['id', 'house', 'rating', 'comment']
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+        house = attrs['house']
+
+        # Check if user occupies the house
+        if not house.rooms.filter(tenant=user, occupied=True).exists():
+            raise serializers.ValidationError("You can only rate a house you occupy.")
+
+        # Check if user already rated this house this month
+        month_start = now().replace(day=1)
+        if HouseRating.objects.filter(
+            house=house,
+            user=user,
+            month=month_start
+        ).exists():
+            raise serializers.ValidationError("You have already rated this house this month.")
+
+        return attrs
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        month_start = now().replace(day=1)
+        validated_data['user'] = user
+        validated_data['month'] = month_start
+        return super().create(validated_data)
 
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
         fields = "__all__"
-
-
 
 class AmenitiesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -122,7 +157,6 @@ class BookmarkSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bookmark
         fields = ['id', 'user', 'house', 'created_at']
-
 
 class AdvertisementSerializer(serializers.ModelSerializer):
     class Meta:

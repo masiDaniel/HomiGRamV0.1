@@ -20,7 +20,6 @@ class AccountSerializer(serializers.ModelSerializer):
         account.set_password(account.password)
         account.save()
 
-        # user_profile = UserProfileModel.objects.create(account=account, **validated_data)
         return account
     
     def update(self, instance, validated_data):

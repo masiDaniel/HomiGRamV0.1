@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, ConfirmAgreementView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, PaymentStatusView, RateHouseAPIView, RemoveBookmarkView, RemoveCaretakerView, RentPaymentPreviewView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, StartRentView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView, RentPaymentInitiateView,MpesaCallbackView 
+from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, ConfirmAgreementView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, PaymentStatusView, SubmitHouseRating, RemoveBookmarkView, RemoveCaretakerView, RentPaymentPreviewView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, StartRentView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView, RentPaymentInitiateView,MpesaCallbackView 
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
@@ -9,7 +9,7 @@ urlpatterns = [
     path('getMyRooms/', MyRoomsAPIView.as_view(), name="get_houses"),
     path('updateRoom/<int:room_id>/', GetRoomssAPIView.as_view()),
     path("search/<str:name>", SearchApiView.as_view(), name="search_house"),
-    path('rate/<int:house_id>/', RateHouseAPIView.as_view(), name='rate-house'),
+    path('rate/', SubmitHouseRating.as_view(), name='rate-house'),
     path('locations/', LocationsAPIView.as_view(), name="get_locations"),
 
     # /?status=pending, active, expired/
