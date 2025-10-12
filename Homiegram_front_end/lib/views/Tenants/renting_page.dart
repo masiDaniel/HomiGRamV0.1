@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/action_button.dart';
+import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/models/room_with_agrrement_model.dart';
 import 'package:homi_2/services/get_rooms_service.dart';
 import 'package:homi_2/services/user_data.dart';
@@ -63,6 +64,7 @@ class _RentingPageState extends State<RentingPage> {
                   color: Colors.green, strokeWidth: 6.0),
             );
           } else if (snapshot.hasError) {
+            print("this is the error ${snapshot.error}");
             return Center(
               child: Lottie.asset(
                 'assets/animations/notFound.json',
@@ -84,7 +86,6 @@ class _RentingPageState extends State<RentingPage> {
               itemCount: matchedRooms.length,
               itemBuilder: (context, index) {
                 final room = matchedRooms[index];
-                String imageUrl = '$devUrl${room.roomImages}';
 
                 return Card(
                   elevation: 4,
@@ -96,25 +97,20 @@ class _RentingPageState extends State<RentingPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       // Room Image
-                      ClipRRect(
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(20),
-                        ),
-                        child: Image.network(
-                          imageUrl,
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const SizedBox(
-                            height: 200,
-                            child: Center(
-                              child: Text(
-                                'Image not available',
+                      SizedBox(
+                        height: 180,
+                        width: double.infinity,
+                        child: room.images!.isNotEmpty
+                            ? BlurCachedImage(
+                                imageUrl: '$devUrl${room.images?.first}',
+                                height: 180,
+                                width: double.infinity,
+                                fit: BoxFit.cover,
+                              )
+                            : Image.asset(
+                                'assets/images/splash.jpeg',
+                                fit: BoxFit.cover,
                               ),
-                            ),
-                          ),
-                        ),
                       ),
 
                       Padding(
@@ -137,7 +133,7 @@ class _RentingPageState extends State<RentingPage> {
                                     alignment: Alignment.centerRight,
                                     child: Chip(
                                       label: Text(
-                                        room.rentStatus ? "Paid" : "Pending",
+                                        room.rentStatus ? "Paid" : "Unpaid",
                                         style: const TextStyle(
                                             color: Colors.white),
                                       ),
@@ -167,7 +163,7 @@ class _RentingPageState extends State<RentingPage> {
                                           color: Color(0xFF126E06)),
                                       const SizedBox(width: 6),
                                       Text(
-                                        room.rentAmount,
+                                        room.rentAmount.toString(),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 16,

@@ -8,7 +8,7 @@ const devUrl = AppConstants.baseUrl;
 Future logoutUser() async {
   String? token = await getAccessToken();
   String? refreshToken = await getRefreshToken();
-  print("these are the  tokens access $token \n  refrexh $refreshToken");
+
   try {
     final headersWithToken = {
       'Content-Type': 'application/json',
@@ -21,8 +21,6 @@ Future logoutUser() async {
         "refresh": refreshToken,
       }),
     );
-    print("Response status: ${response.statusCode}");
-    print("Response body: ${response.body}");
 
     if (response.statusCode == 205) {
       return true;

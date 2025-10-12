@@ -246,17 +246,24 @@ class _ProfilePageState extends State<ProfilePage> {
                         onTap: () {
                           /// TODO: View full profile picture
                           /// store and fetch the profie picture locally.
+                          print(
+                              'Picture: $currentUserProfilePicture, Show initials: $showInitials');
                         },
                         child: CircleAvatar(
                           backgroundColor: const Color.fromARGB(255, 2, 75, 50),
                           radius: 50,
-                          backgroundImage: getProfileImage(
-                              currentUserProfilePicture, devUrl),
+                          backgroundImage: (currentUserProfilePicture != null &&
+                                  currentUserProfilePicture!.isNotEmpty &&
+                                  currentUserProfilePicture != 'N/A')
+                              ? getProfileImage(
+                                  currentUserProfilePicture, devUrl)
+                              : null,
                           child: (currentUserProfilePicture == null ||
-                                      currentUserProfilePicture!.isEmpty) &&
-                                  showInitials
+                                  currentUserProfilePicture!.isEmpty ||
+                                  currentUserProfilePicture == 'N/A')
                               ? Text(
-                                  extractInitials(currentUserFirstName ?? ''),
+                                  extractInitials(
+                                      currentUserFirstName ?? 'User'),
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 28,
@@ -327,7 +334,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 12),
+
                   const Divider(),
 
                   // Bookmarks
@@ -480,7 +487,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 12),
                   const Divider(),
                   if (currentUserType != "landlord")
                     ListTile(

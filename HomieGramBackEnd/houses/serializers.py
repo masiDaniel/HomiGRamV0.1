@@ -62,6 +62,7 @@ class TenancyAgreementSerializer(serializers.ModelSerializer):
         
 class RoomAndTenancySerializer(serializers.ModelSerializer):
     agreement = serializers.SerializerMethodField()
+    images = RoomImageSerializer(many=True, read_only=True) 
     class Meta:
         model = Room
         fields = "__all__"

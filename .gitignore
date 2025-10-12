@@ -19,3 +19,45 @@ ios/Flutter/Flutter.podspec
 # Misc
 pubspec.lock
 
+# ----------------------
+# Python / Django
+# ----------------------
+*.pyc
+__pycache__/
+
+# Virtual environment
+.venv/
+venv/
+
+# Django local database
+HomieGramBackEnd/db.sqlite3
+
+# Environment variables / secrets
+HomieGramBackEnd/.env.development
+HomieGramBackEnd/.env.production
+
+# Media / uploaded files
+HomieGramBackEnd/house_images/
+
+# Backup files
+HomieGramBackEnd/accounts_backup.dump
+
+# Static files (optional: you may collectstatic in production)
+# HomieGramBackEnd/static/
+
+# ----------------------
+# React / frontend
+# ----------------------
+Homiegram_front_end/node_modules/
+Homiegram_front_end/build/
+Homiegram_front_end/.env
+
+# ----------------------
+# IDE / OS
+# ----------------------
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db

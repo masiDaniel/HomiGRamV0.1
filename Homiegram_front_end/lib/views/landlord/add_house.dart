@@ -135,6 +135,10 @@ class AddHousePageState extends State<AddHousePage> {
                 TextFormField(
                   decoration: InputDecoration(
                     labelText: 'House Name',
+                    floatingLabelStyle: const TextStyle(
+                      color: Color(0xFF105A01),
+                      fontWeight: FontWeight.w600,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -155,7 +159,11 @@ class AddHousePageState extends State<AddHousePage> {
                 TextFormField(
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Average Rent amount(ksh)',
+                    labelText: 'Average monthly rent (1000)',
+                    floatingLabelStyle: const TextStyle(
+                      color: Color(0xFF105A01),
+                      fontWeight: FontWeight.w600,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -181,8 +189,16 @@ class AddHousePageState extends State<AddHousePage> {
                       icon: const Icon(Icons.search, color: Color(0xFF105A01)),
                       onPressed: () => showLocationDialog(context),
                     ),
+                    floatingLabelStyle: const TextStyle(
+                      color: Color(0xFF105A01), // green when floating (focused)
+                      fontWeight: FontWeight.w600,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Color(0xFF105A01), width: 2),
                     ),
                   ),
                   validator: (value) => value == null || value.isEmpty
@@ -197,6 +213,10 @@ class AddHousePageState extends State<AddHousePage> {
                   readOnly: true,
                   decoration: InputDecoration(
                     labelText: "Amenities",
+                    floatingLabelStyle: const TextStyle(
+                      color: Color(0xFF105A01),
+                      fontWeight: FontWeight.w600,
+                    ),
                     suffixIcon: IconButton(
                       icon: const Icon(Icons.add_circle_outline,
                           color: Color(0xFF105A01)),
@@ -212,6 +232,10 @@ class AddHousePageState extends State<AddHousePage> {
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide:
+                          BorderSide(color: Color(0xFF105A01), width: 2),
                     ),
                   ),
                   validator: (value) => value == null || value.isEmpty
@@ -287,6 +311,10 @@ class AddHousePageState extends State<AddHousePage> {
                   decoration: InputDecoration(
                     labelText: 'Description',
                     alignLabelWithHint: true,
+                    floatingLabelStyle: const TextStyle(
+                      color: Color(0xFF105A01),
+                      fontWeight: FontWeight.w600,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -476,17 +504,40 @@ class AddHousePageState extends State<AddHousePage> {
             return StatefulBuilder(
               builder: (context, setState) {
                 return AlertDialog(
-                  title: const Text("Select Amenities you have"),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  title: const Text(
+                    "Select Amenities You Have",
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF105A01),
+                    ),
+                  ),
                   content: SizedBox(
                     width: double.maxFinite,
-                    height: 350,
+                    height: 380,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Search Field
                         TextField(
                           controller: searchController,
-                          decoration: const InputDecoration(
+                          decoration: InputDecoration(
                             labelText: "Search amenity",
-                            prefixIcon: Icon(Icons.search),
+                            prefixIcon: const Icon(Icons.search,
+                                color: Color(0xFF105A01)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: const OutlineInputBorder(
+                              borderSide: BorderSide(
+                                  color: Color(0xFF105A01), width: 2),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                              horizontal: 12,
+                            ),
                           ),
                           onChanged: (query) {
                             setState(() {
@@ -498,43 +549,89 @@ class AddHousePageState extends State<AddHousePage> {
                             });
                           },
                         ),
-                        const SizedBox(height: 10),
-                        Expanded(
-                          child: ListView.builder(
-                            itemCount: filteredAmenities.length,
-                            itemBuilder: (context, index) {
-                              final amenity = filteredAmenities[index];
-                              final isSelected =
-                                  selectedAmenityIds.contains(amenity.id);
 
-                              return CheckboxListTile(
-                                title: Text(amenity.name!),
-                                value: isSelected,
-                                onChanged: (value) {
-                                  setState(() {
-                                    if (value == true) {
-                                      selectedAmenityIds.add(amenity.id!);
-                                    } else {
-                                      selectedAmenityIds.remove(amenity.id);
-                                    }
-                                  });
-                                },
-                              );
-                            },
+                        const SizedBox(height: 12),
+
+                        // Amenity list
+                        Expanded(
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey.shade300),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: ListView.builder(
+                              itemCount: filteredAmenities.length,
+                              itemBuilder: (context, index) {
+                                final amenity = filteredAmenities[index];
+                                final isSelected =
+                                    selectedAmenityIds.contains(amenity.id);
+
+                                return CheckboxListTile(
+                                  title: Text(
+                                    amenity.name!,
+                                    style: TextStyle(
+                                      color: isSelected
+                                          ? const Color(0xFF105A01)
+                                          : Colors.black87,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                  activeColor: const Color(0xFF105A01),
+                                  value: isSelected,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        selectedAmenityIds.add(amenity.id!);
+                                      } else {
+                                        selectedAmenityIds.remove(amenity.id);
+                                      }
+                                    });
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  // Buttons
+                  actionsPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   actions: [
                     TextButton(
-                      onPressed: () => Navigator.pop(context, null), // Cancel
-                      child: const Text("Cancel"),
+                      onPressed: () => Navigator.pop(context, null),
+                      child: const Text(
+                        "Cancel",
+                        style: TextStyle(
+                          color: Colors.grey,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                     ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF105A01),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                      ),
                       onPressed: () =>
                           Navigator.pop(context, selectedAmenityIds),
-                      child: const Text("Done"),
+                      child: const Text(
+                        "Done",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ],
                 );

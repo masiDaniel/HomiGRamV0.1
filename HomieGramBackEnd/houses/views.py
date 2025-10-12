@@ -90,6 +90,14 @@ def compute_charges(agreement, is_first_payment):
 
     return items, total_amount
 
+
+def format_phone_number(raw_number):
+    num = str(raw_number).replace(" ", "").replace("+", "")
+    if num.startswith("0"):
+        return "254" + num[1:]
+    elif not num.startswith("254"):
+        return "254" + num
+    return num
 class HouseAPIView(APIView):
     """
     Handles All House Processes
@@ -601,34 +609,33 @@ class StartRentView(APIView):
             return Response({"error": "house_id and room_id are required"}, status=400)
 
         try:
+            # TODO : get more info on this
             with transaction.atomic():
                 # lock the room row to prevent race conditions
                 room = Room.objects.select_for_update().get(
                     id=room_id, apartment_id=house_id
                 )
-
-                # check if room is already occupied
                 if room.occupied:
                     return Response({"error": "This room is already occupied"}, status=400)
 
-                # check if user already has any ongoing agreement for this room
-                existing_agreement = TenancyAgreement.objects.filter(
+             
+                has_existing_agreement = TenancyAgreement.objects.filter(
                     tenant=request.user,
                     room=room,
                     status__in=["pending", "approved", "active"]
                 ).first()
 
-                if existing_agreement:
+                if has_existing_agreement:
                     return Response(
                         {
                             "error": "You already have an existing agreement for this room.",
-                            "agreement": TenancyAgreementSerializer(existing_agreement).data,
+                            "agreement": TenancyAgreementSerializer(has_existing_agreement).data,
                         },
                         status=200
                     )
 
                 # create new pending agreement safely inside the lock
-                agreement = TenancyAgreement.objects.create(
+                new_agreement = TenancyAgreement.objects.create(
                     tenant=request.user,
                     house=room.apartment,
                     room=room,
@@ -636,7 +643,7 @@ class StartRentView(APIView):
                 )
 
                 return Response(
-                    {"agreement": TenancyAgreementSerializer(agreement).data},
+                    {"agreement": TenancyAgreementSerializer(new_agreement).data},
                     status=201
                 )
 
@@ -706,84 +713,125 @@ class RentPaymentInitiateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        agreement_id = request.data.get("agreement_id")
-        if not agreement_id:
-            return Response({"error": "agreement_id is required"}, status=400)
+        try:
+            agreement_id = request.data.get("agreement_id")
+            if not agreement_id:
+                return Response({"error": "agreement_id is required"}, status=400)
 
-        agreement = get_object_or_404(
-            TenancyAgreement,
-            id=agreement_id,
-            tenant=request.user,
-            status__in=["approved", "active"]
-        )
+            agreement = get_object_or_404(
+                TenancyAgreement,
+                id=agreement_id,
+                tenant=request.user,
+                status__in=["approved", "active"]
+            )
 
-        # 1️⃣ Check for an existing pending payment
-        existing_payment = Payment.objects.filter(
-            agreement=agreement,
-            tenant=request.user,
-            status="pending"
-        ).first()
+            #  Check for an existing pending payment
+            existing_payment = Payment.objects.filter(
+                agreement=agreement,
+                tenant=request.user,
+                status="pending"
+            ).first()
 
-        if existing_payment:
-            # Check if it has been pending for too long (e.g., 2 minutes)
-            time_diff = timezone.now() - existing_payment.created_at
-            if time_diff.total_seconds() < 120:
-                # 2 mins have not passed — return the same payment
+            if existing_payment:
+                # Calculate how long ago the payment was created
+                time_diff = timezone.now() - existing_payment.created_at
+
+                if time_diff.total_seconds() < 120 and existing_payment.status == "pending":
+                    # Less than 2 minutes since creation and still pending — tell user to wait
+                    return Response({
+                        "message": (
+                            "You already have a pending payment. "
+                            "Please complete it on your phone. "
+                            "If you cancelled, wait 2 minutes before trying again."
+                        ),
+                        "payment_id": existing_payment.id,
+                        "checkout_request_id": existing_payment.checkout_request_id,
+                        "status": existing_payment.status,
+                    }, status=200)
+
+                # Mark old pending payments as failed if they timed out
+                if existing_payment.status == "pending":
+                    existing_payment.status = "failed"
+                    existing_payment.failure_reason = "Timed out - user did not complete payment"
+                    existing_payment.save()
+
+            # Compute charges again
+            is_first_payment = not Payment.objects.filter(
+                agreement=agreement, status="confirmed"
+            ).exists()
+
+            items, total_amount = compute_charges(agreement, is_first_payment)
+
+            # Create new pending payment
+            payment = Payment.objects.create(
+                agreement=agreement,
+                tenant=request.user,
+                house=agreement.house,
+                room=agreement.room,
+                amount=total_amount,
+                status="pending",
+            )
+
+            for item in items:
+                PaymentItem.objects.create(payment=payment, name=item["name"], amount=item["amount"])
+
+            phone_number = format_phone_number(request.user.phone_number)
+
+            # Initiate STK push
+            mpesa = MpesaHandler()
+            res_status, res_data = mpesa.make_stk_push({
+                "amount": total_amount,
+                "phone_number": phone_number 
+            })
+
+            if not res_status or res_data.get("errorCode"):
+                payment.status = "failed"
+                payment.failure_reason = res_data.get("errorMessage", "STK Push failed")
+                payment.save()
+
                 return Response({
-                    "message": "You already have a pending payment. Please complete it on your phone. if canncleed please wait for 2 minutes then try again",
-                    "payment_id": existing_payment.id,
-                    "checkout_request_id": existing_payment.checkout_request_id,
-                    "status": existing_payment.status,
-                }, status=200)
-            else:
-                existing_payment.status = "failed"
-                existing_payment.failure_reason = "Timed out - user did not complete payment"
-                existing_payment.save()
+                    "success": False,
+                    "message": "Failed to initiate payment.",
+                    "errors": {
+                        "mpesa_code": res_data.get("errorCode"),
+                        "reason": res_data.get("errorMessage", "Unknown error"),
+                    },
+                    "payment_id": payment.id
+                }, status=status.HTTP_400_BAD_REQUEST)
 
-        #Compute charges again
-        is_first_payment = not Payment.objects.filter(
-            agreement=agreement, status="confirmed"
-        ).exists()
-
-        items, total_amount = compute_charges(agreement, is_first_payment)
-
-        # Create new pending payment
-        payment = Payment.objects.create(
-            agreement=agreement,
-            tenant=request.user,
-            house=agreement.house,
-            room=agreement.room,
-            amount=total_amount,
-            status="pending",
-        )
-
-        for item in items:
-            PaymentItem.objects.create(payment=payment, name=item["name"], amount=item["amount"])
-
-        # Initiate STK push
-        mpesa = MpesaHandler()
-        res_status, res_data = mpesa.make_stk_push({
-            "amount": total_amount,
-            "phone_number": request.user.phone_number
-        })
-
-        if not res_status:
-            payment.status = "failed"
-            payment.failure_reason = res_data.get("errorMessage", "STK Push failed")
+            # [3] Success case
+            payment.checkout_request_id = res_data.get("CheckoutRequestID")
+            payment.status = "pending"
             payment.save()
-            return Response({"error": "Failed to initiate payment", "details": res_data}, status=400)
 
-  
-        payment.checkout_request_id = res_data.get("CheckoutRequestID")
-        payment.save()
+            return Response({
+                "success": True,
+                "message": "STK push initiated successfully. Please complete payment on your phone.",
+                "data": {
+                    "payment_id": payment.id,
+                    "amount": total_amount,
+                    "items": items,
+                    "mpesa_response": {
+                        "CheckoutRequestID": res_data.get("CheckoutRequestID"),
+                        "MerchantRequestID": res_data.get("MerchantRequestID"),
+                        "ResponseDescription": res_data.get("ResponseDescription"),
+                        "CustomerMessage": res_data.get("CustomerMessage")
+                    }
+                }
+            }, status=status.HTTP_200_OK)
 
-        return Response({
-            "message": "STK push sent. Please complete payment on your phone.",
-            "payment_id": payment.id,
-            "amount": total_amount,
-            "items": items,
-            "mpesa_response": res_data
-        }, status=200)
+        except Exception as e:
+            # Handle unexpected errors gracefully
+            import traceback
+            print("Unexpected error during payment initiation:", traceback.format_exc())
+            return Response({
+                "success": False,
+                "message": "An unexpected error occurred while processing your payment.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+       
+
 
 
 
@@ -859,6 +907,30 @@ class MpesaCallbackView(APIView):
                 # Optionally mark room as occupied
                 agreement.room.occupied = True
                 agreement.room.save()
+            
+            room = agreement.room
+            if room:
+                room.tenant = agreement.tenant
+                room.assign_tenant(agreement.tenant) 
+                room.rent_status = True
+                room.last_payment_date=timezone.now()
+                room.save()
+
+            house = agreement.house
+            tenant = agreement.tenant
+            caretaker = house.caretaker
+
+            house_group_name = f"{slugify(house.name)}-official"
+            house_group, created = ChatRoom.objects.get_or_create(
+                name=house_group_name,
+                defaults={"is_group": True},
+            )
+
+            if not house_group.participants.filter(id=tenant.id).exists():
+                house_group.participants.add(tenant)
+
+            if caretaker:
+                create_private_chat_if_not_exists(tenant, caretaker.user_id)
 
             return Response({
                 "status": "success",

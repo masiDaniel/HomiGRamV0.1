@@ -30,8 +30,11 @@ Future<void> clearTokens() async {
 
 Future<String?> refreshAccessToken() async {
   final refreshToken = await getRefreshToken();
+  print("this is the refresh token $refreshToken");
 
   if (refreshToken == null) return null;
+
+  print("we also get here");
 
   final response = await http.post(
     Uri.parse('$devUrl/accounts/api/token/refresh/'),

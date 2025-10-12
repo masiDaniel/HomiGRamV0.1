@@ -162,11 +162,11 @@ class _ChatPageState extends State<ChatPage> {
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         elevation: 2,
-        backgroundColor: isDark ? Colors.grey[900] : const Color(0xFF105A01),
+        // backgroundColor: isDark ? Colors.grey[900] : const Color(0xFF105A01),
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back,
-            color: Colors.white,
+            // color: Colors.white,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -189,23 +189,23 @@ class _ChatPageState extends State<ChatPage> {
                 style: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 18,
-                  color: Colors.white,
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
-            onPressed: () {},
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     icon: const Icon(
+        //       Icons.more_vert,
+        //     ),
+        //     onPressed: () {},
+        //   ),
+        // ],
       ),
       body: Stack(
         children: [
-          // Background (stationary, never moves)
           Positioned.fill(
             child: Image.asset(
               isDark
@@ -214,8 +214,6 @@ class _ChatPageState extends State<ChatPage> {
               fit: BoxFit.cover,
             ),
           ),
-
-          // Foreground (moves with keyboard)
           SafeArea(
             child: Column(
               children: [

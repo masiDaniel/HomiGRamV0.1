@@ -79,11 +79,7 @@ class AgreementDetailsPage extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: agreement.status == "active"
-                                ? Colors.green
-                                : agreement.status == "pending"
-                                    ? Colors.orange
-                                    : Colors.red,
+                            color: _getStatusColor(agreement.status),
                           ),
                         ),
                       ],
@@ -187,5 +183,21 @@ class AgreementDetailsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'active':
+        return Colors.green;
+      case 'approved':
+        return Colors.blue;
+      case 'pending':
+        return Colors.orange;
+      case 'terminated':
+      case 'failed':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
   }
 }
