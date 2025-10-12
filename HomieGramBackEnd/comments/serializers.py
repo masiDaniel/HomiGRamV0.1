@@ -8,10 +8,10 @@ class CommentsSerializers(serializers.ModelSerializer):
 
     class Meta:
         model = HouseComments
-        fields = '__all__'  # This includes total_likes and total_dislikes
+        fields = '__all__'  
 
     def get_total_likes(self, obj):
         return obj.likes.count()
 
     def get_total_dislikes(self, obj):
-        return obj.dislikes.count()  # Fix wrong reference
+        return obj.dislikes.count() 
