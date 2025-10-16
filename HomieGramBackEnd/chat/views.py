@@ -1,24 +1,16 @@
-# chat/views.py
-
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from accounts.models import CustomUser
-from .models import ChatRoom, Message
+from .models import ChatRoom
 from .serializers import ChatRoomSerializer, MessageSerializer
 from django.shortcuts import get_object_or_404
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import  IsAuthenticated
-
 
 User = get_user_model()
 
 class GetOrCreateChatRoom(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
-
-        # print("HEADERS:", request.headers)
-        # print("USER:", request.user)
-        # print("IS AUTH:", request.user.is_authenticated)
         user1 = request.user
         receiver_id = request.data.get("receiver_id")
 
@@ -34,13 +26,11 @@ class GetOrCreateChatRoom(APIView):
         room, created = ChatRoom.objects.get_or_create(name=room_name)
         room.participants.set([user1, user2])
 
-        # Find the other user
         other_user = user2 if user1 == request.user else user1
 
         serializer = ChatRoomSerializer(room)
 
         return Response(serializer.data)
-
 
 class CreateGroupChatRoom(APIView):
     permission_classes = [IsAuthenticated]
@@ -48,14 +38,12 @@ class CreateGroupChatRoom(APIView):
     def post(self, request):
         name = request.data.get("name")
         participant_ids = request.data.get("participant_ids", [])
-      
 
         if not name or not participant_ids:
             return Response({"error": "Group name and participant IDs are required."}, status=400)
 
-        # Create the chat room
         room = ChatRoom.objects.create(name=name)
-        room.participants.add(request.user)  # Add the creator
+        room.participants.add(request.user)
 
         for pid in participant_ids:
             try:
@@ -63,7 +51,6 @@ class CreateGroupChatRoom(APIView):
                 room.participants.add(user)
             except User.DoesNotExist:
                 continue
-
 
         return Response({
             "success": True,
@@ -79,25 +66,19 @@ class ChatRoomDetailView(APIView):
         room = get_object_or_404(ChatRoom, name=room_name)
         serializer = ChatRoomSerializer(room)
         return Response(serializer.data)
-    
-
 
 class MessageHistoryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, room_name):
         room = get_object_or_404(ChatRoom, name=room_name)
-        
         last_message_id = request.query_params.get("after_id")
         
         if last_message_id:
             messages = room.messages.filter(id__gt=last_message_id).order_by("timestamp")
         else:
-            messages = room.messages.order_by("-timestamp")[:50]  # first load
-
+            messages = room.messages.order_by("-timestamp")[:50]
         return Response(MessageSerializer(messages, many=True).data)
-
-
 
 class UserChatRoomsAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -111,6 +92,6 @@ class UserChatRoomsAPIView(APIView):
             rooms = rooms.filter(updated_at__gt=updated_after)
 
         serializer = ChatRoomSerializer(rooms, many=True, context={'request': request})
-        print(serializer.data)
+
         return Response(serializer.data)
     

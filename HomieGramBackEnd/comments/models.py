@@ -2,8 +2,6 @@ from django.db import models
 from accounts.models import CustomUser
 from houses.models import Houses
 
-# Create your models here.
-# TODO : add a way to identify if that comment is from a tenant in the house or not
 class HouseComments(models.Model):
     """
     This Table Will Hold Info on Comments on Houses
@@ -17,10 +15,7 @@ class HouseComments(models.Model):
         null=True, blank=True, 
         related_name='replies'
     )
-
     created_at = models.DateTimeField(auto_now_add=True)
-   
-
     likes = models.ManyToManyField(CustomUser, related_name="liked_comments", blank=True)
     dislikes = models.ManyToManyField(CustomUser, related_name="disliked_comments", blank=True)
 

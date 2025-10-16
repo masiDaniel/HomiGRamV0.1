@@ -3,10 +3,9 @@ from django.conf import settings
 from django.db import models
 from dynaconf import ValidationError
 from accounts.models import CustomUser
-from datetime import date, time, datetime, timedelta
-from dateutil.relativedelta import relativedelta
+from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
-
+from django.utils.timezone import now
 
 
 def validate_file_extension(value):
@@ -15,7 +14,6 @@ def validate_file_extension(value):
     if extension not in valid_extensions:
         raise ValidationError(('Unsupported file extension. Only PDF, DOC, DOCX files are allowed.'))
     
-
 class Amenity(models.Model):
     """
     Stores information about house amenities.
@@ -41,7 +39,6 @@ class Location(models.Model):
 
     def __str__(self):
         return f'{self.county}, {self.town}, {self.area}'
-
 
 class Houses(models.Model):
     """
@@ -72,10 +69,6 @@ class Houses(models.Model):
     water_deposit = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     contract_file = models.FileField(upload_to='house_contacts/', validators=[validate_file_extension], null=True, blank=True)
     
-    
-    # TODO implement ratings from teenants and non teenants
-    #validators=[MinValueValidator(0), MaxValueValidator(5)
-    
     def calculate_average_rating(self):
         ratings = self.ratings.all()
         if ratings.exists():
@@ -88,7 +81,6 @@ class Houses(models.Model):
 
     def __str__(self):
         return f'{self.name} - Rating: {self.rating}'
-
 
 class HouseImage(models.Model):
     house = models.ForeignKey(Houses, on_delete=models.CASCADE, related_name='images')
@@ -104,13 +96,21 @@ class HouseRating(models.Model):
     rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
     comment = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    month = models.DateField(default=now) 
 
     class Meta:
-        unique_together = ('house', 'user')  # Ensures that a user can only rate a house once
+        unique_together = ('house', 'user', 'month') 
+
+    def save(self, *args, **kwargs):
+        self.month = self.month.replace(day=1)
+        super().save(*args, **kwargs)    
+        ratings = HouseRating.objects.filter(house=self.house)
+        avg = ratings.aggregate(models.Avg('rating'))['rating__avg']
+        self.house.rating = avg or 0
+        self.house.save()
 
     def __str__(self):
-        return f'{self.house.name} - {self.rating} by {self.user.username}'
-
+        return f'{self.house.name} - {self.rating} by {self.user.username} ({self.month.strftime("%B %Y")})'
 
 class CareTaker(models.Model):
     """
@@ -124,8 +124,6 @@ class CareTaker(models.Model):
 
     def __str__(self) -> str:
         return self.user_id.get_full_name()
-
-
 
 class Teenants(models.Model):
     """
@@ -145,7 +143,7 @@ class Room(models.Model):
     rent = models.DecimalField(max_digits=10, decimal_places=2)
     occupied = models.BooleanField(default=False)
     tenant =  models.ForeignKey(CustomUser, related_name='tenant_occupying', on_delete=models.SET_NULL, null=True, blank=True)
-    # entry_date = models.DateField(default=timezone.now())
+   
     rent_status = models.BooleanField(default=False)
     last_payment_date = models.DateTimeField(null=True, blank=True)
     
@@ -189,10 +187,6 @@ class TenancyAgreement(models.Model):
 
     def __str__(self):
         return f"Agreement - {self.tenant.username} -> {self.room.room_name} ({self.status}) id {self.id}"
-
-
-    
-
 
 class Payment(models.Model):
     # Who made the payment
@@ -241,8 +235,6 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment {self.id} - {self.tenant.username} - {self.status}"
 
-
-
 class PaymentItem(models.Model):
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name="items")
     name = models.CharField(max_length=100)  # e.g. "Rent", "Water", "Electricity", "Security Deposit"
@@ -265,7 +257,6 @@ class Receipt(models.Model):
     def __str__(self):
         return f"Receipt {self.receipt_number} for {self.payment}"
 
-
 class Bookmark(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     house = models.ForeignKey(Houses, on_delete=models.CASCADE)
@@ -277,7 +268,6 @@ class Bookmark(models.Model):
 
     def __str__(self):
         return f"{self.user} bookmarked {self.house}"
-    
 
 class PendingAdvertisement(models.Model):
     """Stores ad details before payment confirmation."""
@@ -293,8 +283,6 @@ class PendingAdvertisement(models.Model):
     def __str__(self):
         return f"{self.title} - {'Paid' if self.payment_status else 'Pending'}"
 
-
-# TODO : Link this to the user who has posted, house, business, or individual
 class Advertisement(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()

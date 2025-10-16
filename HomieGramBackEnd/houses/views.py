@@ -12,18 +12,16 @@ from houses.mpesa import MpesaHandler
 from accounts.models import CustomUser
 from django.utils.crypto import get_random_string
 from .utils import get_safe_group_name
-from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer,  PendingAdvertisementSerializer, TenancyAgreementSerializer
-from .models import Advertisement, Amenity, Bookmark, CareTaker, Charge, HouseImage, HouseRating, Houses, Location, Payment, PaymentItem, Room, PendingAdvertisement, TenancyAgreement, Receipt
+from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseRatingSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer, TenancyAgreementSerializer
+from .models import Advertisement, Amenity, Bookmark, CareTaker, Charge, HouseImage, HouseRating, Houses, Location, Payment, PaymentItem, Room, PendingAdvertisement, RoomImage, TenancyAgreement, Receipt
 from .utils import get_safe_group_name
 from rest_framework.permissions import  IsAuthenticated
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
+from datetime import datetime
+from django.utils import timezone
 
-# Create your views here.
-
-
-# TODO : test this complete workflow
 def generate_receipt(payment):
     if hasattr(payment, "receipt"): 
         return payment.receipt
@@ -90,7 +88,6 @@ def compute_charges(agreement, is_first_payment):
 
     return items, total_amount
 
-
 def format_phone_number(raw_number):
     num = str(raw_number).replace(" ", "").replace("+", "")
     if num.startswith("0"):
@@ -98,6 +95,25 @@ def format_phone_number(raw_number):
     elif not num.startswith("254"):
         return "254" + num
     return num
+
+def get_valid_until(paid_at=None):
+    paid_at = paid_at or timezone.now()
+    year = paid_at.year
+    month = paid_at.month
+
+    # Determine next month and year
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
+    else:
+        next_month = month + 1
+        next_year = year
+
+    # Valid until 5th of next month
+    valid_until = datetime(next_year, next_month, 5)
+    return valid_until
+
+
 class HouseAPIView(APIView):
     """
     Handles All House Processes
@@ -112,7 +128,7 @@ class HouseAPIView(APIView):
         """
         houses = Houses.objects.all()
         serializer = HousesSerializers(houses, many=True)
-        print(f"this is the data {serializer.data}")
+       
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request, *args, **kwargs):
@@ -161,7 +177,6 @@ class HouseAPIView(APIView):
             return Response(serializer.data, status=200)
         return Response(serializer.errors, status=400)
 
-
 class HouseWithRoomsAPIView(APIView):
     """
     Fetches all houses along with their rooms
@@ -170,7 +185,7 @@ class HouseWithRoomsAPIView(APIView):
     def get(self, request, *args, **kwargs):
         houses = Houses.objects.prefetch_related('rooms').all()
         serializer = HouseWithRoomsSerializer(houses, many=True)
-        print(f"this is the data {serializer.data}")
+  
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SearchApiView(RetrieveAPIView):
@@ -179,23 +194,21 @@ class SearchApiView(RetrieveAPIView):
     queryset = Houses.objects.all()
     serializer_class = HousesSerializers
 
-class RateHouseAPIView(APIView):
+class SubmitHouseRating(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, house_id, *args, **kwargs):
-        house = Houses.objects.get(id=house_id)
-        rating_value = request.data.get('rating')
-        comment = request.data.get('comment', '')
+    def post(self, request):
+        serializer = HouseRatingSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Rating submitted successfully.", "data": serializer.data}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        rating, created = HouseRating.objects.update_or_create(
-            house=house,
-            user=request.user,
-            defaults={'rating': rating_value, 'comment': comment}
-        )
-
-        house.update_average_rating()  # Update the average rating after a new rating is saved
-
-        return Response({"message": "Rating submitted successfully"}, status=status.HTTP_200_OK)
+    def get(self, request):
+        # List all ratings of the logged-in user
+        ratings = HouseRating.objects.filter(user=request.user)
+        serializer = HouseRatingSerializer(ratings, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class LocationsAPIView(APIView):
 
@@ -230,23 +243,22 @@ class GetRoomssAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     def post(self, request, *args, **kwargs):
-        """
-        Create new multiple rooms in the database
-        """
-        rooms_data = request.data  # Expecting a list of room data
-        if not isinstance(rooms_data, list):
-            return Response({"detail": "Request body should be a list of room data."}, status=status.HTTP_400_BAD_REQUEST)
-        
-        rooms = []
-        for room_data in rooms_data:
-            serializer = RoomSerializer(data=room_data)
-            if serializer.is_valid():
-                rooms.append(serializer.save())  # Save the valid room
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        
-        return Response({"detail": "Rooms added successfully."}, status=status.HTTP_201_CREATED)
-    
+        serializer = RoomSerializer(data=request.data)
+        if serializer.is_valid():
+            room = serializer.save()
+
+            images = request.FILES.getlist('image')
+
+            for image in images:
+                RoomImage.objects.create(room=room, image=image)
+
+            return Response(
+                {"detail": "Room added successfully.", "room": RoomSerializer(room).data},
+                status=status.HTTP_201_CREATED
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def patch(self, request, *args, **kwargs):
         """
         Partially update an existing room
@@ -297,7 +309,6 @@ class AmenitiessAPIView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    
 class GetBookmarksAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -308,7 +319,6 @@ class GetBookmarksAPIView(APIView):
         bookmarks = Bookmark.objects.all()
         serializer = BookmarkSerializer(bookmarks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-        
 
 class AddBookmarkView(APIView):
     permission_classes = [IsAuthenticated]
@@ -334,7 +344,6 @@ class RemoveBookmarkView(APIView):
         bookmark.delete()
         return Response({'message': 'Bookmark removed'}, status=status.HTTP_204_NO_CONTENT)
 
-
 class SubmitAdvertisementAPIView(APIView):
     """
     User submits an ad, but it's not saved in the main advertisement model until payment is confirmed.
@@ -349,7 +358,6 @@ class SubmitAdvertisementAPIView(APIView):
             return Response(serializer.data ,status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 class ConfirmPaymentAPIView(APIView):
     """
@@ -384,8 +392,6 @@ class ConfirmPaymentAPIView(APIView):
 
         except PendingAdvertisement.DoesNotExist:
             return Response({"error": "Invalid payment reference"}, status=status.HTTP_404_NOT_FOUND)
-
-
 
 class GetAdvertisementsAPIView(APIView):
     permission_classes = [IsAuthenticated]
@@ -507,53 +513,22 @@ class AssignTenantView(APIView):
             num_of_tries += 1
 
 
-        # # Simulate payment check
-        # payment_confirmed = check_payment_status(room)
-        # if not payment_confirmed:
-        #     return Response({"error": "Payment not confirmed", "agreement_id": agreement.id}, status=400)
-
-        # # Approve agreement
-        # agreement.status = "active"
-        # agreement.save()
-        # # Assign tenant
-      
-        # room.assign_tenant(tenant)
-        # room.rent_status = True
-        # room.save()
-
-        # # Ensure official house group exists
-        # house_group, created = ChatRoom.objects.get_or_create(
-        #     name=house_group_name,
-        #     defaults={"is_group": True},
-        # )
-        # house_group.participants.add(tenant)
-
-        # # Landlord chat
-        # create_private_chat_if_not_exists(tenant, landlord)
-
-        # # Caretaker chat
-        # if caretaker:
-        #     create_private_chat_if_not_exists(tenant, caretaker.user_id)
-
-        # # Return updated room data
-        # room_data = RoomSerializer(room).data
-        # return Response(room_data, status=status.HTTP_200_OK)
-        # 5) Handle result
+    
         if trans_status == 200 and trans_response.get("ResultCode") == "0":
             # Payment confirmed
             payment.status = "confirmed"
             payment.save()
-            print("we get here")
+      
             # Approve agreement and assign tenant to room
             agreement.status = "active"
             agreement.save()
 
-            print("Agreement saved")
+          
 
             room.assign_tenant(tenant)  # assuming this method exists and saves
             room.rent_status = True
             room.save()
-            print("tenancy saved")
+     
             # Ensure official house group exists and add participant
             
             house_group_name = f"{slugify(house.name)}-official"
@@ -596,7 +571,6 @@ class AssignTenantView(APIView):
             },
             status=status.HTTP_400_BAD_REQUEST,
         )
-
 # step 1: initiate.
 class StartRentView(APIView):
     permission_classes = [IsAuthenticated]
@@ -649,9 +623,6 @@ class StartRentView(APIView):
 
         except Room.DoesNotExist:
             return Response({"error": "Room not found"}, status=404)
-
-
-
 # Step 2: Confirm agreement
 class ConfirmAgreementView(APIView):
     permission_classes = [IsAuthenticated]
@@ -682,7 +653,6 @@ class ConfirmAgreementView(APIView):
             "message": message,
             "agreement": TenancyAgreementSerializer(agreement).data
         }, status=200)
-
 # Step 3: Initiate payment
 class RentPaymentPreviewView(APIView):
     permission_classes = [IsAuthenticated]
@@ -830,11 +800,6 @@ class RentPaymentInitiateView(APIView):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-       
-
-
-
-
 class PaymentStatusView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, *args, **kwargs):
@@ -878,6 +843,7 @@ class MpesaCallbackView(APIView):
             payment.amount = amount
             payment.mpesa_receipt = receipt_number
             payment.paid_at = timezone.now()
+            payment.valid_until = get_valid_until(payment.paid_at)
             payment.save()
 
             # Mark charges as paid
@@ -944,7 +910,6 @@ class MpesaCallbackView(APIView):
             payment.save()
             return Response({"status": "failed", "reason": result_desc})
 
-
 class AssignCaretakerView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request):
@@ -987,7 +952,6 @@ class GetCaretakersAPIView(APIView):
         serializer = CareTakersSerializer(caretakers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-
 class RequestTerminationAPIView(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, agreement_id):
@@ -1003,7 +967,6 @@ class RequestTerminationAPIView(APIView):
         agreement.save()
 
         return Response({"message": "Termination request submitted, awaiting approval"}, status=200)
-
 
 class ApproveTerminationAPIView(APIView):
     permission_classes = [IsAuthenticated]

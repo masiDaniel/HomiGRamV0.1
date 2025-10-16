@@ -6,9 +6,6 @@ from datetime import datetime
 from requests.auth import HTTPBasicAuth
 import os
 
-
-
-
 class MpesaHandler:
     now = None
     shortcode = None
@@ -26,7 +23,6 @@ class MpesaHandler:
 
     def __init__(self):
         self.now = datetime.now()
-        
         self.shortcode = os.getenv("MPESA_SHORTCODE")
         self.store_number  = os.getenv("BUSINESS_STORE_NUMBER")
         self.consumer_key = os.getenv("MPESA_CONSUMER_KEY")
@@ -44,45 +40,33 @@ class MpesaHandler:
                 raise Exception("Request for access token failed")
             else:
                 self.access_token_expiration = time.time() + 3599
-
         except Exception as e:
-            # TODO log this error
             print(str(e))
 
     def get_mpesa_access_token(self):
         try:
-            # initializing token to none
             token = None
             res = requests.get(
                 self.access_token_url,
                 auth=HTTPBasicAuth(self.consumer_key, self.consumer_secret),
             )
-            print(f"the secret {self.consumer_secret}, the public {self.consumer_key}")
             token = res.json()['access_token']
-
-            print(f"this is the token {token}")
-
             self.headers = {
                 "Authorization": f"Bearer {token}",
             }
         except Exception as e:
-            print(str(e), "error getting access token")
             raise e
-
         return token
 
     def generate_password(self):
         self.timestamp = self.now.strftime("%Y%m%d%H%M%S")
         password_str = self.shortcode + self.passkey + self.timestamp
         password_bytes = password_str.encode()
-
         return base64.b64encode(password_bytes).decode("utf-8")
 
     def make_stk_push(self, payload):
-      
         amount = payload['amount']
         phone_number = payload['phone_number']
-
         push_data = {
             "BusinessShortCode": self.shortcode,
             "Password": self.password,
@@ -96,25 +80,12 @@ class MpesaHandler:
             "AccountReference": "HOMIGRAM",
             "TransactionDesc": "Client Deposit",
         }
-
-        print(f" push data {push_data}")
-
-        print(f" headers {self.headers}")
-
         response = requests.post(
             self.stk_push_url,
             json=push_data,
             headers=self.headers
         )
-        print("i am here")
-        print(self.stk_push_url)
-                
-        print("Status Code:", response.status_code)
-        print("Response Text:", response.text)
-
         response_data = response.json()
-        print(response_data)
-
         return response.status_code, response_data
 
     def query_transaction_status(self, checkout_request_id):
@@ -124,15 +95,10 @@ class MpesaHandler:
             "Timestamp": self.timestamp,
             "CheckoutRequestID": checkout_request_id
         }
-
         response = requests.post(
             self.query_status_url,
             json=query_data,
             headers=self.headers
         )
-        
-        response_data = response.json()
-
-        print(response_data)
-        
+        response_data = response.json()      
         return response.status_code, response_data
