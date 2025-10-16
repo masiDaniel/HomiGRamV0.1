@@ -101,26 +101,18 @@ def get_valid_until(paid_at=None):
     year = paid_at.year
     month = paid_at.month
 
-    # If payment made before or on 5th → valid until 5th of next month
-    if paid_at.day <= 5:
-        # move to next month
-        if month == 12:
-            next_month = 1
-            next_year = year + 1
-        else:
-            next_month = month + 1
-            next_year = year
+    # Determine next month and year
+    if month == 12:
+        next_month = 1
+        next_year = year + 1
     else:
-        # payment made after 5th → still valid until 5th of next month
-        if month == 12:
-            next_month = 1
-            next_year = year + 1
-        else:
-            next_month = month + 1
-            next_year = year
+        next_month = month + 1
+        next_year = year
 
-    valid_until = datetime(next_year, next_month, 5, tzinfo=timezone.utc)
+    # Valid until 5th of next month
+    valid_until = datetime(next_year, next_month, 5)
     return valid_until
+
 
 class HouseAPIView(APIView):
     """

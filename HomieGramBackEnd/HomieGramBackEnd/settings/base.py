@@ -96,6 +96,9 @@ USE_TZ = False
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "static"
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # # DRF + Knox
@@ -128,3 +131,42 @@ CHANNEL_LAYERS = {
         "CONFIG": {"hosts": [REDIS_URL]},
     }
 }
+
+import os
+
+LOGGING_DIR = '/home/dan/HomiGRamV0.1/HomieGramBackEnd/logs'
+os.makedirs(LOGGING_DIR, exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] {levelname} {name} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'django_errors.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file', 'console'],
+            'level': 'ERROR',  # You can also use DEBUG for development
+            'propagate': True,
+        },
+        '': {  # root logger
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+        },
+    },
+}
+
