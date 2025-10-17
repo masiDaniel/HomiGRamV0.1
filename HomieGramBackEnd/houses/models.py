@@ -286,7 +286,7 @@ class PendingAdvertisement(models.Model):
 class Advertisement(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField()
-    image = models.ImageField(upload_to='advertisements/images', null=True, blank=True)
+    image = models.ImageField(upload_to='advertisment_images/', null=True, blank=True)
     video_file = models.FileField(upload_to='advertisements/videos/', null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
