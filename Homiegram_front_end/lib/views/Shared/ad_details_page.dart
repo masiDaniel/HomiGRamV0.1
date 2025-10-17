@@ -26,9 +26,9 @@ class AdDetailPage extends StatelessWidget {
               child: ad.imageUrl != null
                   ? Image.network(
                       '$devUrl${ad.imageUrl!}',
-                      height: 200,
+                      height: 400,
                       width: double.infinity,
-                      fit: BoxFit.cover,
+                      fit: BoxFit.contain,
                     )
                   : Image.asset(
                       'assets/images/advertise.png',

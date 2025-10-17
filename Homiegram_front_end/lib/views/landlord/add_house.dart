@@ -190,7 +190,7 @@ class AddHousePageState extends State<AddHousePage> {
                       onPressed: () => showLocationDialog(context),
                     ),
                     floatingLabelStyle: const TextStyle(
-                      color: Color(0xFF105A01), // green when floating (focused)
+                      color: Color(0xFF105A01),
                       fontWeight: FontWeight.w600,
                     ),
                     border: OutlineInputBorder(

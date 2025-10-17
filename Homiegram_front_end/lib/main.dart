@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:homi_2/components/not_found.dart';
-import 'package:homi_2/providers/user_provider.dart';
-import 'package:homi_2/services/theme_provider.dart';
-import 'package:homi_2/views/Shared/about_app.dart';
-import 'package:homi_2/views/Shared/splash_screen.dart';
-import 'package:homi_2/views/Shared/video_splash_screen.dart';
-import 'package:homi_2/views/Shared/navigation_bar.dart';
-import 'package:homi_2/views/Shared/search_page.dart';
-import 'package:homi_2/views/landlord/management.dart';
-import 'package:homi_2/views/Shared/sign_in.dart';
-import 'package:homi_2/views/Shared/sign_up.dart';
-import 'package:homi_2/views/Shared/welcome_page.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-void main() async {
+// Providers
+import 'package:homi_2/providers/user_provider.dart';
+import 'package:homi_2/services/theme_provider.dart';
+
+// Shared Views
+import 'package:homi_2/views/Shared/video_splash_screen.dart';
+import 'package:homi_2/views/Shared/splash_screen.dart';
+import 'package:homi_2/views/Shared/welcome_page.dart';
+import 'package:homi_2/views/Shared/sign_in.dart';
+import 'package:homi_2/views/Shared/sign_up.dart';
+import 'package:homi_2/views/Shared/about_app.dart';
+import 'package:homi_2/views/Shared/navigation_bar.dart';
+import 'package:homi_2/views/Shared/search_page.dart';
+import 'package:homi_2/components/not_found.dart';
+
+// Landlord Views
+import 'package:homi_2/views/landlord/management.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final initialRoute = await getInitialRoute();
-
-  runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(create: (_) => UserProvider()..loadUserData()),
-    ChangeNotifierProvider(create: (_) => ThemeProvider()),
-  ], child: MyApp(initialRoute: initialRoute)));
+  runApp(MyApp(initialRoute: initialRoute));
 }
 
 Future<String> getInitialRoute() async {
@@ -38,32 +40,44 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()..loadUserData()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ],
+      child: const _AppWrapper(),
+    );
+  }
+}
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'HG',
-      theme: ThemeData.light(),
-      darkTheme: ThemeData.dark(),
-      themeMode: themeProvider.themeMode,
-      initialRoute: initialRoute,
-      home: const WelcomePage(),
+class _AppWrapper extends StatelessWidget {
+  const _AppWrapper({Key? key}) : super(key: key);
 
-      // home: const VideoSplashScreen(),
-      // should refactor on this to user flutters way
-      routes: {
-        '/splash': (context) => const SplashScreen(),
-        '/welcome': (context) => const WelcomePage(),
-        '/signin': (context) => const SignIn(),
-        '/signup': (context) => const SignUp(),
-        '/about': (context) => const AboutHomiegram(),
-        '/homescreen': (context) => const CustomBottomNavigartion(),
-        '/searchPage': (context) => const SearchPage(),
-        '/landlordManagement': (context) => const LandlordManagement(),
-      },
-      onUnknownRoute: (settings) {
-        return MaterialPageRoute(
-          builder: (context) => const NotFoundPage(),
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'HomiGram',
+          theme: ThemeData.light(),
+          darkTheme: ThemeData.dark(),
+          themeMode: themeProvider.themeMode,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const VideoSplashScreen(),
+            '/splash': (context) => const SplashScreen(),
+            '/welcome': (context) => const WelcomePage(),
+            '/signin': (context) => const SignIn(),
+            '/signup': (context) => const SignUp(),
+            '/about': (context) => const AboutHomiegram(),
+            '/homescreen': (context) => const CustomBottomNavigation(),
+            '/searchPage': (context) => const SearchPage(),
+            '/landlordManagement': (context) => const LandlordManagement(),
+          },
+          onUnknownRoute: (_) => MaterialPageRoute(
+            builder: (_) => const NotFoundPage(),
+          ),
         );
       },
     );

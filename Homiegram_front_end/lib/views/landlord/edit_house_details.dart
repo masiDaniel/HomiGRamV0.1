@@ -1,9 +1,6 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/my_snackbar.dart';
-// import 'package:homi_2/models/amenities.dart';
-// import 'package:homi_2/services/get_amenities.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -65,7 +62,6 @@ class _EditHouseDetailsPageState extends State<EditHouseDetailsPage> {
       'description': description,
       'payment_bank_name': bankName,
       'payment_account_number': accountNumber,
-      // 'amenities': selectedAmenities.toList(),
       'images': _imageUrls
     };
 

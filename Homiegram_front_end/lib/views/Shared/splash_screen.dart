@@ -40,7 +40,6 @@ class _SplashScreenState extends State<SplashScreen> {
             }
           });
         }).catchError((error) {
-          debugPrint('Video initialization failed: $error');
           _navigateToNextScreen(); // Fallback to navigation if video fails
         });
     } else {

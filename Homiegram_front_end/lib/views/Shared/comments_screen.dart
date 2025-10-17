@@ -42,7 +42,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
   }
 
   void addComment(String comment) async {
-    await PostComments.postComment(
+    await CommentsService.postComment(
       houseId: widget.house.houseId.toString(),
       userId: userId.toString(),
       comment: comment,
@@ -98,6 +98,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       setState(() {}); // refresh UI
     } else {
       log("Failed to react, status: $statusCode");
+      if (!context.mounted) return;
       showCustomSnackBar(context, "Failed to react");
     }
   }
@@ -385,7 +386,7 @@ class CommentTile extends StatelessWidget {
               width: 2,
               height: 60,
               margin: const EdgeInsets.only(right: 8),
-              color: Colors.green.withOpacity(0.4),
+              color: Colors.green.withValues(alpha: 0.4),
             ),
 
           // Bubble + content
@@ -397,7 +398,7 @@ class CommentTile extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF126E06).withOpacity(0.1),
+                    color: const Color(0xFF126E06).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

@@ -174,7 +174,7 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             const CircleAvatar(
                 radius: 20,
-                backgroundColor: const Color(0xFFE8F5E9),
+                backgroundColor: Color(0xFFE8F5E9),
                 child: Icon(
                   Icons.person,
                   size: 30,

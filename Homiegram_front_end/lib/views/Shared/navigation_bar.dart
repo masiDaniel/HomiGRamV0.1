@@ -9,64 +9,76 @@ import 'package:homi_2/views/Tenants/renting_page.dart';
 import 'package:homi_2/views/Shared/search_page.dart';
 import 'package:homi_2/views/landlord/management.dart';
 
-class CustomBottomNavigartion extends StatefulWidget {
-  const CustomBottomNavigartion({super.key});
+class CustomBottomNavigation extends StatefulWidget {
+  const CustomBottomNavigation({super.key});
 
   @override
-  State<CustomBottomNavigartion> createState() => _HomePageState();
+  State<CustomBottomNavigation> createState() => _CustomBottomNavigationState();
 }
 
-class _HomePageState extends State<CustomBottomNavigartion> {
+class _CustomBottomNavigationState extends State<CustomBottomNavigation> {
   int _selectedIndex = 0;
   String? userType;
+
+  final List<Widget> _tenantPages = const [
+    HomePage(),
+    SearchPage(),
+    RentingPage(),
+    ProfilePage(),
+  ];
+
+  final List<Widget> _landlordPages = const [
+    HomePage(),
+    SearchPage(),
+    LandlordManagement(),
+    ProfilePage(),
+  ];
 
   @override
   void initState() {
     super.initState();
-    _loadUserType();
-    _checkUserDetails();
+    _initializeNavigation();
   }
 
-  Future<void> _loadUserType() async {
-    String? type = await UserPreferences.getUserType();
+  Future<void> _initializeNavigation() async {
+    final results = await Future.wait([
+      UserPreferences.getUserType(),
+      UserPreferences.getPhoneNumber(),
+      UserPreferences.getIdNumber(),
+    ]);
+
+    if (!mounted) return;
+
+    final type = results[0] as String?;
+    final phone = results[1] as String?;
+    final idNumber = results[2] as int?;
+
     setState(() {
       userType = type ?? 'tenant';
     });
-  }
-
-  Future<void> _checkUserDetails() async {
-    String? phone = await UserPreferences.getPhoneNumber();
-    int? idNumber = await UserPreferences.getIdNumber();
 
     if (phone == null || phone.isEmpty || idNumber == null) {
       _showUserDetailsDialog(phone, idNumber);
     }
   }
 
-  List<Widget> get _pages {
-    if ((userType ?? 'tenant') == 'landlord') {
-      return const [
-        HomePage(),
-        SearchPage(),
-        // MarketPlace(),
-        LandlordManagement(),
-        ProfilePage(),
-      ];
-    } else {
-      return const [
-        HomePage(),
-        SearchPage(),
-        // MarketPlace(),
-        RentingPage(),
-        ProfilePage(),
-      ];
-    }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
+
+  @override
+  void didUpdateWidget(covariant CustomBottomNavigation oldWidget) {
+    super.didUpdateWidget(oldWidget);
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index);
   }
 
   Future<bool> _onWillPop() async {
@@ -76,12 +88,20 @@ class _HomePageState extends State<CustomBottomNavigartion> {
 
   @override
   Widget build(BuildContext context) {
+    if (userType == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Dynamically rebuild the page each time a tab is selected
+    final List<Widget> pages =
+        (userType == 'landlord') ? _landlordPages : _tenantPages;
+
     return PopScope(
-      onPopInvokedWithResult: (_, __) {
-        _onWillPop();
-      },
+      onPopInvokedWithResult: (_, __) => _onWillPop(),
       child: Scaffold(
-        body: _pages.elementAt(_selectedIndex),
+        body: _buildSelectedPage(pages[_selectedIndex]),
         bottomNavigationBar: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Container(
@@ -135,6 +155,13 @@ class _HomePageState extends State<CustomBottomNavigartion> {
     );
   }
 
+  Widget _buildSelectedPage(Widget page) {
+    return KeyedSubtree(
+      key: ValueKey(_selectedIndex),
+      child: page,
+    );
+  }
+
   void _showUserDetailsDialog(String? phone, int? idNumber) {
     final phoneController = TextEditingController(text: phone ?? '');
     final idController =
@@ -151,7 +178,7 @@ class _HomePageState extends State<CustomBottomNavigartion> {
     final bool needsId = idNumber == null || idNumber == 0;
 
     // Pre-validate fields that already exist
-    if (!needsPhone && RegExp(r'^07\d{8}$').hasMatch(phone!)) {
+    if (!needsPhone && RegExp(r'^07\d{8}$').hasMatch(phone)) {
       isPhoneValid = true;
     }
     if (!needsId && RegExp(r'^\d{8}$').hasMatch(idNumber.toString())) {
@@ -276,7 +303,7 @@ class _HomePageState extends State<CustomBottomNavigartion> {
                             await UserPreferences.savePartialUserData(
                                 updatedData);
 
-                            if (!mounted) return;
+                            if (!context.mounted) return;
                             showCustomSnackBar(context, 'Profile updated!');
                             Navigator.of(context).pop();
                           }

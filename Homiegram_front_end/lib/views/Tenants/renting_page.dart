@@ -64,7 +64,6 @@ class _RentingPageState extends State<RentingPage> {
                   color: Colors.green, strokeWidth: 6.0),
             );
           } else if (snapshot.hasError) {
-            print("this is the error ${snapshot.error}");
             return Center(
               child: Lottie.asset(
                 'assets/animations/notFound.json',

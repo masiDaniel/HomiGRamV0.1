@@ -168,13 +168,14 @@ class AgreementDetailsPage extends StatelessWidget {
             onPressed: () async {
               bool success =
                   await AgreementService().terminateAgreement(agreement.id);
-
+              if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                     content: Text(success
                         ? "Termination request sent"
                         : "Termination failed")),
               );
+
               Navigator.pop(context);
             },
             child:

@@ -8,9 +8,9 @@ import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/get_house_service.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/views/landlord/add_house_info.dart';
-import 'package:homi_2/views/landlord/landlord_house_details.dart';
 import 'package:homi_2/views/landlord/add_house.dart';
+import 'package:homi_2/views/landlord/landlord_house_details.dart';
+
 import 'package:lottie/lottie.dart';
 
 const devUrl = AppConstants.baseUrl;
@@ -134,7 +134,37 @@ class _LandlordManagementState extends State<LandlordManagement> {
             return const Center(
                 child: Text('Error: No data received from server.'));
           } else if (snapshot.data!.isEmpty) {
-            return const Center(child: Text('No houses available.'));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.home_outlined,
+                    size: 80,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'No houses available',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[700],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Add Your Property To Continue.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[500],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
           }
 
           final houses = snapshot.data!;

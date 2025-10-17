@@ -74,9 +74,6 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
   }
 
   String getUserName(int? cartakerId) {
-    // TODO : Loading caretakers id instead of user id, two different models
-    // refactor it to work
-
     final caretaker = users.firstWhere(
       (loc) => loc.userId == cartakerId,
       orElse: () => GerUsers(firstName: "select a user"),
@@ -459,7 +456,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                             border: Border.all(color: borderColor, width: 2),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.08),
+                                color: Colors.black.withValues(alpha: 0.08),
                                 blurRadius: 10,
                                 offset: const Offset(2, 4),
                               ),
@@ -498,7 +495,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                                       size: 18, color: textColor),
                                   const SizedBox(width: 6),
                                   Text(
-                                    '${room.rentAmount}',
+                                    room.rentAmount,
                                     style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       color: textColor,
@@ -513,7 +510,7 @@ class _HouseDetailsPageState extends State<HouseDetailsPage> {
                                 decoration: BoxDecoration(
                                   color: isAvailable
                                       ? const Color(0xFFE8F5E9)
-                                      : Colors.white.withOpacity(0.15),
+                                      : Colors.white.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(

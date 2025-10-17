@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:homi_2/components/my_button.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/components/my_text_field.dart';
-import 'package:homi_2/models/user_signup.dart';
 import 'package:homi_2/services/user_signup_service.dart';
 
 class SignUp extends StatefulWidget {
@@ -50,35 +49,35 @@ class _SignUpPageState extends State<SignUp> {
   }
 
   void _signUserUp() async {
-    if (passwordError != null || confirmPasswordError != null) {
-      return;
-    }
-    setState(() {
-      isLoading = true;
-    });
+    if (passwordError != null || confirmPasswordError != null) return;
+
+    setState(() => isLoading = true);
 
     try {
-      UserSignUp? userSignUp = await fetchUserSignUp(
+      final userSignUp = await fetchUserSignUp(
         firstNameController.text.trim(),
         lastNameController.text.trim(),
         emailController.text.trim(),
         passwordController.text.trim(),
       );
+
       if (!mounted) return;
+
       if (userSignUp != null) {
-        showCustomSnackBar(
-            context, 'Sign Up Successful - Login to your account.');
+        showCustomSnackBar(context, 'Sign Up Successful! Please log in.',
+            type: SnackBarType.success);
         Navigator.pushNamed(context, '/signin');
       } else {
         showCustomSnackBar(context, 'Sign-up failed. Please try again later.',
             type: SnackBarType.warning);
       }
     } catch (e) {
-      showCustomSnackBar(context, 'Error: ${e.toString()}');
+      if (!mounted) return;
+      showCustomSnackBar(context, e.toString(), type: SnackBarType.error);
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
 

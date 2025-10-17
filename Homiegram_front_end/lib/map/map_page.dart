@@ -1,170 +1,198 @@
-// import 'dart:async';
-// import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-// import 'package:flutter/material.dart';
-// import 'package:google_maps_flutter/google_maps_flutter.dart';
-// import 'package:location/location.dart';
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-// class MapPage extends StatefulWidget {
-//   final double destLat;
-//   final double destLng;
+class MapPage extends StatefulWidget {
+  final double? destLat;
+  final double? destLng;
+  final String? houseName;
 
-//   const MapPage({
-//     super.key,
-//     required this.destLat,
-//     required this.destLng,
-//   });
+  const MapPage({
+    super.key,
+    required this.destLat,
+    required this.destLng,
+    this.houseName,
+  });
 
-//   @override
-//   State<MapPage> createState() => _MapPageState();
-// }
+  @override
+  State<MapPage> createState() => _MapPageState();
+}
 
-// class _MapPageState extends State<MapPage> {
-//   final Completer<GoogleMapController> _mapController =
-//       Completer<GoogleMapController>();
+class _MapPageState extends State<MapPage> {
+  final Completer<GoogleMapController> _mapController =
+      Completer<GoogleMapController>();
+  final Location _locationController = Location();
 
-//   final Location _locationController = Location();
+  LatLng? _currentPosition;
+  LatLng? _destination;
 
-//   LatLng? _currentPosition;
-//   late LatLng _destination;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.destLat != null && widget.destLng != null) {
+      _destination = LatLng(widget.destLat!, widget.destLng!);
+      getLocationUpdates();
+    }
+  }
 
-//   Map<PolylineId, Polyline> polylines = {};
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-//   @override
-//   void initState() {
-//     super.initState();
-//     _destination = LatLng(widget.destLat, widget.destLng);
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Map View"),
+        elevation: 0,
+      ),
+      body: widget.destLat == null || widget.destLng == null
+          ? _noDataView(context)
+          : Stack(
+              children: [
+                _currentPosition == null
+                    ? const Center(child: CircularProgressIndicator())
+                    : GoogleMap(
+                        onMapCreated: (GoogleMapController controller) =>
+                            _mapController.complete(controller),
+                        initialCameraPosition: CameraPosition(
+                          target: _destination!,
+                          zoom: 13,
+                        ),
+                        zoomControlsEnabled: false,
+                        markers: {
+                          Marker(
+                            markerId: const MarkerId("destination"),
+                            position: _destination!,
+                            infoWindow: const InfoWindow(title: "Destination"),
+                            icon: BitmapDescriptor.defaultMarkerWithHue(
+                                BitmapDescriptor.hueGreen),
+                          ),
+                          if (_currentPosition != null)
+                            Marker(
+                              markerId: const MarkerId("current"),
+                              position: _currentPosition!,
+                              infoWindow:
+                                  const InfoWindow(title: "You are here"),
+                              icon: BitmapDescriptor.defaultMarkerWithHue(
+                                  BitmapDescriptor.hueAzure),
+                            ),
+                        },
+                        myLocationEnabled: true,
+                        myLocationButtonEnabled: false,
+                      ),
 
-//     getLocationUpdates().then(
-//       (_) => {
-//         getPolylinePoints().then(
-//           (coordinates) => generatePolylineFromPoints(coordinates),
-//         ),
-//       },
-//     );
-//   }
+                // 🧭 Custom floating panel
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  right: 20,
+                  child: _floatingPanel(context, isDark),
+                ),
+              ],
+            ),
+    );
+  }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text("Map Navigation"),
-//         backgroundColor: const Color(0xFF126E06),
-//       ),
-//       body: _currentPosition == null
-//           ? const Center(child: CircularProgressIndicator())
-//           : GoogleMap(
-//               onMapCreated: (GoogleMapController controller) =>
-//                   _mapController.complete(controller),
-//               initialCameraPosition: CameraPosition(
-//                 target: _destination,
-//                 zoom: 13,
-//               ),
-//               markers: {
-//                 if (_currentPosition != null)
-//                   Marker(
-//                     markerId: const MarkerId("current"),
-//                     position: _currentPosition!,
-//                     infoWindow: const InfoWindow(title: "You are here"),
-//                     icon: BitmapDescriptor.defaultMarkerWithHue(
-//                         BitmapDescriptor.hueBlue),
-//                   ),
-//                 Marker(
-//                   markerId: const MarkerId("destination"),
-//                   position: _destination,
-//                   infoWindow: const InfoWindow(title: "Destination"),
-//                 ),
-//               },
-//               polylines: Set<Polyline>.of(polylines.values),
-//               myLocationEnabled: true,
-//               myLocationButtonEnabled: false,
-//             ),
-//       floatingActionButton: _currentPosition == null
-//           ? null
-//           : FloatingActionButton(
-//               backgroundColor: const Color(0xFF126E06),
-//               child: const Icon(Icons.my_location),
-//               onPressed: () {
-//                 _cameraToPosition(_currentPosition!);
-//               },
-//             ),
-//     );
-//   }
+  Widget _noDataView(BuildContext context) {
+    return const Center(
+      child: Text(
+        "No location data available.",
+        style: TextStyle(fontSize: 16, color: Colors.grey),
+      ),
+    );
+  }
 
-//   Future<void> _cameraToPosition(LatLng pos) async {
-//     final GoogleMapController controller = await _mapController.future;
-//     CameraPosition newCameraPosition = CameraPosition(target: pos, zoom: 14);
-//     await controller.animateCamera(
-//       CameraUpdate.newCameraPosition(newCameraPosition),
-//     );
-//   }
+  Widget _floatingPanel(BuildContext context, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[900]!.withValues(alpha: 0.9) : Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: isDark ? Colors.black26 : Colors.grey.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.location_on, color: Color(0xFF126E06), size: 28),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.houseName!,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF126E06),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            icon: const Icon(Icons.directions, color: Colors.white),
+            label: const Text("Open Maps",
+                style: TextStyle(color: Colors.white, fontSize: 15)),
+            onPressed: _openGoogleMaps,
+          ),
+        ],
+      ),
+    );
+  }
 
-//   Future<void> getLocationUpdates() async {
-//     bool serviceEnabled;
-//     PermissionStatus permissionGranted;
+  Future<void> getLocationUpdates() async {
+    bool serviceEnabled = await _locationController.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await _locationController.requestService();
+      if (!serviceEnabled) return;
+    }
 
-//     serviceEnabled = await _locationController.serviceEnabled();
-//     if (!serviceEnabled) {
-//       serviceEnabled = await _locationController.requestService();
-//       if (!serviceEnabled) return;
-//     }
+    PermissionStatus permissionGranted =
+        await _locationController.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await _locationController.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) return;
+    }
 
-//     permissionGranted = await _locationController.hasPermission();
-//     if (permissionGranted == PermissionStatus.denied) {
-//       permissionGranted = await _locationController.requestPermission();
-//       if (permissionGranted != PermissionStatus.granted) return;
-//     }
+    _locationController.onLocationChanged
+        .listen((LocationData currentLocation) async {
+      if (currentLocation.latitude != null &&
+          currentLocation.longitude != null) {
+        setState(() {
+          _currentPosition = LatLng(
+            currentLocation.latitude!,
+            currentLocation.longitude!,
+          );
+        });
+      }
+    });
+  }
 
-//     _locationController.onLocationChanged
-//         .listen((LocationData currentLocation) {
-//       if (currentLocation.latitude != null &&
-//           currentLocation.longitude != null) {
-//         setState(() {
-//           _currentPosition = LatLng(
-//             currentLocation.latitude!,
-//             currentLocation.longitude!,
-//           );
-//         });
-//       }
-//     });
-//   }
+  Future<void> _openGoogleMaps() async {
+    if (_destination == null) return;
 
-//   Future<List<LatLng>> getPolylinePoints() async {
-//     if (_currentPosition == null) return [];
+    final double destLat = _destination!.latitude;
+    final double destLng = _destination!.longitude;
 
-//     List<LatLng> polylineCoordinates = [];
-//     PolylinePoints polylinePoints = PolylinePoints(apiKey: "YOUR_API_KEY_HERE");
+    final url =
+        "https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng&travelmode=driving";
 
-//     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-//       request: PolylineRequest(
-//         origin: PointLatLng(
-//             _currentPosition!.latitude, _currentPosition!.longitude),
-//         destination: PointLatLng(_destination.latitude, _destination.longitude),
-//         mode: TravelMode.driving,
-//       ),
-//     );
-
-//     if (result.points.isNotEmpty) {
-//       for (var point in result.points) {
-//         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-//       }
-//     } else {
-//       print("Error fetching polyline: ${result.errorMessage}");
-//     }
-
-//     return polylineCoordinates;
-//   }
-
-//   void generatePolylineFromPoints(List<LatLng> polylineCoordinates) {
-//     PolylineId id = const PolylineId("route");
-//     Polyline polyline = Polyline(
-//       polylineId: id,
-//       color: Colors.blue,
-//       points: polylineCoordinates,
-//       width: 6,
-//     );
-
-//     setState(() {
-//       polylines[id] = polyline;
-//     });
-//   }
-// }
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Could not open Google Maps.")),
+      );
+    }
+  }
+}

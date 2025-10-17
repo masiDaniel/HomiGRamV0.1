@@ -31,7 +31,6 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       int? userId = await UserPreferences.getUserId();
       return await cartService.getCart(userId);
     } catch (e) {
-      debugPrint("Error loading cart: $e");
       return null;
     }
   }

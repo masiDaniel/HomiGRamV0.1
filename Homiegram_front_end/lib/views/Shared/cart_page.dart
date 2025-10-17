@@ -28,7 +28,6 @@ class _CartScreenState extends State<CartScreen> {
     return await cartService.getCart(userId);
   }
 
-//  TODO creation is not working seamlesly i the frontend
   Future<void> _createCart() async {
     int? userId = await UserPreferences.getUserId();
     if (userId == null) return;
@@ -47,13 +46,12 @@ class _CartScreenState extends State<CartScreen> {
 
       showCustomSnackBar(context, "Creation failed!");
     } catch (e) {
-      debugPrint("Error creating cart: $e");
+      rethrow;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO :  style this page better, meaningful information
     return Scaffold(
       appBar: AppBar(title: const Text("Shopping Cart")),
       body: FutureBuilder<Cart?>(

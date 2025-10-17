@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/services/house_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,6 +20,8 @@ class _EditRoomPageState extends State<EditRoomPage> {
   late TextEditingController sizeController;
   late TextEditingController rentController;
   File? selectedImage;
+  late PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
@@ -28,6 +31,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
         TextEditingController(text: widget.room.noOfBedrooms.toString());
     sizeController = TextEditingController(text: widget.room.sizeInSqMeters);
     rentController = TextEditingController(text: widget.room.rentAmount);
+    _pageController = PageController(initialPage: 0);
   }
 
   @override
@@ -62,10 +66,7 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
       if (!mounted) return;
       Navigator.pop(context, updatedRoom);
-    } catch (e, stackTrace) {
-      debugPrint("Error saving room details: $e");
-      debugPrintStack(stackTrace: stackTrace);
-
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -78,8 +79,6 @@ class _EditRoomPageState extends State<EditRoomPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hasImage = selectedImage != null || widget.room.roomImages.isNotEmpty;
-
     return Scaffold(
         appBar: AppBar(title: const Text("Edit Room")),
         body: SingleChildScrollView(
@@ -87,38 +86,76 @@ class _EditRoomPageState extends State<EditRoomPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 📸 Image Preview Section
-              ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: hasImage
-                    ? selectedImage != null
-                        ? Image.file(
-                            selectedImage!,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                        : Image.network(
-                            widget.room.roomImages,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          )
-                    : Container(
-                        height: 200,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: const Color(0xFF126E06), width: 1),
-                        ),
-                        child: const Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            size: 60,
-                            color: Color(0xFF126E06),
+              SizedBox(
+                height: 360,
+                child: Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    SizedBox(
+                      height: 500,
+                      child: (widget.room.images == null ||
+                              widget.room.images!.isEmpty)
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.image_not_supported,
+                                      size: 80, color: Colors.grey),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    "No images available",
+                                    style: TextStyle(
+                                        color: Colors.grey[600], fontSize: 16),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : PageView.builder(
+                              controller: _pageController,
+                              itemCount: widget.room.images!.length,
+                              onPageChanged: (index) {
+                                setState(() {
+                                  _currentPage = index;
+                                });
+                              },
+                              itemBuilder: (context, index) {
+                                final imageUrl = widget.room.images![index];
+
+                                return SizedBox(
+                                  width: double.infinity,
+                                  child: BlurCachedImage(
+                                    imageUrl: '$devUrl$imageUrl',
+                                    height: 600,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    Positioned(
+                      bottom: 15,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          widget.room.images!.length,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            width: _currentPage == index ? 12 : 8,
+                            height: _currentPage == index ? 12 : 8,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _currentPage == index
+                                  ? Colors.white
+                                  : Colors.white54,
+                            ),
                           ),
                         ),
                       ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 16),

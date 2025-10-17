@@ -172,7 +172,6 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    bool showInitials = currentUserProfilePicture == "N/A";
     final themeProvider = Provider.of<ThemeProvider>(context);
 
     return Scaffold(
@@ -246,8 +245,6 @@ class _ProfilePageState extends State<ProfilePage> {
                         onTap: () {
                           /// TODO: View full profile picture
                           /// store and fetch the profie picture locally.
-                          print(
-                              'Picture: $currentUserProfilePicture, Show initials: $showInitials');
                         },
                         child: CircleAvatar(
                           backgroundColor: const Color.fromARGB(255, 2, 75, 50),
@@ -499,6 +496,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         bool? success = await updateUserInfo(updateData);
 
                         if (success == true) {
+                          if (!context.mounted) return;
                           showDialog(
                             context: context,
                             builder: (context) => AlertDialog(
@@ -523,6 +521,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           );
 
                           await Future.delayed(const Duration(seconds: 2));
+                          if (!context.mounted) return;
                           Navigator.of(context).pop();
                           _logout();
                         } else {

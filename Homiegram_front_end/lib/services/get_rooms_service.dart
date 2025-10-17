@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:dio/dio.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/room.dart';
@@ -22,7 +23,6 @@ Future<List<GetRooms>> fetchRooms() async {
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
-      print("this is the room data $roomData");
 
       try {
         final List<GetRooms> rooms = roomData.map((json) {
@@ -54,12 +54,11 @@ Future<List<RoomWithAgreement>> fetchRoomsWithAgreements() async {
 
     if (response.statusCode == 200) {
       final List<dynamic> roomData = json.decode(response.body);
-      print("room data ${json.decode(response.body)}");
+
       try {
         final List<RoomWithAgreement> rooms = roomData.map((json) {
           return RoomWithAgreement.fromJson(json);
         }).toList();
-        print("tjese are the converted rooms $rooms");
 
         allRoomsAndAgreements = rooms;
       } catch (e) {
@@ -104,24 +103,50 @@ Future<List<GetRooms>> fetchRoomsByHouse(int houseId) async {
   }
 }
 
-Future<String> postRoomsByHouse(int houseId, GetRooms newRoom) async {
+Future<String> postRoomsByHouse(GetRooms newRoom) async {
+  final dio = Dio();
+  FormData formData = FormData();
+
+  // Add text fields
+  formData.fields.add(MapEntry('room_name', newRoom.roomName));
+  formData.fields.add(MapEntry('rent', newRoom.rentAmount.toString()));
+  formData.fields
+      .add(MapEntry('number_of_bedrooms', newRoom.noOfBedrooms.toString()));
+  formData.fields
+      .add(MapEntry('size_in_sq_meters', newRoom.sizeInSqMeters.toString()));
+  formData.fields.add(MapEntry('apartment', newRoom.apartmentID.toString()));
+
+  // Add images if available
+  if (newRoom.images != null && newRoom.images!.isNotEmpty) {
+    for (int i = 0; i < newRoom.images!.length; i++) {
+      String imagePath = newRoom.images![i];
+      var file = await MultipartFile.fromFile(imagePath,
+          filename: imagePath.split('/').last);
+      formData.files.add(MapEntry('image', file)); // Single key 'image' is fine
+    }
+  }
+
   String? token = await getAccessToken();
   try {
-    final response = await http.post(
-      Uri.parse('$devUrl/houses/getRooms/'),
-      headers: {
-        "Content-Type": "application/json",
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode([newRoom.tojson()]),
+    final response = await dio.post(
+      '$devUrl/houses/getRooms/',
+      data: formData,
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
     );
 
-    if (response.statusCode == 201) {
-      return response.body;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return response.data.toString();
     } else {
-      throw Exception('failed to post new room  ${response.statusCode}');
+      throw Exception('Failed with status ${response.statusCode}');
     }
+  } on DioException catch (e) {
+    throw Exception(
+        'Failed to post new room: ${e.response?.data ?? e.message}');
   } catch (e) {
-    rethrow;
+    throw Exception('Unexpected error: $e');
   }
 }

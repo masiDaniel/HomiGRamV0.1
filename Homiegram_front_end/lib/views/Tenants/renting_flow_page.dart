@@ -2,8 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/secure_tokens.dart';
+import 'package:homi_2/services/house_service.dart';
+import 'package:homi_2/views/Tenants/renting_page.dart';
 import 'package:http/http.dart' as http;
+
+const devUrl = AppConstants.baseUrl;
 
 class RentFlowPage extends StatefulWidget {
   final int houseId;
@@ -24,7 +29,22 @@ class _RentFlowPageState extends State<RentFlowPage> {
   double _total = 0.0;
 
   Future<void> startRent() async {
-    setState(() => _isLoading = true);
+    // Helper to safely call setState
+    void safeSetState(VoidCallback fn) {
+      if (mounted) setState(fn);
+    }
+
+    // Helper to show snackbars safely
+    void safeShowSnackBar(String message) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
+    }
+
+    safeSetState(() => _isLoading = true);
+
     try {
       final token = await getAccessToken();
       final response = await http.post(
@@ -41,31 +61,30 @@ class _RentFlowPageState extends State<RentFlowPage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-
-        setState(() {
+        safeSetState(() {
           _agreementData = data["agreement"];
         });
-        _controller.nextPage(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-        );
+
+        if (mounted) {
+          _controller.nextPage(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text("Error: ${response.body} code ${response.statusCode}")),
+        safeShowSnackBar(
+          "Error: ${response.body} code ${response.statusCode}",
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Something went wrong: $e")),
-      );
+      safeShowSnackBar("Something went wrong: $e");
     } finally {
-      setState(() => _isLoading = false);
+      safeSetState(() => _isLoading = false);
     }
   }
 
   Future<void> signAgreement() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     try {
       final token = await getAccessToken();
@@ -90,11 +109,13 @@ class _RentFlowPageState extends State<RentFlowPage> {
           curve: Curves.easeInOut,
         );
       } else {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Error: ${response.body}")),
         );
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Something went wrong: $e")),
       );
@@ -124,6 +145,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
         _total = data["total"];
       });
     } else {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: ${response.body}")),
       );
@@ -145,9 +167,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
             },
             body: jsonEncode({"agreement_id": _agreementData?["id"]}),
           )
-          .timeout(const Duration(seconds: 20)); // prevent hanging requests
-
-      print("Response (${response.statusCode}): ${response.body}");
+          .timeout(const Duration(seconds: 20));
 
       Map<String, dynamic> responseData = {};
       try {
@@ -156,11 +176,10 @@ class _RentFlowPageState extends State<RentFlowPage> {
         responseData = {};
       }
 
-      // ---- SUCCESS CASE ----
       if (response.statusCode == 200 && (responseData['success'] != false)) {
         final message = responseData['message'] ??
             'Payment initiated successfully. Please check your phone.';
-
+        if (!mounted) return;
         await showDialog(
           context: context,
           barrierDismissible: true,
@@ -174,7 +193,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 15,
                     offset: const Offset(0, 8),
                   ),
@@ -218,7 +237,15 @@ class _RentFlowPageState extends State<RentFlowPage> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                              builder: (_) => const RentingPage()),
+                          (Route<dynamic> route) => false,
+                        );
+                      },
                       child: const Text(
                         "OK",
                         style: TextStyle(
@@ -243,7 +270,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
           responseData['error'] ??
           responseData['errors']?['reason'] ??
           "Payment could not be initiated. Please try again.";
-
+      if (!mounted) return;
       await showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -321,7 +348,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -388,10 +415,10 @@ class _RentFlowPageState extends State<RentFlowPage> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       elevation: 0,
                     ),
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.of(context).pop();
-                      // You can send the rating to backend here
-                      print("User rated: $rating stars");
+                      await HouseService.submitRating(
+                          widget.houseId, rating.toInt());
                     },
                     child: const Text(
                       "Submit",
@@ -424,6 +451,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
           'Authorization': 'Bearer $token',
         },
       );
+      if (!mounted) return;
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -698,6 +726,7 @@ class _RentFlowPageState extends State<RentFlowPage> {
                           onPressed: _agreementChecked
                               ? () async {
                                   await initiateStkPush();
+                                  if (!context.mounted) return;
                                   await showRatingDialog(context);
                                 }
                               : null,

@@ -5,7 +5,7 @@ class GetRooms {
   final String sizeInSqMeters;
   final String rentAmount;
   final bool occuiedStatus;
-  final String roomImages;
+
   final List<String>? images;
   final int apartmentID;
   final int tenantId;
@@ -18,7 +18,6 @@ class GetRooms {
       required this.sizeInSqMeters,
       required this.rentAmount,
       required this.occuiedStatus,
-      required this.roomImages,
       this.images,
       required this.apartmentID,
       required this.tenantId,
@@ -38,7 +37,6 @@ class GetRooms {
         sizeInSqMeters: json['size_in_sq_meters'],
         rentAmount: json['rent'],
         occuiedStatus: json['occupied'] ?? false,
-        roomImages: json['room_images'] ?? '',
         images: images,
         apartmentID: json['apartment'] ?? 0,
         tenantId: json['tenant'] ?? 0,

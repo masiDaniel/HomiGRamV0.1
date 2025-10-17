@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homi_2/components/api_client.dart';
 import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/models/room.dart';
+import 'package:homi_2/views/landlord/edit_room_page.dart';
 
 class RoomDetailsPage extends StatefulWidget {
   final GetRooms room;
@@ -30,9 +31,6 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final hasImages =
-        widget.room.images != null && widget.room.images!.isNotEmpty;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -44,73 +42,76 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🖼️ Image Carousel
             SizedBox(
-              height: 300,
-              child: hasImages
-                  ? Stack(
-                      alignment: Alignment.bottomCenter,
-                      children: [
-                        PageView.builder(
-                          controller: _pageController,
-                          itemCount: widget.room.images!.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentPage = index;
-                            });
-                          },
-                          itemBuilder: (context, index) {
-                            final imageUrl = widget.room.images![index];
-                            return BlurCachedImage(
-                              imageUrl: '$devUrl$imageUrl',
-                              height: 300,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                            );
-                          },
-                        ),
-                        // 🟢 Page Indicators
-                        Positioned(
-                          bottom: 10,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              widget.room.images!.length,
-                              (index) => AnimatedContainer(
-                                duration: const Duration(milliseconds: 300),
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                width: _currentPage == index ? 12 : 8,
-                                height: _currentPage == index ? 12 : 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _currentPage == index
-                                      ? Colors.white
-                                      : Colors.white54,
+              height: 360,
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  SizedBox(
+                    height: 500,
+                    child: (widget.room.images == null ||
+                            widget.room.images!.isEmpty)
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.image_not_supported,
+                                    size: 80, color: Colors.grey),
+                                const SizedBox(height: 10),
+                                Text(
+                                  "No images available",
+                                  style: TextStyle(
+                                      color: Colors.grey[600], fontSize: 16),
                                 ),
-                              ),
+                              ],
                             ),
+                          )
+                        : PageView.builder(
+                            controller: _pageController,
+                            itemCount: widget.room.images!.length,
+                            onPageChanged: (index) {
+                              setState(() {
+                                _currentPage = index;
+                              });
+                            },
+                            itemBuilder: (context, index) {
+                              final imageUrl = widget.room.images![index];
+
+                              return SizedBox(
+                                width: double.infinity,
+                                child: BlurCachedImage(
+                                  imageUrl: '$devUrl$imageUrl',
+                                  height: 600,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                  Positioned(
+                    bottom: 15,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        widget.room.images!.length,
+                        (index) => AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          width: _currentPage == index ? 12 : 8,
+                          height: _currentPage == index ? 12 : 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _currentPage == index
+                                ? Colors.white
+                                : Colors.white54,
                           ),
                         ),
-                      ],
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.image_not_supported,
-                              size: 80, color: Colors.grey),
-                          const SizedBox(height: 10),
-                          Text(
-                            "No images available",
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 16,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -155,8 +156,12 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/edit-room',
-                      arguments: widget.room);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditRoomPage(room: widget.room),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.edit, color: Colors.white),
                 label: const Text(

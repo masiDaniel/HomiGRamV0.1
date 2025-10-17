@@ -32,7 +32,6 @@ class _FilterSheetState extends State<FilterSheetHouses> {
   }
 
   @override
-  // TODO :  map everything in alphabetical order, amenities and locations
   Widget build(BuildContext context) {
     final hasLocations = widget.locations.isNotEmpty;
     final hasAmenities = widget.amenities.isNotEmpty;
@@ -155,19 +154,23 @@ class _FilterSheetState extends State<FilterSheetHouses> {
                 fontSize: 18,
               ),
             ),
-
-            // TODO :  have the slider divided for 500 not on 1
             child: RangeSlider(
               values: rentRange,
               min: 2000,
               max: 50000,
-              divisions: 1000,
+              divisions: ((50000 - 2000) / 100).round(), // makes it step by 100
               labels: RangeLabels(
                 "${rentRange.start.toInt()}",
                 "${rentRange.end.toInt()}",
               ),
               onChanged: (values) {
-                setState(() => rentRange = values);
+                // Snap to nearest 100
+                setState(() {
+                  rentRange = RangeValues(
+                    (values.start / 100).round() * 100,
+                    (values.end / 100).round() * 100,
+                  );
+                });
               },
             ),
           ),

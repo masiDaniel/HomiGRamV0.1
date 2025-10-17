@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/secure_tokens.dart';
@@ -21,32 +23,42 @@ const Map<String, String> headers = {
 
 const devUrlTest = AppConstants.baseUrl;
 
-Future fetchUserSignIn(
+Future<UserRegistration?> fetchUserSignIn(
     BuildContext context, String username, String password) async {
   try {
-    final response = await http.post(
-      Uri.parse("$devUrlTest/accounts/login/"),
-      headers: headers,
-      body: jsonEncode({
-        "email": username,
-        "password": password,
-      }),
-    );
+    final response = await http
+        .post(
+          Uri.parse("$devUrlTest/accounts/login/"),
+          headers: headers,
+          body: jsonEncode({
+            "email": username,
+            "password": password,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
 
     if (response.statusCode == 200) {
       final userData = json.decode(response.body);
-      print("this is the user data $userData");
 
       await UserPreferences.saveUserData(userData);
       saveTokens(userData['access'], userData['refresh']);
 
       return UserRegistration.fromJSon(userData);
+    } else if (response.statusCode == 400 || response.statusCode == 401) {
+      // Invalid credentials
+      return null;
+    } else {
+      throw Exception("Server error: ${response.statusCode}");
     }
+  } on SocketException {
+    throw const SocketException(
+        "No internet connection. Please check your network.");
+  } on TimeoutException {
+    throw TimeoutException("Connection timed out. Please try again.");
   } catch (e) {
-    log("Error during sign-in: $e");
-    return null;
+    log("Unexpected error during sign-in: $e");
+    throw Exception("Unexpected error occurred. Please try again later.");
   }
-  return null;
 }
 
 Future updateUserInfo(Map<String, dynamic> updateData) async {

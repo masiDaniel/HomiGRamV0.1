@@ -83,12 +83,12 @@ class PostHouseService {
           },
         ),
       );
+      print("this is the response ${response.data}");
       if (response.statusCode == 200) {
         return true;
       }
       return true;
-    } on DioException catch (e) {
-      print('Failed to post house: ${e.response?.data}');
+    } on DioException {
       return false;
     }
   }

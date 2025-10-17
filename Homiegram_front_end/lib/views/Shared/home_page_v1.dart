@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/chat.dart';
@@ -82,6 +81,8 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> fetchUsers() async {
+    if (!mounted) return;
+
     setState(() {
       isLoading = true;
     });
@@ -102,12 +103,13 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
-  void dispose() {
-    _timer?.cancel();
-    _pageController.dispose();
-    _videoController?.dispose();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+  }
 
-    super.dispose();
+  @override
+  void didUpdateWidget(covariant HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
   }
 
   void _startAutoScroll() {
@@ -313,8 +315,8 @@ class _HomePageState extends State<HomePage> {
                       itemBuilder: (context, index) {
                         final chat = chatRooms[index];
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            await Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (_) => ChatPage(
@@ -562,6 +564,8 @@ class _HomePageState extends State<HomePage> {
                                           final chatRoom =
                                               await getOrCreatePrivateChatRoom(
                                                   user.userId!);
+                                          if (!context.mounted) return;
+
                                           Navigator.pop(context);
 
                                           Navigator.push(
@@ -596,6 +600,15 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    _videoController?.dispose();
+
+    super.dispose();
   }
 }
 

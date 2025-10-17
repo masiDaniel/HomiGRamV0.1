@@ -254,7 +254,7 @@ class BookmarkedHousesPageState extends State<BookmarkedHousesPage> {
       setState(() {
         _bookmarkedHousesFuture = fetchBookmarkedHouses();
       });
-      if (!mounted) return;
+      if (!context.mounted) return;
       _showBookmarkRemovedDialog(context);
     } catch (error, stackTrace) {
       log("Error occurred while removing bookmark: $error");

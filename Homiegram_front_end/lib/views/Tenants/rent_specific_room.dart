@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:homi_2/components/api_client.dart';
 import 'package:homi_2/components/blured_image.dart';
+import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/views/Tenants/renting_flow_page.dart';
+
+const devUrl = AppConstants.baseUrl;
 
 class RoomDetailsScreen extends StatefulWidget {
   final GetRooms room;
@@ -196,7 +198,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                                 color: Colors.grey.shade300,
                               ),
                               _infoItem(Icons.square_foot_outlined,
-                                  "${widget.room.sizeInSqMeters}", "m²"),
+                                  widget.room.sizeInSqMeters, "m²"),
                               Container(
                                 height: 40,
                                 width: 1.2,
@@ -244,6 +246,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                         await UserPreferences.getUserType();
 
                     if (userTypeShared == "landlord") {
+                      if (!context.mounted) return;
                       showDialog(
                         context: context,
                         builder: (BuildContext context) {
@@ -265,6 +268,7 @@ class _RoomDetailsScreenState extends State<RoomDetailsScreen> {
                         },
                       );
                     } else {
+                      if (!context.mounted) return;
                       Navigator.push(
                         context,
                         MaterialPageRoute(

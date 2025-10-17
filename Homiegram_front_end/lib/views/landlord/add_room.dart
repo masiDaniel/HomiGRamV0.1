@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/models/room.dart';
 import 'package:homi_2/services/get_rooms_service.dart';
+import 'package:image_picker/image_picker.dart';
 
 class RoomInputPage extends StatefulWidget {
   final int apartmentId;
@@ -22,6 +25,9 @@ class RoomInputPageState extends State<RoomInputPage> {
   final TextEditingController _sizeController = TextEditingController();
   final TextEditingController _rentController = TextEditingController();
 
+  final List<String> _imageUrls = [];
+  final ImagePicker _picker = ImagePicker();
+
   Future<void> _submitRoom() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -34,13 +40,13 @@ class RoomInputPageState extends State<RoomInputPage> {
       sizeInSqMeters: _sizeController.text.trim(),
       rentAmount: _rentController.text.trim(),
       occuiedStatus: false,
-      roomImages: '',
+      images: _imageUrls,
       apartmentID: widget.apartmentId,
       tenantId: 0,
       rentStatus: false,
     );
     try {
-      final response = await postRoomsByHouse(widget.apartmentId, newRoom);
+      final response = await postRoomsByHouse(newRoom);
 
       if (!mounted) return;
       setState(() => isLoading = false);
@@ -63,6 +69,7 @@ class RoomInputPageState extends State<RoomInputPage> {
     _numberOfBedroomsController.clear();
     _sizeController.clear();
     _rentController.clear();
+    _imageUrls.clear();
   }
 
   InputDecoration _inputDecoration(String label) => InputDecoration(
@@ -74,6 +81,30 @@ class RoomInputPageState extends State<RoomInputPage> {
           borderSide: BorderSide(color: Color(0xFF105A01), width: 2),
         ),
       );
+
+  Future<void> _pickImages() async {
+    if (_imageUrls.length >= 4) {
+      showCustomSnackBar(context, 'You can only select up to 4 images.');
+      return;
+    }
+
+    final List<XFile> images = await _picker.pickMultiImage();
+
+    final int remainingSlots = 4 - _imageUrls.length;
+
+    setState(() {
+      _imageUrls.addAll(
+        images.take(remainingSlots).map((file) => file.path),
+      );
+    });
+
+    if (!mounted) return;
+
+    if (images.length > remainingSlots) {
+      showCustomSnackBar(
+          context, 'Some images were not added due to the 4-image limit.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -138,6 +169,64 @@ class RoomInputPageState extends State<RoomInputPage> {
                 },
               ),
               const SizedBox(height: 24),
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF105A01),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: _pickImages,
+                icon: const Icon(Icons.image, color: Colors.white),
+                label: const Text(
+                  'Select Images',
+                  style: TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Show Selected Images
+              _imageUrls.isNotEmpty
+                  ? Wrap(
+                      spacing: 8.0,
+                      runSpacing: 8.0,
+                      children: _imageUrls.take(16).map((url) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            alignment: Alignment.topRight,
+                            children: [
+                              Image.file(
+                                File(url),
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.cover,
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _imageUrls.remove(url);
+                                    });
+                                  },
+                                  child: const CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Colors.red,
+                                    child: Icon(Icons.close,
+                                        size: 16, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    )
+                  : const Center(child: Text('No images selected.')),
 
               // Submit Button
               ElevatedButton(

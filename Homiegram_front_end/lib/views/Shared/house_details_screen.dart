@@ -4,19 +4,15 @@ import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/components/constants.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/components/star_ratings.dart';
+import 'package:homi_2/map/map_page.dart';
 import 'package:homi_2/models/amenities.dart';
-import 'package:homi_2/models/bookmark.dart';
 import 'package:homi_2/models/comments.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/comments_service_refined.dart';
-import 'package:homi_2/services/get_rooms_service.dart';
+import 'package:homi_2/services/house_service.dart';
 import 'package:homi_2/services/post_comments_service.dart';
 import 'package:homi_2/services/comments_service.dart';
-import 'package:homi_2/services/fetch_bookmarks.dart';
-import 'package:homi_2/services/get_amenities.dart';
-import 'package:homi_2/services/get_house_service.dart';
-import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
 import 'package:homi_2/views/Shared/comments_screen.dart';
 import 'package:homi_2/views/Shared/rooms_by_type.dart';
@@ -57,23 +53,8 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
     _fetchComments();
     _loadUserId();
     _fetchLocationsAndAmenities();
-    if (widget.house.rooms != null && widget.house.rooms!.isNotEmpty) {
-      roomCategories = widget.house.rooms!.keys.toList();
-      roomCategories.sort((a, b) => int.parse(a).compareTo(int.parse(b)));
-    } else {
-      roomCategories = [];
-    }
-    bookmarkedHousesFuture = fetchBookmarkedHouses();
-
-    // TODO : have this as a function and call it here
-    bookmarkedHousesFuture.then((bookmarkedHouses) {
-      setState(() {
-        isBookmarked = bookmarkedHouses
-            .any((house) => house.houseId == widget.house.houseId);
-      });
-    }).catchError((error) {
-      debugPrint("Error fetching bookmarked houses: $error");
-    });
+    _initRoomCategories();
+    _loadBookmarkedState();
   }
 
   Future<void> _loadUserId() async {
@@ -91,7 +72,7 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
   }
 
   void addComment(String comment) async {
-    await PostComments.postComment(
+    await CommentsService.postComment(
       houseId: widget.house.houseId.toString(),
       userId: userId.toString(),
       comment: comment,
@@ -102,8 +83,22 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
     await _fetchComments();
   }
 
-  /// how should i refactor this?
-  /// have it in a seperate file?
+  void _initRoomCategories() {
+    roomCategories = HouseService.getRoomCategories(widget.house);
+  }
+
+  Future<void> _loadBookmarkedState() async {
+    final userId = await UserPreferences.getUserId();
+    final bookmarkedHouses = await HouseService.fetchBookmarkedHouses(userId);
+
+    if (!mounted) return;
+
+    setState(() {
+      isBookmarked = bookmarkedHouses
+          .any((house) => house.houseId == widget.house.houseId);
+    });
+  }
+
   Future<void> deleteComment(int commentId) async {
     try {
       final statusCode = await CommentService.deleteComment(commentId);
@@ -128,31 +123,12 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
     }
   }
 
-  Map<int, bool> bookmarkedHouses = {};
-
-  Future<List<GetHouse>> fetchBookmarkedHouses() async {
-    int? id = await UserPreferences.getUserId();
-
-    final bookmarks = await fetchBookmarks();
-    List<GetHouse> allHouses = await fetchHouses();
-
-    final houseIdsForCurrentUser = bookmarks
-        .where((bookmark) => bookmark.user == id)
-        .map((bookmark) => bookmark.house)
-        .toList();
-
-    List<GetHouse> filteredHouses = allHouses.where((house) {
-      return houseIdsForCurrentUser.contains(house.houseId);
-    }).toList();
-
-    return filteredHouses;
-  }
-
   Future<void> onReact(int commentId, String action) async {
     final statusCode = await CommentService.reactToComment(
       commentId: commentId,
       action: action,
     );
+    if (!mounted) return;
     if (statusCode == 200) {
       setState(() {});
     } else {
@@ -163,30 +139,18 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
 
   Future<void> _fetchLocationsAndAmenities() async {
     try {
-      List<Locations> fetchedLocations = await fetchLocations();
-      List<Amenities> fetchedAmenities = await fetchAmenities();
-      List<Amenities> availableAmenities = fetchedAmenities
-          .where((amenity) => widget.house.amenities.contains(amenity.id))
-          .toList();
+      final fetchedLocations =
+          await HouseService.fetchHouseLocations(widget.house.houseId);
+      final fetchedAmenities =
+          await HouseService.fetchHouseAmenities(widget.house);
 
       setState(() {
         locations = fetchedLocations;
-        amenities = availableAmenities;
+        amenities = fetchedAmenities;
       });
     } catch (e) {
       log('error fetching locations!');
     }
-  }
-
-  String getLocationName(int locationId) {
-    final location = locations.firstWhere(
-      (loc) => loc.locationId == locationId,
-      orElse: () => Locations(
-        locationId: 0,
-        area: "unknown",
-      ),
-    );
-    return '${location.area}, ${location.town}, ${location.county}';
   }
 
   @override
@@ -332,7 +296,7 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                              'Location ${getLocationName(widget.house.locationDetail!)}',
+                              'Location ${HouseService.getLocationName(locationId: widget.house.locationDetail!, locations: locations)}',
                               style: const TextStyle(fontSize: 16)),
                         ),
                       ],
@@ -340,36 +304,37 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
                     const SizedBox(
                       height: 5,
                     ),
-                    // OutlinedButton.icon(
-                    //   onPressed: () {
-                    //     // Navigator.push(
-                    //     //   context,
-                    //     //   MaterialPageRoute(
-                    //     //     builder: (context) => MapPage(
-                    //     //       destLat: widget.house.latitude!,
-                    //     //       destLng: widget.house.longitude!,
-                    //     //     ),
-                    //     //   ),
-                    //     // );
-                    //   },
-                    //   label: const Text(
-                    //     "Check Map Location",
-                    //     style: TextStyle(
-                    //       color: Color(0xFF126E06),
-                    //       fontWeight: FontWeight.w600,
-                    //     ),
-                    //   ),
-                    //   style: OutlinedButton.styleFrom(
-                    //     side: const BorderSide(
-                    //         color: Color(0xFF126E06), width: 1.2),
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(10),
-                    //     ),
-                    //     padding: const EdgeInsets.symmetric(
-                    //         horizontal: 14, vertical: 10),
-                    //     textStyle: const TextStyle(fontSize: 14),
-                    //   ),
-                    // ),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MapPage(
+                              destLat: widget.house.latitude!,
+                              destLng: widget.house.longitude!,
+                              houseName: widget.house.name,
+                            ),
+                          ),
+                        );
+                      },
+                      label: const Text(
+                        "Check Map Location",
+                        style: TextStyle(
+                          color: Color(0xFF126E06),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: Color(0xFF126E06), width: 1.2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 10),
+                        textStyle: const TextStyle(fontSize: 14),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -471,72 +436,20 @@ class _HouseDetailsScreenState extends State<SpecificHouseDetailsScreen> {
           child: Row(
             children: [
               ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: have this in a different file/function
-                  int houseId = widget.house.houseId;
-
-                  if (isBookmarked) {
-                    PostBookmark.removeBookmark(houseId: houseId).then((_) {
-                      setState(() {
-                        isBookmarked = false;
-                      });
-
-                      if (!mounted) return;
-
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Bookmark Removed'),
-                            content: const Text(
-                                'This house has been removed from your bookmarks.'),
-                            actions: [
-                              TextButton(
-                                style: const ButtonStyle(
-                                  backgroundColor:
-                                      WidgetStatePropertyAll(Color(0x95154D07)),
-                                ),
-                                onPressed: Navigator.of(context).pop,
-                                child: const Text('OK',
-                                    style: TextStyle(color: Colors.white)),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }).catchError((error) {
-                      log("Error occurred while removing bookmark: $error");
+                onPressed: () async {
+                  try {
+                    final newBookmarkState = await HouseService.toggleBookmark(
+                      houseId: widget.house.houseId,
+                      currentlyBookmarked: isBookmarked,
+                      context: context,
+                      houseName: widget.house.name,
+                    );
+                    if (!mounted) return;
+                    setState(() {
+                      isBookmarked = newBookmarkState;
                     });
-                  } else {
-                    PostBookmark.postBookmark(houseId: houseId).then((_) {
-                      setState(() {
-                        isBookmarked = true;
-                      });
-
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Bookmarked'),
-                            content: Text(
-                                '${widget.house.name} has been added to your bookmarks.'),
-                            actions: [
-                              TextButton(
-                                style: const ButtonStyle(
-                                  backgroundColor:
-                                      WidgetStatePropertyAll(Color(0x95154D07)),
-                                ),
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('OK',
-                                    style: TextStyle(color: Colors.white)),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }).catchError((error) {
-                      log("Error occurred while bookmarking: $error");
-                    });
+                  } catch (e) {
+                    log("Error: $e");
                   }
                 },
                 icon: Icon(

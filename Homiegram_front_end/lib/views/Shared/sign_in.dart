@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:homi_2/components/my_button.dart';
 import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/components/my_text_field.dart';
-import 'package:homi_2/models/user_signin.dart';
 import 'package:homi_2/services/user_sigin_service.dart';
 import 'package:homi_2/views/Shared/navigation_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,12 +22,6 @@ class SignInState extends State<SignIn> {
   bool _isLoading = false;
   bool _rememberMe = false;
 
-  /// this is a function that takes the input from the textfields and processes it
-  /// once processed it calls the fetchUserRegistration with email and password as required parameters
-  /// it stores the value returned in the userRegistration object and redirects the user to the homepage if succesful
-  /// questions - (userRegistration class object?  what does the ? mean and do?)
-  ///
-
   @override
   void initState() {
     super.initState();
@@ -35,62 +29,97 @@ class SignInState extends State<SignIn> {
   }
 
   void _signIn() async {
-    String email = _emailController.text.trim();
-    String password = _passwordController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
 
+    // Basic email validation
     bool isValidEmail(String email) {
       final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
       return emailRegex.hasMatch(email);
     }
 
-    if (email.isNotEmpty && password.isNotEmpty && isValidEmail(email)) {
-      setState(() {
-        _isLoading = true;
-      });
-      try {
-        UserRegistration? userRegistration =
-            await fetchUserSignIn(context, email, password)
-                .timeout(const Duration(seconds: 10), onTimeout: () {
-          throw TimeoutException("Connection timed out. Please try again.");
-        });
-        print("user registration $userRegistration");
-        if (userRegistration != null) {
-          if (!mounted) return;
+    // Input validation
+    if (email.isEmpty || password.isEmpty) {
+      showCustomSnackBar(
+        context,
+        'Please enter both email and password.',
+        type: SnackBarType.warning,
+      );
+      return;
+    }
 
-          if (!mounted) return;
-          {
-            _saveCredentials();
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const CustomBottomNavigartion()),
-              (Route<dynamic> route) => false,
-            );
-          }
-        } else {
-          if (!mounted) return;
+    if (!isValidEmail(email)) {
+      showCustomSnackBar(
+        context,
+        'Please enter a valid email address.',
+        type: SnackBarType.warning,
+      );
+      return;
+    }
 
-          showCustomSnackBar(context, 'Invalid email or password',
-              type: SnackBarType.error);
-        }
-      } on TimeoutException catch (e) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Attempt sign-in with a timeout
+      final userRegistration =
+          await fetchUserSignIn(context, email, password).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException(
+          "Connection timed out. Please check your internet connection and try again.",
+        ),
+      );
+
+      if (!mounted) return;
+
+      // Successful sign-in
+      if (userRegistration != null) {
+        await _saveCredentials();
         if (!mounted) return;
-        showCustomSnackBar(context, e.message ?? 'Request timed out',
-            type: SnackBarType.warning);
-      } catch (e) {
-        if (!mounted) return;
 
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CustomBottomNavigation(),
+          ),
+          (route) => false,
+        );
+      } else {
+        // Invalid credentials
         showCustomSnackBar(
-            context, 'An error occurred. Please try again later.',
-            type: SnackBarType.error);
-      } finally {
+          context,
+          'Invalid email or password. Please try again.',
+          type: SnackBarType.error,
+        );
+      }
+    } on TimeoutException catch (e) {
+      if (!mounted) return;
+      showCustomSnackBar(
+        context,
+        e.message ?? 'Request timed out. Please try again later.',
+        type: SnackBarType.warning,
+      );
+    } on SocketException {
+      if (!mounted) return;
+      showCustomSnackBar(
+        context,
+        'Unable to reach the server. Please check your internet connection.',
+        type: SnackBarType.warning,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      showCustomSnackBar(
+        context,
+        'An unexpected error occurred. Please try again later.',
+        type: SnackBarType.error,
+      );
+    } finally {
+      if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-    } else {
-      showCustomSnackBar(context, 'Please enter a valid email and password',
-          type: SnackBarType.warning);
     }
   }
 

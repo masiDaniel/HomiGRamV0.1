@@ -373,8 +373,10 @@ class _MarketPlaceState extends State<MarketPlace> {
                     'owner': id,
                     'image': _selectedImage,
                   };
+                  if (!context.mounted) return;
 
                   postBusiness(businessData, context).then((success) {
+                    if (!context.mounted) return;
                     if (success) {
                       showDialog(
                         context: context,
