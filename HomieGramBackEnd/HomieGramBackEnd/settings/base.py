@@ -101,13 +101,6 @@ MEDIA_URL = '/media/'
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# # DRF + Knox
-# REST_FRAMEWORK = {
-#     "DEFAULT_AUTHENTICATION_CLASSES": ("knox.auth.TokenAuthentication",),
-#     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
-# }
-# REST_KNOX = {"TOKEN_TTL": None}
-
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -116,11 +109,11 @@ REST_FRAMEWORK = {
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),   # short-lived
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),      # longer-lived
-    'ROTATE_REFRESH_TOKENS': True,                    # issue new refresh token when used
-    'BLACKLIST_AFTER_ROTATION': True,                 # blacklist old refresh tokens
-    'AUTH_HEADER_TYPES': ('Bearer',),                 # use Authorization: Bearer <token>
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),   
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),   
+    'ROTATE_REFRESH_TOKENS': True,                   
+    'BLACKLIST_AFTER_ROTATION': True,                
+    'AUTH_HEADER_TYPES': ('Bearer',),                 
 }
 
 # Channels
@@ -133,8 +126,17 @@ CHANNEL_LAYERS = {
 }
 
 import os
+from pathlib import Path
 
-LOGGING_DIR = '/home/dan/HomiGRamV0.1/HomieGramBackEnd/logs'
+# Detect environment for flexibility
+DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
+
+# Use environment variable for logging dir, or fallback to a safe local directory
+if DJANGO_ENV == "production":
+    LOGGING_DIR = '/home/dan/HomiGRamV0.1/HomieGramBackEnd/logs'
+else:
+    LOGGING_DIR = Path(BASE_DIR) / "logs"
+
 os.makedirs(LOGGING_DIR, exist_ok=True)
 
 LOGGING = {
@@ -160,10 +162,10 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['file', 'console'],
-            'level': 'ERROR',  # You can also use DEBUG for development
+            'level': 'ERROR' if DJANGO_ENV == 'production' else 'DEBUG',
             'propagate': True,
         },
-        '': {  # root logger
+        '': { 
             'handlers': ['file', 'console'],
             'level': 'INFO',
         },
