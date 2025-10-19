@@ -117,9 +117,10 @@ class DatabaseHelper {
     _notifyChatRooms();
   }
 
-  // Insert or update message
+// Insert or update message
   Future<void> insertOrUpdateMessage(Message message, int chatroomId) async {
     final db = await database;
+
     await db.insert(
       'messages',
       {
@@ -131,6 +132,20 @@ class DatabaseHelper {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+
+    // Update the chatroom’s last message
+    await db.update(
+      'chatrooms',
+      {
+        'last_message': json.encode(message.toJson()),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [chatroomId],
+    );
+
+    // Notify listeners
+    await _notifyChatRooms();
   }
 
   // Get all chatrooms

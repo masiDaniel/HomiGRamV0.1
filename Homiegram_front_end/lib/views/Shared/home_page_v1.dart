@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:homi_2/chat%20feature/DB/chat_db_helper.dart';
 import 'package:homi_2/components/constants.dart';
-import 'package:homi_2/components/my_snackbar.dart';
 import 'package:homi_2/components/secure_tokens.dart';
 import 'package:homi_2/models/ads.dart';
 import 'package:homi_2/models/chat.dart';
@@ -294,6 +293,7 @@ class _HomePageState extends State<HomePage> {
                 child: StreamBuilder<List<ChatRoom>>(
                   stream: chatRoomsStream,
                   builder: (context, snapshot) {
+                    print("Stream emitted new data!");
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return _buildChatShimmer();
                     } else if (snapshot.hasError) {

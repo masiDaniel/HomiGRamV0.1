@@ -4,7 +4,6 @@ import 'package:homi_2/providers/user_provider.dart';
 import 'package:homi_2/services/theme_provider.dart';
 import 'package:homi_2/views/Shared/about_app.dart';
 import 'package:homi_2/views/Shared/splash_screen.dart';
-import 'package:homi_2/views/Shared/video_splash_screen.dart';
 import 'package:homi_2/views/Shared/navigation_bar.dart';
 import 'package:homi_2/views/Shared/search_page.dart';
 import 'package:homi_2/views/landlord/management.dart';

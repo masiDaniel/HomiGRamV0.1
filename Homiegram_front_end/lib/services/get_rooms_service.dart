@@ -113,8 +113,10 @@ Future<String> postRoomsByHouse(int houseId, GetRooms newRoom) async {
         "Content-Type": "application/json",
         'Authorization': 'Bearer $token',
       },
-      body: jsonEncode([newRoom.tojson()]),
+      body: jsonEncode(newRoom.tojson()),
     );
+
+    print(" this is the response${response.body}");
 
     if (response.statusCode == 201) {
       return response.body;

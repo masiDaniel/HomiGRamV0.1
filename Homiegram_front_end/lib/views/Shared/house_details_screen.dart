@@ -10,7 +10,6 @@ import 'package:homi_2/models/comments.dart';
 import 'package:homi_2/models/get_house.dart';
 import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/comments_service_refined.dart';
-import 'package:homi_2/services/get_rooms_service.dart';
 import 'package:homi_2/services/post_comments_service.dart';
 import 'package:homi_2/services/comments_service.dart';
 import 'package:homi_2/services/fetch_bookmarks.dart';

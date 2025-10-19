@@ -139,7 +139,6 @@ class RoomInputPageState extends State<RoomInputPage> {
               ),
               const SizedBox(height: 24),
 
-              // Submit Button
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF105A01),

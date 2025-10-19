@@ -7,7 +7,7 @@ def get_safe_group_name(name: str, unique_id: int = None) -> str:
 
     If unique_id is provided, it appends it to ensure uniqueness.
     """
-    safe_name = slugify(name)  # converts "My House Name" -> "my-house-name"
+    safe_name = slugify(name) 
 
     if unique_id is not None:
         safe_name = f"{safe_name}-{unique_id}-official"

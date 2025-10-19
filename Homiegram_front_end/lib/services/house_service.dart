@@ -84,16 +84,26 @@ class HouseService {
 
     if (imagePath != null) {
       request.files.add(
-        await http.MultipartFile.fromPath('room_images', imagePath),
+        await http.MultipartFile.fromPath(
+          'images',
+          imagePath,
+        ),
       );
     }
 
     request.headers['Authorization'] = 'Bearer $token';
+    print('>>> REQUEST DEBUG <<<');
+    print('URL: ${request.url}');
+    print('METHOD: ${request.method}');
+    print('HEADERS: ${request.headers}');
+    print('FIELDS: ${request.fields}');
+    print('FILES: ${request.files.map((f) => f.filename).toList()}');
 
     final response = await request.send();
 
     if (response.statusCode == 200) {
       var responseBody = await response.stream.bytesToString();
+      print("this is the response $responseBody");
       final updatedJson = json.decode(responseBody);
       return GetRooms.fromJSon(updatedJson);
     } else {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:homi_2/components/api_client.dart';
 import 'package:homi_2/components/blured_image.dart';
 import 'package:homi_2/models/room.dart';
+import 'package:homi_2/views/landlord/edit_room_page.dart';
 
 class RoomDetailsPage extends StatefulWidget {
   final GetRooms room;
@@ -155,8 +156,12 @@ class _RoomDetailsPageState extends State<RoomDetailsPage> {
                   ),
                 ),
                 onPressed: () {
-                  Navigator.pushNamed(context, '/edit-room',
-                      arguments: widget.room);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditRoomPage(room: widget.room),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.edit, color: Colors.white),
                 label: const Text(

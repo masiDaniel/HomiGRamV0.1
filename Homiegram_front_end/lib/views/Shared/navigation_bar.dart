@@ -151,7 +151,7 @@ class _HomePageState extends State<CustomBottomNavigartion> {
     final bool needsId = idNumber == null || idNumber == 0;
 
     // Pre-validate fields that already exist
-    if (!needsPhone && RegExp(r'^07\d{8}$').hasMatch(phone!)) {
+    if (!needsPhone && RegExp(r'^07\d{8}$').hasMatch(phone)) {
       isPhoneValid = true;
     }
     if (!needsId && RegExp(r'^\d{8}$').hasMatch(idNumber.toString())) {

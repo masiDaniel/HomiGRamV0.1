@@ -8,7 +8,6 @@ import 'package:homi_2/models/locations.dart';
 import 'package:homi_2/services/get_house_service.dart';
 import 'package:homi_2/services/get_locations.dart';
 import 'package:homi_2/services/user_data.dart';
-import 'package:homi_2/views/landlord/add_house_info.dart';
 import 'package:homi_2/views/landlord/landlord_house_details.dart';
 import 'package:homi_2/views/landlord/add_house.dart';
 import 'package:lottie/lottie.dart';

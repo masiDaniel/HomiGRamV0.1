@@ -14,7 +14,7 @@ from django.utils.crypto import get_random_string
 from .utils import get_safe_group_name
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseRatingSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer, TenancyAgreementSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, Charge, HouseImage, HouseRating, Houses, Location, Payment, PaymentItem, Room, PendingAdvertisement, RoomImage, TenancyAgreement, Receipt
-from .utils import get_safe_group_name
+
 from rest_framework.permissions import  IsAuthenticated
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
@@ -247,7 +247,7 @@ class GetRoomssAPIView(APIView):
         if serializer.is_valid():
             room = serializer.save()
 
-            images = request.FILES.getlist('image')
+            images = request.FILES.getlist('images')
 
             for image in images:
                 RoomImage.objects.create(room=room, image=image)
@@ -886,7 +886,7 @@ class MpesaCallbackView(APIView):
             tenant = agreement.tenant
             caretaker = house.caretaker
 
-            house_group_name = f"{slugify(house.name)}-official"
+            house_group_name = get_safe_group_name(house.name, house.id)
             house_group, created = ChatRoom.objects.get_or_create(
                 name=house_group_name,
                 defaults={"is_group": True},
