@@ -78,7 +78,18 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^2.0.0
   fading_edge_scrollview: ^3.0.0
+  flutter_launcher_icons: ^0.14.4
 
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  image_path: "assets/images/splash.jpeg"
+
+
+flutter_native_splash:
+  color: "#FFFFFF"
+  image: assets/images/splash.jpeg
+  android: true
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 

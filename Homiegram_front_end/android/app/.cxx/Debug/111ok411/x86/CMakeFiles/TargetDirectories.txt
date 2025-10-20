@@ -1,2 +1,0 @@
-/home/azte-c/CodeByMasi/HomiGRamV0.1/Homiegram_front_end/android/app/.cxx/Debug/111ok411/x86/CMakeFiles/edit_cache.dir
-/home/azte-c/CodeByMasi/HomiGRamV0.1/Homiegram_front_end/android/app/.cxx/Debug/111ok411/x86/CMakeFiles/rebuild_cache.dir
