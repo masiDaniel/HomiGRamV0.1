@@ -556,7 +556,6 @@ class AddHousePageState extends State<AddHousePage> {
                         Expanded(
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.grey.shade300),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: ListView.builder(
@@ -569,14 +568,6 @@ class AddHousePageState extends State<AddHousePage> {
                                 return CheckboxListTile(
                                   title: Text(
                                     amenity.name!,
-                                    style: TextStyle(
-                                      color: isSelected
-                                          ? const Color(0xFF105A01)
-                                          : Colors.black87,
-                                      fontWeight: isSelected
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                    ),
                                   ),
                                   activeColor: const Color(0xFF105A01),
                                   value: isSelected,

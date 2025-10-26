@@ -192,7 +192,7 @@ class _SearchPageState extends State<SearchPage> {
                 color: Color(0xFF126E06),
               ),
               onPressed: () async {
-                showModalBottomSheet(
+                await showModalBottomSheet(
                   context: context,
                   isScrollControlled: true,
                   shape: const RoundedRectangleBorder(
@@ -205,6 +205,7 @@ class _SearchPageState extends State<SearchPage> {
                     onApply: _onApplyFilters,
                   ),
                 );
+                await Future.delayed(const Duration(milliseconds: 200));
               },
             ),
             IconButton(
