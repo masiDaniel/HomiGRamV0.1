@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, ConfirmAgreementView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, PaymentStatusView, SubmitHouseRating, RemoveBookmarkView, RemoveCaretakerView, RentPaymentPreviewView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, StartRentView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView, RentPaymentInitiateView,MpesaCallbackView 
+from .views import AddBookmarkView, ApproveTerminationAPIView, AssignCaretakerView, AssignTenantView, AmenitiessAPIView, ConfirmAgreementView, GetBookmarksAPIView, HouseWithRoomsAPIView, LocationsAPIView, HouseAPIView, MyRoomsAPIView, PaymentStatusView, SubmitHouseRating, RemoveBookmarkView, RemoveCaretakerView, RentPaymentPreviewView, RequestTerminationAPIView, SearchApiView, GetRoomssAPIView, GetAdvertisementsAPIView, GetCaretakersAPIView, StartRentView, SubmitAdvertisementAPIView,ConfirmPaymentAPIView, RentPaymentInitiateView,MpesaCallbackView,  agreement_detail, agreement_pdf
 
 urlpatterns = [
     path('gethouses/', HouseAPIView.as_view(), name="get_houses"),
@@ -35,4 +35,6 @@ urlpatterns = [
     path('payment-initialization/', RentPaymentInitiateView.as_view(), name='payment_initialization'),
     path('payment-status/', PaymentStatusView.as_view(), name='payment_status'),
     path('mpesa-callback/', MpesaCallbackView.as_view(), name='mpesa_callback'),
+    path('myAgreement/<int:pk>/', agreement_detail, name='agreement_detail'),
+    path('myAgreement/<int:pk>/pdf/', agreement_pdf, name='agreement_pdf'),
 ]

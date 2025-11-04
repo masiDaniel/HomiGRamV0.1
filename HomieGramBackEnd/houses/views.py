@@ -1,7 +1,7 @@
 from django.utils.text import slugify
 import time
 import uuid
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404,  render
 from rest_framework.views import APIView
 from rest_framework import status
 from rest_framework.response import Response
@@ -21,6 +21,9 @@ from django.core.mail import EmailMultiAlternatives
 from django.db import transaction
 from datetime import datetime
 from django.utils import timezone
+from weasyprint import HTML
+from django.http import HttpResponse
+import tempfile
 
 def generate_receipt(payment):
     if hasattr(payment, "receipt"): 
@@ -990,3 +993,59 @@ class ApproveTerminationAPIView(APIView):
 
         return Response({"message": "Agreement terminated successfully"}, status=200)
     
+
+def generate_tenancy_agreement_pdf(request, agreement_id):
+    agreement = get_object_or_404(TenancyAgreement, id=agreement_id)
+
+    # Render HTML template with context
+    html_string = render_to_string("tenancy_agreement_template.html", {
+        "agreement": agreement,
+        "tenant": agreement.tenant,
+        "house": agreement.house,
+        "room": agreement.room,
+    })
+
+    # Create PDF in memory
+    with tempfile.NamedTemporaryFile(delete=True) as output:
+        HTML(string=html_string).write_pdf(output.name)
+        output.seek(0)
+        response = HttpResponse(output.read(), content_type="application/pdf")
+        filename = f"tenancy_agreement_{agreement.tenant.username}_{agreement.id}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+def agreement_detail(request, pk):
+    """
+    Render the tenancy agreement as HTML in browser.
+    """
+    agreement = get_object_or_404(TenancyAgreement, pk=pk)
+    context = {
+        'agreement': agreement,
+        'house': getattr(agreement, 'house', None),
+        'room': getattr(agreement, 'room', None),
+    }
+    return render(request, 'tenancy_agreement_template.html', context)
+
+
+def agreement_pdf(request, pk):
+    """
+    Generate a PDF from the same template and return as attachment.
+    """
+    agreement = get_object_or_404(TenancyAgreement, pk=pk)
+    context = {
+        'agreement': agreement,
+        'house': getattr(agreement, 'house', None),
+        'room': getattr(agreement, 'room', None),
+    }
+    html_string = render_to_string('tenancy_agreement_template.html', context, request=request)
+
+    base_url = request.build_absolute_uri('/') 
+   
+    html = HTML(string=html_string, base_url=base_url)
+    result = html.write_pdf()
+
+   
+    filename = f"Tenancy_Agreement_for_{agreement.tenant.username}.pdf"
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response

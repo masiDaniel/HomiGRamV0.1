@@ -20,8 +20,8 @@ def generate_unique_regno():
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True)
     nick_name = models.CharField(unique=True, null=True)
-    id_number = models.IntegerField(default=0)
-    phone_number = models.CharField(max_length=15, default='')
+    id_number = models.IntegerField(null=True, blank=True, unique=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True, unique=True)
     profile_pic = models.ImageField(null=True)
     passport_pic = models.ImageField(null=True)
     id_scan = models.ImageField(null=True)

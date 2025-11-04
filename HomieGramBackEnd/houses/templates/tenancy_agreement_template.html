@@ -1,0 +1,236 @@
+{# templates/tenancy/agreement_print.html #}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Tenancy Agreement — {{ agreement.pk }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    :root{
+      --primary: #007a06;
+      --muted: #666;
+      --ink: #222;
+      --paper-width: 210mm;
+      --paper-height: 297mm;
+    }
+    /* page setup for printing */
+    @page { size: A4; margin: 24mm 20mm; }
+    html,body{height:100%; margin:0; padding:0; font-family: "Helvetica", Arial, sans-serif; color:var(--ink);}
+    .container{max-width:900px; margin:0 auto; background: white; padding:28px;}
+    header{
+      display:flex; align-items:center; gap:18px; margin-bottom:18px;
+    }
+    .brand {
+      width:84px; height:84px; border-radius:8px;
+      background: linear-gradient(135deg,var(--primary));
+      display:flex; align-items:center; justify-content:center;
+      color:white; font-weight:700; font-size:20px;
+    }
+    h1{margin:0; font-size:20px; color:var(--primary);}
+    .subtitle{color:var(--muted); font-size:12px; margin-top:4px;}
+    .meta {margin-top:12px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap;}
+    .card{border:1px solid #8cdd7c; padding:12px; border-radius:6px; background:#fafafa; font-size:13px;}
+    .section{margin-top:20px;}
+    .section h2{font-size:18px; color:var(--primary); margin-bottom:8px;}
+    table {width:100%; border-collapse: collapse; font-size:13px;}
+    th,td {padding:8px 10px; border:1px solid #e9e9e9; text-align:left; vertical-align:top;}
+    ol li {margin:8px 0;}
+    .flex-row{display:flex; gap:12px; align-items:flex-start;}
+    .muted{color:var(--muted); font-size:13px;}
+    .signature-block{display:flex; gap:18px; margin-top:36px; align-items:flex-start;}
+    .signature {flex:1; text-align:left;}
+    .sig-line{display:block; margin-top:48px; border-top:1px solid #999; width:80%;}
+    .small{font-size:12px; color:var(--muted);}
+    footer {margin-top:28px; font-size:12px; color:var(--muted); border-top:1px dashed #eee; padding-top:10px;}
+ 
+    @media print {
+      body {background: white;}
+    }
+  </style>
+</head>
+<body>
+  <div class="container" role="main">
+    <header>
+      <div class="brand">H</div>
+      <div>
+        <h1>TENANCY AGREEMENT</h1>
+        <div class="subtitle">An agreement between the Property Manager (Homigram) and the Tenant</div>
+      </div>
+      <div style="margin-left:auto; text-align:right;">
+        <div class="small">Agreement date</div>
+        <div style="font-weight:600;">{{ agreement.start_date|date:"F j, Y" }}</div>
+      </div>
+    </header>
+
+    <div class="meta">
+      <div class="card" style="flex:1; min-width:260px;">
+        <strong>Property Manager</strong><br>
+        Homigram<br>
+        Nairobi, Kenya
+      </div>
+
+      <div class="card" style="flex:1; min-width:260px;">
+        <strong>Tenant</strong><br>
+        {{ agreement.tenant.get_full_name|default:agreement.tenant.username }}<br>
+        <span class="muted">Phone:</span> {{ agreement.tenant.phone|default:"0712345678" }}<br>
+        <span class="muted">ID/Passport:</span> {{ agreement.tenant.id_number|default:"12345678" }}<br>
+        <span class="muted">Email:</span> {{ agreement.tenant.email|default:"email@example.com" }}
+      </div>
+
+      <div class="card" style="flex:1; min-width:220px;">
+        <strong>Agreement</strong><br>
+        <span class="muted">Term:</span>
+        {{ agreement.start_date|date:"F j, Y" }} —
+          {% if agreement.end_date %}
+            {{ agreement.end_date|date:"F j, Y" }}
+          {% else %}
+            Not defined
+          {% endif %}
+      </div>
+    </div>
+
+    <section class="section">
+      <h2>PROPERTY DETAILS</h2>
+      <table>
+        <tr><th>Apartment</th><td>{{ agreement.house.name|default:house.name|default:"Royal Subarbs" }}</td></tr>
+        <tr><th>Room</th><td>{{ agreement.room.room_name|default:room.room_name|default:"D-209" }}</td></tr>
+        <tr><th>Unit Type</th><td>{{ agreement.room.number_of_bedrooms|default:room.number_of_bedrooms|default:"Bedsitter" }}</td></tr>
+        <tr><th>Monthly Rent</th><td>Ksh {{ agreement.room.rent|floatformat:0|default:10000 }}</td></tr>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>PAYMENT METHODS</h2>
+      <div class="flex-row">
+        <div style="flex:1;">
+          <strong>M-Pesa</strong>
+          <p class="muted small">Paybill Number: <strong>123456</strong><br>
+             Account Number: <strong>{{ agreement.house.name }}–{{ agreement.room.room_name }}</strong><br>
+             Account Name: <strong>Homigram</strong>
+          </p>
+        </div>
+        <div style="flex:1;">
+          <strong>Bank Transfer</strong>
+          <p class="muted small">
+            Account Name: <strong>Homigram</strong><br>
+            Account Number: <strong>Research</strong><br>
+            Bank: <strong>Cooperative Bank (COOP)</strong>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>RECITALS</h2>
+      <ol>
+        <li>The Landlord has duly appointed Homigram as the authorized property manager and agent of the property during the term of this Agreement.</li>
+        <li>The Property Manager, with the consent of the Landlord, hereby lets the property to the Tenant, who agrees to take the premises for the term and under the conditions herein contained.</li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2>TERMS AND CONDITIONS</h2>
+      <ol>
+        <li>
+          <strong>Term:</strong> One (1) year, commencing on {{ agreement.start_date|date:"F j, Y" }} and expiring on {{ agreement.end_date|date:"F j, Y" }} unless earlier terminated. The tenancy may be renewed by mutual consent.
+        </li>
+        <li>
+          <strong>Rent:</strong>
+          <ul>
+            <li>Rent: Ksh {{ agreement.room.rent|default:10000 }} per month, payable in advance on or before the 5th day of each month.</li>
+            <li>Rent is inclusive of service charges but exclusive of water and electricity.</li>
+            <li>Late Payment Penalty: Ksh 200 per day after the 5th until full payment.</li>
+            <li>The Property Manager may revise rent with at least 90 days' written notice.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Deposit:</strong>
+          <ul>
+            <li>Rent Deposit: one (1) month's rent (Ksh {{ agreement.room.rent|default:10000 }})</li>
+            <li>Water Deposit: Ksh 1,000</li>
+            <li>Deposits are held as security for performance of Tenant obligations. They shall not be used to offset unpaid rent or utilities.</li>
+            <li>Refund within 30 days after handover, less costs for repairs or outstanding dues.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Utilities:</strong> The Tenant pays for all water and electricity consumed. The Property Manager ensures functional connections.
+        </li>
+        <li>
+          <strong>Tenant Obligations:</strong> The Tenant shall:
+          <ol type="a">
+            <li>Pay rent and utilities punctually.</li>
+            <li>Use the premises as a private residence only.</li>
+            <li>Not alter the unit without written consent; approved alterations must be restored at Tenant's cost.</li>
+            <li>Maintain the unit in good condition (fair wear and tear excepted) and perform minor repairs.</li>
+            <li>Permit access for inspections, maintenance or repairs on reasonable notice.</li>
+            <li>Not sublet or assign without written consent.</li>
+            <li>Avoid causing nuisance to neighbours.</li>
+          </ol>
+        </li>
+        <li>
+          <strong>Property Manager / Landlord Obligations:</strong>
+          <ul>
+            <li>Ensure premises are habitable and safe.</li>
+            <li>Attend to major structural repairs not caused by Tenant neglect.</li>
+            <li>Provide reasonable quiet enjoyment.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Termination:</strong>
+          <ul>
+            <li>Either party may terminate with 30 days' written notice.</li>
+            <li>Immediate termination may occur for non-payment >30 days, substantial damage, or material breach.</li>
+            <li>Tenant must vacate, hand over keys, and settle outstanding dues before deposit refund is considered.</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Condition & Handover:</strong> Tenant acknowledges inspection, and shall return premises in the same condition fair wear and tear excepted.
+        </li>
+        <li>
+          <strong>Dispute Resolution:</strong> Resolve amicably first; then mediation under Kenyan law; if unresolved, competent courts in Nairobi County.
+        </li>
+        <li>
+          <strong>Governing Law:</strong> Laws of Kenya, including the Landlord and Tenant (Shops, Hotels and Catering Establishments) Act.
+        </li>
+        <li>
+          <strong>Entire Agreement:</strong> This instrument constitutes the entire agreement between the parties.
+        </li>
+      </ol>
+    </section>
+
+    <section class="section">
+      <h2>Execution</h2>
+      <p>IN WITNESS WHEREOF, the parties hereto have executed this Tenancy Agreement on the date first written above.</p>
+
+      <div class="signature-block">
+        <div class="signature">
+          <div class="sig-line"></div>
+          <div><strong>Tenant:</strong> {{ agreement.tenant.get_full_name|default:agreement.tenant.username }}</div>
+          <div class="small">Phone: {{ agreement.tenant.phone|default:"0712345678" }} &nbsp; | &nbsp; ID: {{ agreement.tenant.id_number|default:"12345678" }}</div>
+          <div class="small">Date: ______________________</div>
+        </div>
+
+        <div class="signature">
+          <div class="sig-line"></div>
+          <div><strong>PROPERTY MANAGER (for Homigram)</strong></div>
+          <div class="small">Name: ______________________</div>
+          <div class="small">Title: Property Manager</div>
+          <div class="small">Date: ______________________</div>
+        </div>
+
+        <div class="signature">
+          <div class="sig-line"></div>
+          <div><strong>WITNESS</strong></div>
+          <div class="small">Name: ______________________</div>
+          <div class="small">Signature: __________________</div>
+          <div class="small">Date: ______________________</div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      Homigram — Property Management Solutions · Nairobi, Kenya · This document is computer-generated and valid without a physical signature when signed above.
+    </footer>
+  </div>
+</body>
+</html>
