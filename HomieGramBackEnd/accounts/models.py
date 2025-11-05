@@ -30,6 +30,7 @@ class CustomUser(AbstractUser):
     is_landlord = models.BooleanField(default=False) 
     num_houses = models.IntegerField(default=0)  
     regno = models.CharField(max_length=5, unique=True, editable=False)
+    activated = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.regno:

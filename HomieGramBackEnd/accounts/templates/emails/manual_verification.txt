@@ -1,0 +1,14 @@
+Hello {{ user.first_name }},
+
+Thank you for signing up with HomiGram!
+
+To complete your verification process and gain full access to your account, please reply to this email with the following documents:
+
+- Valid ID (National ID, Passport, or Student ID)
+- Any additional proof required by your property or institution
+
+Once we receive your documents, our team will review them and activate your account.
+
+If you have any questions, reply directly to this email: {{ support_email }}
+
+— The HomiGram Team

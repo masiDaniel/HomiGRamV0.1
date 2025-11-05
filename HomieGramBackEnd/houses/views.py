@@ -14,7 +14,6 @@ from django.utils.crypto import get_random_string
 from .utils import get_safe_group_name
 from .serializers import AdvertisementSerializer, AmenitiesSerializer, BookmarkSerializer, CareTakersSerializer, HouseRatingSerializer, HouseWithRoomsSerializer, HousesSerializers, LocationSerializer, RoomAndTenancySerializer, RoomSerializer, TenancyAgreementSerializer
 from .models import Advertisement, Amenity, Bookmark, CareTaker, Charge, HouseImage, HouseRating, Houses, Location, Payment, PaymentItem, Room, PendingAdvertisement, RoomImage, TenancyAgreement, Receipt
-
 from rest_framework.permissions import  IsAuthenticated
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
@@ -24,6 +23,7 @@ from django.utils import timezone
 from weasyprint import HTML
 from django.http import HttpResponse
 import tempfile
+from django.conf import settings
 
 def generate_receipt(payment):
     if hasattr(payment, "receipt"): 
@@ -52,42 +52,75 @@ def create_private_chat_if_not_exists(user1, user2):
         )
         room.participants.add(user1, user2)
 
-def send_receipt_email(receipt):
-    subject = f"Your Payment Receipt - {receipt.receipt_number}"
-    from_email = "no-reply@yourapp.com"
-    recipient_list = [receipt.tenant.email]
+# def send_receipt_email(receipt):
+#     subject = f"Your Payment Receipt - {receipt.receipt_number}"
+#     from_email = "no-reply@yourapp.com"
+#     recipient_list = [receipt.tenant.email]
 
-    html_content = render_to_string("receipts/receipt.html", {"receipt": receipt})
+#     html_content = render_to_string("receipt.html", {"receipt": receipt})
     
-    msg = EmailMultiAlternatives(subject, "", from_email, recipient_list)
-    msg.attach_alternative(html_content, "text/html")
-    msg.send()
+#     msg = EmailMultiAlternatives(subject, "", from_email, recipient_list)
+#     msg.attach_alternative(html_content, "text/html")
+#     msg.send()
+
+def send_receipt_email(receipt):
+    """
+    Sends a detailed payment receipt email (HTML + PDF attachment) to the tenant.
+    """
+    subject = f"Your Payment Receipt - {receipt.receipt_number}"
+    from_email = settings.DEFAULT_FROM_EMAIL
+    to = [receipt.tenant.email]
+
+    context = {
+        "receipt": receipt,
+        "payment": receipt.payment,
+        "items": receipt.payment.items.all(),
+        "support_email": settings.DEFAULT_FROM_EMAIL,
+    }
+
+    # Render both text and HTML versions
+    html_content = render_to_string("emails/receipt.html", context)
+    text_content = render_to_string("emails/receipt.txt", context)
+
+    # Convert HTML to PDF
+    pdf_file = HTML(string=html_content).write_pdf()
+
+    # Build the email
+    email = EmailMultiAlternatives(subject, text_content, from_email, to)
+    email.attach_alternative(html_content, "text/html")
+    email.attach(
+        f"Receipt_{receipt.receipt_number}.pdf",
+        pdf_file,
+        "application/pdf"
+    )
+
+    # Send email
+    email.send(fail_silently=False)
 
 def compute_charges(agreement, is_first_payment):
     items, total_amount = [], 0
 
-    # Always add rent and Deposit
-    items.append({"name": "Monthly Rent", "amount": agreement.room.rent})
-    total_amount += agreement.room.rent
-    items.append({"name": "Deposit Rent", "amount": agreement.room.rent})
-    total_amount += agreement.room.rent
-
+    # Only applies for the first time.
     if is_first_payment:
-        # Example: add deposits dynamically
+        items.append({"name": "Monthly Rent", "amount": agreement.room.rent})
+        total_amount += agreement.room.rent
+        items.append({"name": "Deposit Rent", "amount": agreement.room.rent})
+        total_amount += agreement.room.rent
         if getattr(agreement.house, "security_deposit", None):
             items.append({"name": "Security Deposit", "amount": agreement.house.security_deposit})
             total_amount += agreement.house.security_deposit
         if getattr(agreement.house, "water_deposit", None):
             items.append({"name": "Water Deposit", "amount": agreement.house.water_deposit})
             total_amount += agreement.house.water_deposit
-    else:
-        today = timezone.now().date()
-        charges = agreement.charges.filter(
-            month__month=today.month, month__year=today.year, is_paid=False
-        )
-        for c in charges:
-            items.append({"name": c.name, "amount": c.amount})
-            total_amount += c.amount
+
+    # normal payments - after first payment.
+    today = timezone.now().date()
+    charges = agreement.charges.filter(
+        month__month=today.month, month__year=today.year, is_paid=False
+    )
+    for c in charges:
+        items.append({"name": c.name, "amount": c.amount})
+        total_amount += c.amount
 
     return items, total_amount
 
@@ -116,6 +149,61 @@ def get_valid_until(paid_at=None):
     valid_until = datetime(next_year, next_month, 5)
     return valid_until
 
+
+def generate_tenancy_agreement_pdf(request, agreement_id):
+    agreement = get_object_or_404(TenancyAgreement, id=agreement_id)
+
+    # Render HTML template with context
+    html_string = render_to_string("tenancy_agreement_template.html", {
+        "agreement": agreement,
+        "tenant": agreement.tenant,
+        "house": agreement.house,
+        "room": agreement.room,
+    })
+
+    # Create PDF in memory
+    with tempfile.NamedTemporaryFile(delete=True) as output:
+        HTML(string=html_string).write_pdf(output.name)
+        output.seek(0)
+        response = HttpResponse(output.read(), content_type="application/pdf")
+        filename = f"tenancy_agreement_{agreement.tenant.username}_{agreement.id}.pdf"
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
+def agreement_detail(request, pk):
+    """
+    Render the tenancy agreement as HTML in browser.
+    """
+    agreement = get_object_or_404(TenancyAgreement, pk=pk)
+    context = {
+        'agreement': agreement,
+        'house': getattr(agreement, 'house', None),
+        'room': getattr(agreement, 'room', None),
+    }
+    return render(request, 'tenancy_agreement_template.html', context)
+
+def agreement_pdf(request, pk):
+    """
+    Generate a PDF from the same template and return as attachment.
+    """
+    agreement = get_object_or_404(TenancyAgreement, pk=pk)
+    context = {
+        'agreement': agreement,
+        'house': getattr(agreement, 'house', None),
+        'room': getattr(agreement, 'room', None),
+    }
+    html_string = render_to_string('tenancy_agreement_template.html', context, request=request)
+
+    base_url = request.build_absolute_uri('/') 
+   
+    html = HTML(string=html_string, base_url=base_url)
+    result = html.write_pdf()
+
+   
+    filename = f"Tenancy_Agreement_for_{agreement.tenant.username}.pdf"
+    response = HttpResponse(result, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
 
 class HouseAPIView(APIView):
     """
@@ -817,9 +905,6 @@ class PaymentStatusView(APIView):
                 "amount": str(receipt.amount),
                 "date_issued": receipt.date_issued,
             })
-        
-        send_receipt_email(receipt)
-
         return Response({"status": payment.status})
     
 class MpesaCallbackView(APIView):
@@ -900,7 +985,8 @@ class MpesaCallbackView(APIView):
 
             if caretaker:
                 create_private_chat_if_not_exists(tenant, caretaker.user_id)
-
+            # send the reciept
+            send_receipt_email(receipt)
             return Response({
                 "status": "success",
                 "receipt_number": receipt.receipt_number
@@ -992,60 +1078,3 @@ class ApproveTerminationAPIView(APIView):
         room.save()
 
         return Response({"message": "Agreement terminated successfully"}, status=200)
-    
-
-def generate_tenancy_agreement_pdf(request, agreement_id):
-    agreement = get_object_or_404(TenancyAgreement, id=agreement_id)
-
-    # Render HTML template with context
-    html_string = render_to_string("tenancy_agreement_template.html", {
-        "agreement": agreement,
-        "tenant": agreement.tenant,
-        "house": agreement.house,
-        "room": agreement.room,
-    })
-
-    # Create PDF in memory
-    with tempfile.NamedTemporaryFile(delete=True) as output:
-        HTML(string=html_string).write_pdf(output.name)
-        output.seek(0)
-        response = HttpResponse(output.read(), content_type="application/pdf")
-        filename = f"tenancy_agreement_{agreement.tenant.username}_{agreement.id}.pdf"
-        response["Content-Disposition"] = f'attachment; filename="{filename}"'
-        return response
-
-def agreement_detail(request, pk):
-    """
-    Render the tenancy agreement as HTML in browser.
-    """
-    agreement = get_object_or_404(TenancyAgreement, pk=pk)
-    context = {
-        'agreement': agreement,
-        'house': getattr(agreement, 'house', None),
-        'room': getattr(agreement, 'room', None),
-    }
-    return render(request, 'tenancy_agreement_template.html', context)
-
-
-def agreement_pdf(request, pk):
-    """
-    Generate a PDF from the same template and return as attachment.
-    """
-    agreement = get_object_or_404(TenancyAgreement, pk=pk)
-    context = {
-        'agreement': agreement,
-        'house': getattr(agreement, 'house', None),
-        'room': getattr(agreement, 'room', None),
-    }
-    html_string = render_to_string('tenancy_agreement_template.html', context, request=request)
-
-    base_url = request.build_absolute_uri('/') 
-   
-    html = HTML(string=html_string, base_url=base_url)
-    result = html.write_pdf()
-
-   
-    filename = f"Tenancy_Agreement_for_{agreement.tenant.username}.pdf"
-    response = HttpResponse(result, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response

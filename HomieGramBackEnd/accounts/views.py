@@ -6,6 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from .models import CustomUser
 from rest_framework_simplejwt.tokens import RefreshToken
+from .utils.verification_email import send_manual_verification_email
 
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
@@ -93,9 +94,13 @@ class RegisterUsersAPIView(APIView):
 
         serializer = AccountSerializer(data=data)
         if serializer.is_valid():
-            serializer.save()
+          
+            user = serializer.save()
+
+            send_manual_verification_email(user)
+
             data = {
-                'message': "User Successfully registered",
+                'message': "User Successfully registered, Verification email sent.",
                 }
             serializer = MessageSerializer(data)
             return Response(serializer.data, status=status.HTTP_200_OK)

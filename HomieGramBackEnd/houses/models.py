@@ -6,6 +6,7 @@ from accounts.models import CustomUser
 from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.timezone import now
+from django.utils.crypto import get_random_string
 
 
 def validate_file_extension(value):
@@ -235,17 +236,18 @@ class Payment(models.Model):
     def __str__(self):
         return f"Payment {self.id} - {self.tenant.username} - {self.status}"
 
-class PaymentItem(models.Model):
-    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name="items")
-    name = models.CharField(max_length=100)  # e.g. "Rent", "Water", "Electricity", "Security Deposit"
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
-
 class Charge(models.Model):
     agreement = models.ForeignKey(TenancyAgreement, on_delete=models.CASCADE, related_name="charges")
     name = models.CharField(max_length=100)  # "Water", "Electricity", "Garbage", etc.
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     month = models.DateField()  # which month it applies
     is_paid = models.BooleanField(default=False)
+
+class PaymentItem(models.Model):
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name="items")
+    name = models.CharField(max_length=100)  # e.g. "Rent", "Water", "Electricity", "Security Deposit"
+    charge = models.ForeignKey(Charge, on_delete=models.SET_NULL, null=True, blank=True)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
 
 class Receipt(models.Model):
     payment = models.OneToOneField(Payment, on_delete=models.CASCADE, related_name="receipt")
@@ -254,8 +256,17 @@ class Receipt(models.Model):
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     date_issued = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        if not self.receipt_number:
+            self.receipt_number = f"HM-{now().strftime('%Y%m%d')}-{get_random_string(6).upper()}"
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f"Receipt {self.receipt_number} for {self.payment}"
+    
+    @property
+    def items(self):
+        return self.payment.items.all() 
 
 class Bookmark(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

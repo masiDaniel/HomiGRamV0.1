@@ -1,0 +1,18 @@
+HomiGram Payment Receipt
+========================
+
+Receipt Number: {{ receipt.receipt_number }}
+Date Issued: {{ receipt.date_issued|date:"M d, Y H:i" }}
+Tenant: {{ receipt.tenant.get_full_name|default:receipt.tenant.username }}
+
+Payment Breakdown:
+{% for item in items %}
+- {{ item.name }}: KSh {{ item.amount }}
+{% endfor %}
+
+Total Amount: KSh {{ receipt.amount }}
+
+Payment Reference: {{ receipt.payment.mpesa_receipt|default:"N/A" }}
+
+Thank you for using HomiGram — Simplifying Student Housing.
+For support, reach us at {{ support_email }}.
